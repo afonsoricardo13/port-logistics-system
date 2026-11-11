@@ -1,0 +1,236 @@
+// Navbar styling - Consistent design system (AC)
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #0f2b4a 0%, #1a4d7a 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  min-height: 75px; // Ajustado para o novo tamanho do logo
+
+  // Brand section (logo + name - sempre visível - AC)
+  .navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+    background: white; // Fundo branco para toda a secção do logo
+    padding: 0.5rem 1.25rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    margin-right: 2rem;
+    transition: box-shadow 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); // Sombra maior no hover
+    }
+
+    .logo {
+      height: 55px; // Ajustado para melhor proporção
+      width: auto;
+      transition: transform 0.3s ease;
+      
+      &:hover {
+        transform: scale(1.05); // Efeito hover
+      }
+    }
+
+    .company-name {
+      font-size: 1.35rem; // Proporção melhor com logo
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #0f2b4a; // Texto azul escuro no fundo branco
+    }
+  }
+
+  // Primary navigation menu (sempre visível - AC)
+  .nav-menu {
+    display: flex;
+    list-style: none;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    flex-grow: 1;
+    justify-content: center;
+    flex-wrap: wrap;
+
+    .nav-item {
+      .nav-link {
+        display: block;
+        padding: 0.6rem 1rem;
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        font-size: 0.95rem;
+        white-space: nowrap;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.2);
+          color: white;
+          transform: translateY(-2px);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        &.active {
+          background: rgba(255, 255, 255, 0.3);
+          color: white;
+          font-weight: 600;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+      }
+    }
+  }
+
+  // User actions section
+  .navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-shrink: 0;
+
+    // Language switcher (multilingual - AC)
+    .language-switcher {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      .lang-btn {
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.8);
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+
+        &:hover {
+          color: white;
+          background: rgba(255, 255, 255, 0.1);
+        }
+
+        &.active {
+          color: white;
+          background: rgba(255, 255, 255, 0.2);
+          font-weight: 600;
+        }
+      }
+
+      .separator {
+        color: rgba(255, 255, 255, 0.5);
+      }
+    }
+
+    // User info
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      font-size: 0.85rem;
+
+      .user-name {
+        font-weight: 600;
+      }
+
+      .user-role {
+        font-size: 0.75rem;
+        opacity: 0.8;
+      }
+    }
+
+    // Logout button
+    .btn-logout {
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      color: white;
+      padding: 0.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateY(-1px);
+      }
+    }
+  }
+}
+
+// Responsive design (desktop-first - AC)
+// Tablet
+@media (max-width: 1024px) {
+  .navbar {
+    padding: 0.75rem 1rem;
+
+    .navbar-brand .company-name {
+      font-size: 1.1rem;
+    }
+
+    .nav-menu {
+      gap: 0.25rem;
+
+      .nav-item .nav-link {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.9rem;
+      }
+    }
+
+    .navbar-actions {
+      gap: 1rem;
+
+      .user-info {
+        display: none; // Hide on tablet
+      }
+    }
+  }
+}
+
+// Mobile
+@media (max-width: 768px) {
+  .navbar {
+    flex-wrap: wrap;
+    padding: 0.5rem 1rem;
+
+    .navbar-brand {
+      .logo {
+        height: 45px; // Maior no mobile também
+      }
+
+      .company-name {
+        font-size: 1.1rem;
+      }
+    }
+
+    .nav-menu {
+      width: 100%;
+      order: 3;
+      margin-top: 0.5rem;
+      justify-content: flex-start;
+      gap: 0.25rem;
+
+      .nav-item .nav-link {
+        padding: 0.35rem 0.6rem;
+        font-size: 0.85rem;
+      }
+    }
+
+    .navbar-actions {
+      gap: 0.75rem;
+
+      .language-switcher .lang-btn {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.85rem;
+      }
+    }
+  }
+}

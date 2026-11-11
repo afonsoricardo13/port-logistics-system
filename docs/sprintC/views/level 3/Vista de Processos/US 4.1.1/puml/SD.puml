@@ -1,0 +1,61 @@
+@startuml SD - US 4.1.1 - View Daily Operation Plans (Level 3)
+skinparam shadowing true
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+title US 4.1.1 - View Daily Operation Plans (SD Level 3 - OEM Backend)
+
+actor "Logistics Operator" as LO
+
+box "SPA (Angular)" #LightBlue
+    participant "OperationPlansComponent" as COMP
+end box
+
+box "OEM Backend" #LightGreen
+    participant "OperationPlansController" as CTRL
+    participant "OperationPlanService" as SVC
+    participant "IOperationPlanRepository" as REPO
+end box
+
+database "«internal»\nOEM DB" as DB #87CEEB
+
+LO -> COMP: 1: selectDate(date)
+activate COMP
+
+COMP -> CTRL: 1.1: GET /api/operation-plans?date={date}
+activate CTRL
+
+CTRL -> SVC: 1.2: GetByDateAsync(date)
+activate SVC
+
+SVC -> REPO: 1.3: GetByDateWithOperationsAsync(date)
+activate REPO
+
+REPO -> DB: 1.4: SELECT * FROM OperationPlans WHERE Date = @date
+activate DB
+DB --> REPO: 1.5: operation plans
+deactivate DB
+
+REPO --> SVC: 1.6: List<OperationPlan>
+deactivate REPO
+
+SVC -> SVC: 1.7: mapToDTO(plans)
+
+SVC --> CTRL: 1.8: List<OperationPlanDTO>
+deactivate SVC
+
+CTRL --> COMP: 1.9: 200 OK (plans)
+deactivate CTRL
+
+COMP --> LO: 1.10: display daily plans table
+deactivate COMP
+
+@enduml

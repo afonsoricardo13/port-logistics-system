@@ -1,0 +1,68 @@
+@startuml Vista de Processos Frontend – US 4.1.3 (Generate Single Plan - SPA)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as USER
+
+box "SPA (Angular)" #LightBlue
+    participant "MissingPlansComponent" as COMP
+    participant "OperationPlanService" as PLAN_SVC
+    participant "MatDialog" as DIALOG
+    participant "AuthService" as AUTH
+    participant "Router" as ROUTER
+end box
+
+participant "<<external>>\nIAM" as IAM #F5F5DC
+
+USER -> COMP: 1: click "Generate Plan" for VVN row
+activate COMP
+
+COMP -> AUTH: 1.1: getToken()
+activate AUTH
+AUTH -> IAM: 1.1.1: validateSession()
+activate IAM
+IAM --> AUTH: 1.1.2: valid JWT token
+deactivate IAM
+AUTH --> COMP: 1.1.3: token
+deactivate AUTH
+
+COMP -> DIALOG: 1.2: open(SelectAlgorithmDialogComponent)
+activate DIALOG
+DIALOG --> USER: 1.3: display algorithm selection
+deactivate DIALOG
+deactivate COMP
+
+USER -> DIALOG: 2: select algorithm, click "Generate"
+activate DIALOG
+DIALOG --> COMP: 2.1: close({algorithm, vvnId})
+deactivate DIALOG
+
+activate COMP
+COMP -> COMP: 2.2: showLoadingSpinner()
+
+COMP -> PLAN_SVC: 2.3: generateForVvn(vvnId, algorithm)
+activate PLAN_SVC
+PLAN_SVC --> COMP: 2.3.1: generated plan
+deactivate PLAN_SVC
+
+COMP -> COMP: 2.4: hideLoadingSpinner()
+COMP -> COMP: 2.5: removeVvnFromList(vvnId)
+COMP -> COMP: 2.6: showSuccessToast("Plan generated successfully")
+
+COMP -> ROUTER: 2.7: navigate(['/operation-plans', plan.id])
+activate ROUTER
+ROUTER --> USER: 2.8: redirect to plan details
+deactivate ROUTER
+deactivate COMP
+
+@enduml

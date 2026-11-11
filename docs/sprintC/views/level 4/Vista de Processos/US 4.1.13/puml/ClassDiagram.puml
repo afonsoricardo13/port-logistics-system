@@ -1,0 +1,143 @@
+@startuml Vista Logica - Level 4 (US 4.1.13 - Incidents)
+
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor<<Controller>> LightBlue
+    BackgroundColor<<Service>> LightGreen
+    BackgroundColor<<Repository>> LightYellow
+    BackgroundColor<<Entity>> LightCoral
+    BackgroundColor<<DTO>> Wheat
+    BackgroundColor<<ValueObject>> LightGray
+}
+
+package "WebApi Layer" {
+    class IncidentsController <<Controller>> {
+        - _service: IncidentService
+        - _logger: ILogger<IncidentsController>
+        + GetAll(status?, severity?, startDate?, endDate?, activeOnly?, vesselVisitId?): Task<ActionResult<IEnumerable<IncidentDTO>>>
+        + GetById(id: Guid): Task<ActionResult<IncidentDTO>>
+        + Create(dto: CreateIncidentDTO): Task<ActionResult<IncidentDTO>>
+        + Update(id: Guid, dto: UpdateIncidentDTO): Task<ActionResult<IncidentDTO>>
+        + Resolve(id: Guid, dto: ResolveIncidentDTO): Task<ActionResult<IncidentDTO>>
+        + AddAffectedVve(id: Guid, vveId: string): Task<ActionResult<IncidentDTO>>
+        + RemoveAffectedVve(id: Guid, vveId: string): Task<ActionResult<IncidentDTO>>
+    }
+}
+
+package "Application Layer" {
+    class IncidentService <<Service>> {
+        - _repository: IIncidentRepository
+        - _incidentTypeRepository: IIncidentTypeRepository
+        - _vveRepository: IVesselVisitExecutionRepository
+        - _logger: ILogger<IncidentService>
+        + GetAllAsync(filter: IncidentFilterDTO): Task<IEnumerable<IncidentDTO>>
+        + GetByIdAsync(id: Guid): Task<IncidentDTO?>
+        + CreateAsync(dto: CreateIncidentDTO, userEmail: string): Task<IncidentDTO>
+        + UpdateAsync(id: Guid, dto: UpdateIncidentDTO, userEmail: string): Task<IncidentDTO>
+        + ResolveAsync(id: Guid, dto: ResolveIncidentDTO, userEmail: string): Task<IncidentDTO>
+        + AddAffectedVveAsync(id: Guid, vveId: string): Task<IncidentDTO>
+        + RemoveAffectedVveAsync(id: Guid, vveId: string): Task<IncidentDTO>
+        - CalculateDuration(startTime, endTime): TimeSpan
+    }
+
+    class IncidentDTO <<DTO>> {
+        + Id: Guid
+        + IncidentTypeCode: string
+        + IncidentTypeName: string
+        + StartTime: DateTime
+        + EndTime: DateTime?
+        + Severity: string
+        + Description: string
+        + ResponsibleUser: string
+        + AffectedVves: List<string>
+        + Status: string
+        + Duration: TimeSpan?
+        + CreatedAt: DateTime
+        + UpdatedAt: DateTime?
+    }
+
+    class CreateIncidentDTO <<DTO>> {
+        + IncidentTypeCode: string
+        + Severity: string
+        + Description: string
+        + AffectedVves: List<string>?
+        + AffectsAllOngoing: bool
+        + AffectsUpcoming: bool
+    }
+
+    class UpdateIncidentDTO <<DTO>> {
+        + Severity: string?
+        + Description: string?
+    }
+
+    class ResolveIncidentDTO <<DTO>> {
+        + EndTime: DateTime
+        + ResolutionNotes: string?
+    }
+
+    class IncidentFilterDTO <<DTO>> {
+        + Status: string?
+        + Severity: string?
+        + StartDate: DateTime?
+        + EndDate: DateTime?
+        + ActiveOnly: bool?
+        + VesselVisitId: string?
+    }
+}
+
+package "Domain Layer" {
+    class Incident <<Entity>> {
+        - _id: Guid
+        - _affectedVves: List<string>
+        + Id: Guid {get}
+        + IncidentTypeCode: string {get; private set}
+        + StartTime: DateTime {get; private set}
+        + EndTime: DateTime? {get; private set}
+        + Severity: Severity {get; private set}
+        + Description: string {get; private set}
+        + ResponsibleUser: string {get; private set}
+        + AffectedVves: IReadOnlyCollection<string> {get}
+        + CreatedAt: DateTime {get; private set}
+        + UpdatedAt: DateTime? {get; private set}
+        + Incident(typeCode, severity, description, responsibleUser)
+        + AddAffectedVve(vveId: string): void
+        + RemoveAffectedVve(vveId: string): void
+        + Resolve(endTime: DateTime): void
+        + Update(severity?, description?): void
+        + IsActive(): bool
+        + GetDuration(): TimeSpan?
+    }
+
+    interface IIncidentRepository <<Repository>> {
+        + GetByIdAsync(id: Guid): Task<Incident?>
+        + GetAllAsync(): Task<IEnumerable<Incident>>
+        + GetActiveAsync(): Task<IEnumerable<Incident>>
+        + GetByVveIdAsync(vveId: string): Task<IEnumerable<Incident>>
+        + GetByDateRangeAsync(start, end): Task<IEnumerable<Incident>>
+        + GetBySeverityAsync(severity: Severity): Task<IEnumerable<Incident>>
+        + AddAsync(incident: Incident): Task<Incident>
+        + UpdateAsync(incident: Incident): Task<Incident>
+    }
+}
+
+package "DataModel Layer" {
+    class IncidentRepository <<Repository>> {
+        - _context: OEMDbContext
+        + GetByIdAsync(id: Guid): Task<Incident?>
+        + GetAllAsync(): Task<IEnumerable<Incident>>
+        + GetActiveAsync(): Task<IEnumerable<Incident>>
+        + GetByVveIdAsync(vveId: string): Task<IEnumerable<Incident>>
+        + GetByDateRangeAsync(start, end): Task<IEnumerable<Incident>>
+        + GetBySeverityAsync(severity: Severity): Task<IEnumerable<Incident>>
+        + AddAsync(incident: Incident): Task<Incident>
+        + UpdateAsync(incident: Incident): Task<Incident>
+    }
+}
+
+' Relationships
+IncidentsController --> IncidentService
+IncidentService --> IIncidentRepository
+IncidentService --> IncidentDTO
+IncidentRepository ..|> IIncidentRepository
+
+@enduml

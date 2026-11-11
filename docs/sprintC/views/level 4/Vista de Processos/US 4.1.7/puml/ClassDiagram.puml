@@ -1,0 +1,160 @@
+@startuml Vista Logica - Level 4 (US 4.1.7 - Vessel Visit Execution)
+
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor<<Controller>> LightBlue
+    BackgroundColor<<Service>> LightGreen
+    BackgroundColor<<Repository>> LightYellow
+    BackgroundColor<<Entity>> LightCoral
+    BackgroundColor<<DTO>> Wheat
+    BackgroundColor<<ValueObject>> LightGray
+}
+
+package "WebApi Layer" {
+    class VesselVisitExecutionsController <<Controller>> {
+        - _service: VesselVisitExecutionService
+        - _repository: IVesselVisitExecutionRepository
+        - _logger: ILogger<VesselVisitExecutionsController>
+        + GetAll(vvnId?, status?, startDate?, endDate?): Task<ActionResult<IEnumerable<VesselVisitExecutionDTO>>>
+        + SearchWithMetrics(startDate?, endDate?, vesselImo?, status?): Task<ActionResult<IEnumerable<VesselVisitExecutionSearchResultDTO>>>
+        + GetById(id: string): Task<ActionResult<VesselVisitExecutionDTO>>
+        + Create(dto: CreateVveDTO): Task<ActionResult<VesselVisitExecutionDTO>>
+        + UpdateBerthing(id: string, dto: UpdateVveBerthingDTO): Task<ActionResult<VesselVisitExecutionDTO>>
+        + Complete(id: string, dto: CompleteVveDTO): Task<ActionResult<VesselVisitExecutionDTO>>
+    }
+}
+
+package "Application Layer" {
+    class VesselVisitExecutionService <<Service>> {
+        - _repository: IVesselVisitExecutionRepository
+        - _executedOpRepository: IExecutedOperationRepository
+        - _portLogisticsClient: PortLogisticsApiClient
+        - _logger: ILogger<VesselVisitExecutionService>
+        + GetAllAsync(): Task<IEnumerable<VesselVisitExecutionDTO>>
+        + GetByIdAsync(id: string): Task<VesselVisitExecutionDTO?>
+        + GetByVvnIdAsync(vvnId: string): Task<IEnumerable<VesselVisitExecutionDTO>>
+        + GetByStatusAsync(status: VveStatus): Task<IEnumerable<VesselVisitExecutionDTO>>
+        + GetByDateRangeAsync(start, end): Task<IEnumerable<VesselVisitExecutionDTO>>
+        + SearchWithMetricsAsync(startDate?, endDate?, vesselImo?, status?): Task<IEnumerable<VesselVisitExecutionSearchResultDTO>>
+        + CreateAsync(dto: CreateVveDTO, userEmail: string): Task<VesselVisitExecutionDTO>
+        + UpdateBerthingAsync(id: string, dto: UpdateVveBerthingDTO, userEmail: string): Task<VesselVisitExecutionDTO>
+        + CompleteAsync(id: string, dto: CompleteVveDTO, userEmail: string): Task<VesselVisitExecutionDTO>
+        - CalculateMetrics(vve: VesselVisitExecution, vvn: VvnDetailsDTO): VesselVisitExecutionSearchResultDTO
+    }
+
+    class VesselVisitExecutionDTO <<DTO>> {
+        + Id: string
+        + VvnId: string
+        + ActualArrivalTime: DateTime?
+        + ActualBerthTime: DateTime?
+        + DockUsed: string?
+        + ActualUnberthTime: DateTime?
+        + ActualDepartureTime: DateTime?
+        + Status: string
+        + CreatedBy: string
+        + CreatedAt: DateTime
+        + UpdatedBy: string?
+        + UpdatedAt: DateTime?
+        + Notes: string?
+    }
+
+    class VesselVisitExecutionSearchResultDTO <<DTO>> {
+        + Id: string
+        + VvnId: string
+        + VesselImo: string?
+        + VesselName: string?
+        + ActualArrivalTime: DateTime?
+        + ActualBerthTime: DateTime?
+        + DockUsed: string?
+        + ActualUnberthTime: DateTime?
+        + ActualDepartureTime: DateTime?
+        + Status: string
+        + ExpectedArrivalTime: DateTime?
+        + ExpectedDepartureTime: DateTime?
+        + TotalTurnaroundTimeHours: double?
+        + BerthOccupancyTimeHours: double?
+        + WaitingTimeForBerthingHours: double?
+        + ArrivalDelayHours: double?
+        + DepartureDelayHours: double?
+        + ExecutedOperationsCount: int?
+    }
+
+    class CreateVveDTO <<DTO>> {
+        + VvnId: string
+        + ActualArrivalTime: DateTime
+        + Notes: string?
+    }
+
+    class UpdateVveBerthingDTO <<DTO>> {
+        + ActualBerthTime: DateTime
+        + DockUsed: string
+    }
+
+    class CompleteVveDTO <<DTO>> {
+        + ActualUnberthTime: DateTime
+        + ActualDepartureTime: DateTime
+        + Notes: string?
+    }
+}
+
+package "Domain Layer" {
+    class VesselVisitExecution <<Entity>> {
+        - _id: string
+        - _vvnId: string
+        + Id: string {get}
+        + VvnId: string {get}
+        + ActualArrivalTime: DateTime? {get; private set}
+        + ActualBerthTime: DateTime? {get; private set}
+        + DockUsed: string? {get; private set}
+        + ActualUnberthTime: DateTime? {get; private set}
+        + ActualDepartureTime: DateTime? {get; private set}
+        + Status: VesselVisitExecutionStatus {get; private set}
+        + CreatedBy: string {get; private set}
+        + CreatedAt: DateTime {get; private set}
+        + UpdatedBy: string? {get; private set}
+        + UpdatedAt: DateTime? {get; private set}
+        + Notes: string? {get; private set}
+        + VesselVisitExecution(vvnId, arrivalTime, createdBy)
+        + UpdateBerthing(berthTime, dockUsed, updatedBy): void
+        + Complete(unberthTime, departureTime, updatedBy): void
+        - GenerateId(): string
+    }
+
+    enum VesselVisitExecutionStatus <<ValueObject>> {
+        InProgress
+        Completed
+    }
+
+    interface IVesselVisitExecutionRepository <<Repository>> {
+        + GetByIdAsync(id: string): Task<VesselVisitExecution?>
+        + GetAllAsync(): Task<IEnumerable<VesselVisitExecution>>
+        + GetByVvnIdAsync(vvnId: string): Task<IEnumerable<VesselVisitExecution>>
+        + GetByStatusAsync(status: VveStatus): Task<IEnumerable<VesselVisitExecution>>
+        + GetByDateRangeAsync(start, end): Task<IEnumerable<VesselVisitExecution>>
+        + AddAsync(vve: VesselVisitExecution): Task<VesselVisitExecution>
+        + UpdateAsync(vve: VesselVisitExecution): Task<VesselVisitExecution>
+    }
+}
+
+package "DataModel Layer" {
+    class VesselVisitExecutionRepository <<Repository>> {
+        - _context: OEMDbContext
+        + GetByIdAsync(id: string): Task<VesselVisitExecution?>
+        + GetAllAsync(): Task<IEnumerable<VesselVisitExecution>>
+        + GetByVvnIdAsync(vvnId: string): Task<IEnumerable<VesselVisitExecution>>
+        + GetByStatusAsync(status: VveStatus): Task<IEnumerable<VesselVisitExecution>>
+        + GetByDateRangeAsync(start, end): Task<IEnumerable<VesselVisitExecution>>
+        + AddAsync(vve: VesselVisitExecution): Task<VesselVisitExecution>
+        + UpdateAsync(vve: VesselVisitExecution): Task<VesselVisitExecution>
+    }
+}
+
+' Relationships
+VesselVisitExecutionsController --> VesselVisitExecutionService
+VesselVisitExecutionsController --> IVesselVisitExecutionRepository
+VesselVisitExecutionService --> IVesselVisitExecutionRepository
+VesselVisitExecutionService --> VesselVisitExecutionDTO
+VesselVisitExecutionService --> VesselVisitExecutionSearchResultDTO
+VesselVisitExecutionRepository ..|> IVesselVisitExecutionRepository
+
+@enduml

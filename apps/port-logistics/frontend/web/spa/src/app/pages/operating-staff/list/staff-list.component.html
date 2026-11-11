@@ -1,0 +1,206 @@
+<!-- US 2.2.11: Operating Staff List -->
+<div class="staff-list-container" data-cy="staff-list">
+  <!-- Header -->
+  <div class="header">
+    <h1>Operating Staff</h1>
+    <button 
+      class="btn btn-primary" 
+      data-cy="create-staff-btn"
+      aria-label="Create new staff member"
+      (click)="createNewStaff()"
+      *ngIf="canManageStaff()">
+      <i class="icon-plus"></i> Register New Staff
+    </button>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <!-- Filters Section (US 2.2.11 - AC: Searchable and filterable) -->
+  <div class="filters-section">
+    <div class="filters-row">
+      <!-- Search by ID, Name, Email, or Qualification -->
+      <div class="filter-group">
+        <label for="search">Search</label>
+        <input 
+          id="search"
+          type="text" 
+          class="form-control" 
+          data-cy="search-input"
+          aria-label="Search staff members"
+          placeholder="Search by ID, name, email, or qualification..."
+          [(ngModel)]="searchText"
+          (ngModelChange)="onSearchChange()" />
+      </div>
+
+      <!-- Status Filter -->
+      <div class="filter-group">
+        <label for="status">Status</label>
+        <select 
+          id="status"
+          class="form-control" 
+          data-cy="status-filter"
+          [(ngModel)]="selectedStatus"
+          (ngModelChange)="onFilterChange()">
+          <option *ngFor="let status of statusOptions" [value]="status.value">
+            {{ status.label }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Qualification Filter -->
+      <div class="filter-group">
+        <label for="qualification">Qualification</label>
+        <input 
+          id="qualification"
+          type="text" 
+          class="form-control" 
+          placeholder="Filter by qualification..."
+          [(ngModel)]="selectedQualification"
+          (ngModelChange)="onFilterChange()" />
+      </div>
+
+      <!-- Clear Filters Button -->
+      <div class="filter-group filter-actions">
+        <button 
+          class="btn btn-secondary btn-sm" 
+          data-cy="clear-filters-btn"
+          (click)="clearFilters()"
+          title="Clear all filters">
+          Clear Filters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="loading" data-cy="loading-indicator">
+    <div class="spinner"></div>
+    <p>Loading operating staff...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredStaff.length === 0" class="empty-state">
+    <p *ngIf="!searchText && !selectedStatus && !selectedQualification">
+      No operating staff found. Register your first staff member!
+    </p>
+    <p *ngIf="searchText || selectedStatus || selectedQualification">
+      No staff members match your search criteria. Try adjusting your filters.
+    </p>
+  </div>
+
+  <!-- Staff Table -->
+  <div *ngIf="!loading && filteredStaff.length > 0" class="staff-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Mecanographic Number</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Status</th>
+          <th>Qualifications</th>
+          <th>Operational Window</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let staff of filteredStaff" data-cy="staff-row">
+          <!-- Mecanographic Number -->
+          <td class="id-cell">
+            <strong>{{ staff.mecanographicNumber }}</strong>
+          </td>
+
+          <!-- Name -->
+          <td class="name-cell">
+            {{ staff.name }}
+          </td>
+
+          <!-- Email -->
+          <td class="email-cell">
+            {{ staff.email }}
+          </td>
+
+          <!-- Phone -->
+          <td class="phone-cell">
+            {{ staff.phoneNumber }}
+          </td>
+
+          <!-- Status (US 2.2.11 - AC: Current status) -->
+          <td>
+            <span [class]="'status-badge ' + getStatusClass(staff.status)">
+              {{ staff.status }}
+            </span>
+          </td>
+
+          <!-- Qualifications -->
+          <td class="qualifications-cell">
+            <div class="qualifications-list">
+              <span *ngFor="let qual of staff.qualifications" class="qualification-badge">
+                {{ qual }}
+              </span>
+            </div>
+          </td>
+
+          <!-- Operational Window -->
+          <td class="window-cell">
+            {{ staff.operationalWindow }}
+          </td>
+
+          <!-- Actions -->
+          <td class="actions-cell">
+            <!-- View Details -->
+            <button 
+              class="btn btn-sm btn-info" 
+              data-cy="view-details-btn"
+              (click)="viewDetails(staff.mecanographicNumber)"
+              title="View details">
+              View
+            </button>
+
+            <!-- Edit (only for managers) -->
+            <button 
+              *ngIf="canManageStaff() && staff.status === 'Available'"
+              class="btn btn-sm btn-secondary" 
+              data-cy="edit-staff-btn"
+              (click)="editStaff(staff)"
+              title="Edit staff member">
+              Edit
+            </button>
+
+            <!-- Deactivate (only for available staff) -->
+            <button 
+              *ngIf="canManageStaff() && staff.status === 'Available'"
+              class="btn btn-sm btn-warning" 
+              data-cy="deactivate-staff-btn"
+              (click)="deactivateStaff(staff)"
+              title="Deactivate staff member">
+              Deactivate
+            </button>
+
+            <!-- Reactivate (only for unavailable staff) -->
+            <button 
+              *ngIf="canManageStaff() && staff.status === 'Unavailable'"
+              class="btn btn-sm btn-success" 
+              data-cy="reactivate-staff-btn"
+              (click)="reactivateStaff(staff)"
+              title="Reactivate staff member">
+              Reactivate
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Results Count -->
+  <div *ngIf="!loading && filteredStaff.length > 0" class="results-count">
+    Showing {{ filteredStaff.length }} of {{ staffMembers.length }} staff members
+  </div>
+</div>

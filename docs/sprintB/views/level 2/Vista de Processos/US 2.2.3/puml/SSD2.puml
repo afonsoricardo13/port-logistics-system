@@ -1,0 +1,31 @@
+@startuml Vista de Processos – Level 2 (US 2.2.3 – Update Dock)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+participant "«container (C4)»\nSPA (Web UI)" as UI #87CEEB
+participant "«container (C4)»\nPort Logistics (Backend)" as BACKEND #87CEEB
+
+-> UI: 1: update dock
+activate UI
+UI --> : 1.1: show current dock data
+deactivate UI
+-> UI: 2: dock data update
+activate UI
+UI --> BACKEND: 2.1: request to update dock
+activate BACKEND
+BACKEND -> UI: 2.2: dock updated
+deactivate BACKEND
+UI --> : 2.3: dock updated
+deactivate UI
+
+@enduml

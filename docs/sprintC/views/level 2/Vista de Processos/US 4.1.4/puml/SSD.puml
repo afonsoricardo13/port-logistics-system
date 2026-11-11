@@ -1,0 +1,60 @@
+@startuml SSD - US 4.1.4 - View Operation Plan Details (Level 2)
+skinparam shadowing true
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+title US 4.1.4 - View Operation Plan Details (SSD Level 2)
+
+actor "Logistics Operator" as LO
+
+box "Port Operations System" #LightBlue
+    participant "SPA\n(Angular)" as SPA
+    participant "OEM\nBackend" as OEM
+    participant "Port Logistics\nBackend" as PL
+end box
+
+participant "«external»\nIAM" as IAM #F5F5DC
+
+database "«internal»\nOEM DB" as OEMDB #87CEEB
+database "«internal»\nPort Logistics DB" as PLDB #87CEEB
+
+LO -> SPA: 1: view plan details (planId)
+activate SPA
+
+SPA -> IAM: 1.1: validateSession()
+activate IAM
+IAM --> SPA: 1.2: valid token
+deactivate IAM
+
+SPA -> OEM: 1.3: GET /api/operation-plans/{planId}
+activate OEM
+
+OEM -> OEMDB: 1.4: query plan with operations
+activate OEMDB
+OEMDB --> OEM: 1.5: plan with planned operations
+deactivate OEMDB
+
+OEM -> PL: 1.6: GET /api/vessel-visit-notifications/{vvnId}
+activate PL
+PL -> PLDB: 1.6.1: query VVN details
+activate PLDB
+PLDB --> PL: 1.6.2: VVN data
+deactivate PLDB
+PL --> OEM: 1.7: VVN with vessel info
+deactivate PL
+
+OEM --> SPA: 1.8: complete plan details
+deactivate OEM
+
+SPA --> LO: 1.9: display plan with operations timeline
+deactivate SPA
+
+@enduml

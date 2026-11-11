@@ -1,0 +1,62 @@
+@startuml SSD - US 4.1.6 - View Missing Operation Plans (Level 2)
+skinparam shadowing true
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+title US 4.1.6 - View Missing Operation Plans (SSD Level 2)
+
+actor "Logistics Operator" as LO
+
+box "Port Operations System" #LightBlue
+    participant "SPA\n(Angular)" as SPA
+    participant "OEM\nBackend" as OEM
+    participant "Port Logistics\nBackend" as PL
+end box
+
+participant "«external»\nIAM" as IAM #F5F5DC
+
+database "«internal»\nOEM DB" as OEMDB #87CEEB
+database "«internal»\nPort Logistics DB" as PLDB #87CEEB
+
+LO -> SPA: 1: view missing plans (date)
+activate SPA
+
+SPA -> IAM: 1.1: validateSession()
+activate IAM
+IAM --> SPA: 1.2: valid token
+deactivate IAM
+
+SPA -> OEM: 1.3: GET /api/operation-plans/missing?date={date}
+activate OEM
+
+OEM -> PL: 1.4: GET /api/vessel-visit-notifications?date={date}&status=Approved
+activate PL
+PL -> PLDB: 1.4.1: query approved VVNs
+activate PLDB
+PLDB --> PL: 1.4.2: approved VVNs for date
+deactivate PLDB
+PL --> OEM: 1.5: approved VVNs list
+deactivate PL
+
+OEM -> OEMDB: 1.6: query existing plans for date
+activate OEMDB
+OEMDB --> OEM: 1.7: plans with VVN IDs
+deactivate OEMDB
+
+OEM -> OEM: 1.8: filter VVNs without plans
+
+OEM --> SPA: 1.9: VVNs missing operation plans
+deactivate OEM
+
+SPA --> LO: 1.10: display missing plans list
+deactivate SPA
+
+@enduml

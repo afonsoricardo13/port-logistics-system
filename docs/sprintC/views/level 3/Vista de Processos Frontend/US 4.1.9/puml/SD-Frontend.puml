@@ -1,0 +1,84 @@
+@startuml Vista de Processos Frontend – US 4.1.9 (Update VVE Executed Operations - SPA)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as USER
+
+box "SPA (Angular)" #LightBlue
+    participant "VveExecutionTrackingComponent" as COMP
+    participant "ExecutedOperationService" as EO_SVC
+    participant "OperationPlanService" as OP_SVC
+    participant "AuthService" as AUTH
+end box
+
+participant "<<external>>\nIAM" as IAM #F5F5DC
+
+USER -> COMP: 1: navigate to /vve-execution-tracking/{vveId}
+activate COMP
+
+COMP -> AUTH: 1.1: getToken()
+activate AUTH
+AUTH --> COMP: 1.1.1: token, userEmail
+deactivate AUTH
+
+COMP -> OP_SVC: 1.2: getByVvnId(vvnId)
+activate OP_SVC
+OP_SVC --> COMP: 1.2.1: planned operations
+deactivate OP_SVC
+
+COMP -> EO_SVC: 1.3: getByVveId(vveId)
+activate EO_SVC
+EO_SVC --> COMP: 1.3.1: existing executed operations
+deactivate EO_SVC
+
+COMP --> USER: 1.4: display operations table with status indicators
+deactivate COMP
+
+alt Initialize from plan (first time)
+    USER -> COMP: 2a: click "Initialize from Plan"
+    activate COMP
+    COMP -> EO_SVC: 2a.1: initializeFromPlan(vveId, planId)
+    activate EO_SVC
+    EO_SVC --> COMP: 2a.2: initialized operations
+    deactivate EO_SVC
+    COMP --> USER: 2a.3: refresh table with initialized operations
+    deactivate COMP
+end
+
+USER -> COMP: 3: select operation row, modify times/resources
+activate COMP
+COMP --> USER: 3.1: open edit modal/inline form
+deactivate COMP
+
+USER -> COMP: 4: update operation details, click "Save"
+activate COMP
+
+COMP -> COMP: 4.1: validateOperationData()
+
+COMP -> EO_SVC: 4.2: update(operationId, UpdateExecutedOperationDTO)
+activate EO_SVC
+EO_SVC --> COMP: 4.2.1: updated operation
+deactivate EO_SVC
+
+COMP -> COMP: 4.3: updateOperationStatus()
+note right
+    Status changes:
+    - NotStarted → Started (if start time set)
+    - Started → Completed (if end time set)
+    - Mark Delayed if behind schedule
+end note
+
+COMP --> USER: 4.4: refresh row, show success notification
+deactivate COMP
+
+@enduml

@@ -1,0 +1,74 @@
+@startuml Mapping IV ↔ PV – Level 2 (Port Logistics + Scheduling)
+left to right direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+skinparam rectangle {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam node {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam component {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ========== LEFT: Implementation View (Level 2) ==========
+rectangle "Implementation View (Level 2)" as IMP {
+
+  component "SPA (Web UI)"          as UI_I
+  component "Port Logistics (Backend)" as PORT_I
+  component "Scheduling & Planning" as PLAN_I
+
+  UI_I ..-> PORT_I
+  PORT_I ..-> PLAN_I
+}
+
+' ========== RIGHT: Physical View (Level 2) ==========
+rectangle "Physical View (Level 2)" as PHY {
+
+  node "localhost" as LOCAL {
+    component "«component»\nBrowser" as BROWSER {
+      component "«component»\nUI (loaded in browser)" as UI_CLIENT
+    }
+  }
+
+  node "server1" as S1 {
+    component "«component»\nPort Logistics API"     as PORT
+    component "«component»\nScheduling & Planning"  as PLAN
+  }
+
+  node "server2" as S2 {
+    component "«component»\nHTTP Server" as HTTPD
+    rectangle "\n UI (static artifact)" as UI_STATIC #87CEEB
+  }
+
+  LOCAL -[hidden]-> S1
+  LOCAL -[hidden]down-> S2
+}
+
+' ========== MAPPINGS ==========
+UI_I   ..> BROWSER   : runs in browser
+UI_I   ..> UI_STATIC : served by
+UI_I   ..> HTTPD     : hosted by
+
+PORT_I ..> PORT      : deploy
+PLAN_I ..> PLAN      : deploy
+
+' ========== External Component: Database ==========
+node "db-server" as DB {
+  component "«external»\nDatabase" as DATABASE #F5F5DC
+}
+
+S1 -> DB : SQL
+
+@enduml

@@ -1,0 +1,66 @@
+@startuml Class Diagram - US 4.1.1 - View Daily Operation Plans
+skinparam shadowing true
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+title US 4.1.1 - View Daily Operation Plans (Level 4 - Class Diagram)
+
+package "WebApi" #LightBlue {
+    class OperationPlansController {
+        - _operationPlanService: IOperationPlanService
+        + GetByDate(date: DateOnly): ActionResult<List<OperationPlanDTO>>
+    }
+}
+
+package "Application" #LightGreen {
+    interface IOperationPlanService {
+        + GetByDateAsync(date: DateOnly): Task<List<OperationPlanDTO>>
+    }
+    
+    class OperationPlanService {
+        - _repository: IOperationPlanRepository
+        - _mapper: IMapper
+        + GetByDateAsync(date: DateOnly): Task<List<OperationPlanDTO>>
+    }
+    
+    class OperationPlanDTO {
+        + Id: Guid
+        + VvnId: Guid
+        + VesselName: string
+        + VesselImo: string
+        + Date: DateOnly
+        + PlannedOperationsCount: int
+        + Status: string
+    }
+}
+
+package "Domain" #LightYellow {
+    interface IOperationPlanRepository {
+        + GetByDateWithOperationsAsync(date: DateOnly): Task<List<OperationPlan>>
+    }
+    
+    class OperationPlan <<aggregate root>> {
+        + Id: Guid
+        + VvnId: Guid
+        + Date: DateOnly
+        + PlannedOperations: List<PlannedOperation>
+        + CreatedAt: DateTime
+        + UpdatedAt: DateTime
+    }
+}
+
+package "DataModel" #LightCoral {
+    class OperationPlanRepository {
+        - _context: OEMDbContext
+        + GetByDateWithOperationsAsync(date: DateOnly): Task<List<OperationPlan>>
+    }
+}
+
+OperationPlansController --> IOperationPlanService
+IOperationPlanService <|.. OperationPlanService
+OperationPlanService --> IOperationPlanRepository
+IOperationPlanRepository <|.. OperationPlanRepository
+OperationPlanRepository ..> OperationPlan
+OperationPlanService ..> OperationPlanDTO
+
+@enduml

@@ -1,0 +1,119 @@
+@startuml US2.2.10 - Sequence Diagram
+actor "Shipping Agent Representative" as Rep
+participant "VesselVisitController" as Controller
+participant "VesselVisitService" as Service
+participant "VesselVisitRepository" as Repository
+participant "ShippingAgentRepService" as RepService
+participant "ShippingAgentOrgService" as OrgService
+participant "VesselService" as VesselService
+participant "DockService" as DockService
+participant "VesselVisitNotificationMapper" as Mapper
+participant "List<VesselVisitNotificationDTO>" as ListDto
+participant "VesselVisitNotificationDTO" as Dto
+
+' Authentication and authorization
+activate Rep
+Rep -> Controller : GET /api/vessel-visits
+activate Controller
+Controller -> RepService : getCurrentRepresentative()
+activate RepService
+RepService --> Controller : representative
+deactivate RepService
+Controller -> OrgService : getOrganizationByRepresentative(representative)
+activate OrgService
+OrgService --> Controller : organization
+deactivate OrgService
+
+' Retrieve notifications based on filters
+Controller -> Service : getVesselVisitNotifications(filters, representative, organization)
+activate Service
+Service -> Repository : findByFilters(filters, representative, organization)
+activate Repository
+Repository --> Service : filteredNotifications
+deactivate Repository
+
+' Enrich notifications with additional information (Domain layer)
+loop for each notification in filteredNotifications
+    alt notification has vessel
+        Service -> VesselService : getVesselDetails(notification.vesselId)
+        activate VesselService
+        VesselService --> Service : vesselDetails
+        deactivate VesselService
+    end
+
+    alt notification is approved
+        Service -> DockService : getDockDetails(notification.dockId)
+        activate DockService
+        DockService --> Service : dockDetails
+        deactivate DockService
+    end
+end
+
+' Map domain objects to DTOs (Application layer)
+Service -> Mapper : toDTOList(enrichedNotifications)
+activate Mapper
+Mapper -> ListDto ** : create()
+loop for each notification in enrichedNotifications
+    Mapper -> Mapper : dto = toDTO(notification)
+    Mapper -> Dto ** : createVesselVisitNotificationDTO(notification)
+    Mapper -> ListDto : add(dto)
+end
+Mapper --> Service : notificationsDtoList : List<VesselVisitNotificationDTO>
+deactivate Mapper
+
+Service --> Controller : notificationsDtoList
+deactivate Service
+Controller --> Rep : HTTP 200 OK with notificationsDtoList
+deactivate Controller
+
+' View specific notification details
+Rep -> Controller : GET /api/vessel-visits/{id}
+activate Controller
+Controller -> RepService : getCurrentRepresentative()
+activate RepService
+RepService --> Controller : representative
+deactivate RepService
+Controller -> OrgService : getOrganizationByRepresentative(representative)
+activate OrgService
+OrgService --> Controller : organization
+deactivate OrgService
+
+Controller -> Service : getVesselVisitNotificationById(id, representative, organization)
+activate Service
+Service -> Repository : findById(id)
+activate Repository
+Repository --> Service : notification
+deactivate Repository
+
+' Verify authorization
+Service -> Service : verifyAuthorization(notification, representative, organization)
+
+' Enrich notification with additional information (Domain layer)
+alt notification has vessel
+    Service -> VesselService : getVesselDetails(notification.vesselId)
+    activate VesselService
+    VesselService --> Service : vesselDetails
+    deactivate VesselService
+end
+
+alt notification is approved
+    Service -> DockService : getDockDetails(notification.dockId)
+    activate DockService
+    DockService --> Service : dockDetails
+    deactivate DockService
+end
+
+' Map domain object to DTO (Application layer)
+Service -> Mapper : toDTO(notification)
+activate Mapper
+Mapper -> Dto ** : createVesselVisitNotificationDTO(notification)
+Mapper --> Service : notificationDto : VesselVisitNotificationDTO
+deactivate Mapper
+
+Service --> Controller : notificationDto
+deactivate Service
+Controller --> Rep : HTTP 200 OK with notificationDto
+deactivate Controller
+deactivate Rep
+
+@enduml

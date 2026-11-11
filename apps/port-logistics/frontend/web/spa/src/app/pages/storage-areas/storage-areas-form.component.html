@@ -1,0 +1,188 @@
+<div class="storage-area-form-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>{{ isEditMode ? 'Edit' : 'Register New' }} Storage Area</h1>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading storage area...</p>
+  </div>
+
+  <!-- Form -->
+  <form [formGroup]="form" *ngIf="!loading" class="storage-area-form">
+    
+    <!-- Basic Information Section -->
+    <div class="form-section">
+      <h2>Basic Information</h2>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="identifier" class="required">Identifier</label>
+          <input 
+            id="identifier"
+            type="text" 
+            formControlName="identifier"
+            class="form-control"
+            placeholder="SA-YARD-01"
+            [class.error]="isFieldInvalid('identifier')" />
+          <span *ngIf="isFieldInvalid('identifier')" class="error-message">
+            Valid identifier required (uppercase letters, numbers, and hyphens only)
+          </span>
+          <span class="help-text">Format: SA-TYPE-NUMBER (e.g., SA-YARD-01)</span>
+        </div>
+
+        <div class="form-group">
+          <label for="type" class="required">Type</label>
+          <select 
+            id="type"
+            formControlName="type"
+            class="form-control"
+            [class.error]="isFieldInvalid('type')">
+            <option value="">Select type...</option>
+            <option *ngFor="let type of storageTypes" [value]="type">{{ type }}</option>
+          </select>
+          <span *ngIf="isFieldInvalid('type')" class="error-message">
+            Type is required
+          </span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="location" class="required">Location</label>
+          <input 
+            id="location"
+            type="text" 
+            formControlName="location"
+            class="form-control"
+            placeholder="North Port Area, Section A"
+            [class.error]="isFieldInvalid('location')" />
+          <span *ngIf="isFieldInvalid('location')" class="error-message">
+            Location is required
+          </span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="maxCapacityTeu" class="required">Maximum Capacity (TEU)</label>
+          <input 
+            id="maxCapacityTeu"
+            type="number" 
+            formControlName="maxCapacityTeu"
+            class="form-control"
+            min="0"
+            placeholder="1000"
+            [class.error]="isFieldInvalid('maxCapacityTeu')" />
+          <span *ngIf="isFieldInvalid('maxCapacityTeu')" class="error-message">
+            Maximum capacity must be a positive number
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="currentOccupancyTeu" class="required">Current Occupancy (TEU)</label>
+          <input 
+            id="currentOccupancyTeu"
+            type="number" 
+            formControlName="currentOccupancyTeu"
+            class="form-control"
+            min="0"
+            placeholder="250"
+            [class.error]="isFieldInvalid('currentOccupancyTeu')" />
+          <span *ngIf="form.get('currentOccupancyTeu')?.hasError('exceedsCapacity')" class="error-message">
+            Current occupancy cannot exceed maximum capacity
+          </span>
+          <span *ngIf="isFieldInvalid('currentOccupancyTeu') && !form.get('currentOccupancyTeu')?.hasError('exceedsCapacity')" class="error-message">
+            Current occupancy must be a non-negative number
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Served Docks Section -->
+    <div class="form-section">
+      <h2>Served Docks</h2>
+      <p class="section-description">
+        If no docks are specified, this storage area will serve the entire port (all docks). 
+        Specify docks only if this area is constrained to serve specific docks.
+      </p>
+      
+      <div formArrayName="servedDocks">
+        <div *ngFor="let dockGroup of servedDocksArray.controls; let i = index" [formGroupName]="i" class="array-item">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Dock Code</label>
+              <select 
+                formControlName="dockCode"
+                class="form-control">
+                <option value="">Select dock...</option>
+                <option *ngFor="let dock of availableDocks" [value]="dock.code">{{ dock.code }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Distance (meters)</label>
+              <input 
+                type="number" 
+                formControlName="distanceMeters"
+                class="form-control"
+                min="0"
+                placeholder="500" />
+            </div>
+
+            <div class="form-group-actions">
+              <button 
+                type="button" 
+                class="btn btn-danger btn-sm" 
+                (click)="removeServedDock(i)"
+                title="Remove dock">
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <button 
+        type="button" 
+        class="btn btn-secondary btn-sm" 
+        (click)="addServedDock()">
+        + Add Dock
+      </button>
+
+      <div *ngIf="servedDocksArray.length === 0" class="alert alert-info">
+        No specific docks configured. This area serves all docks by default.
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button 
+        type="button" 
+        class="btn btn-outline" 
+        (click)="cancel()"
+        [disabled]="submitting">
+        Cancel
+      </button>
+
+      <button 
+        type="submit" 
+        class="btn btn-primary" 
+        (click)="save()"
+        [disabled]="submitting || form.invalid">
+        {{ isEditMode ? 'Update' : 'Create' }} Storage Area
+      </button>
+    </div>
+  </form>
+</div>

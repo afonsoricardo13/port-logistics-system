@@ -1,0 +1,98 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>{{ (isEditMode ? 'incidentTypes.edit' : 'incidentTypes.create') | translate }}</h1>
+  </div>
+
+  @if (loading && isEditMode) {
+    <div class="loading">{{ 'common.loading' | translate }}</div>
+  }
+
+  @if (error) {
+    <div class="alert alert-error">{{ error }}</div>
+  }
+
+  @if (!loading || !isEditMode) {
+    <form (ngSubmit)="onSubmit()" class="form-container">
+      <div class="form-group">
+        <label for="code">{{ 'incidentTypes.code' | translate }} *</label>
+        <input
+          type="text"
+          id="code"
+          [(ngModel)]="code"
+          name="code"
+          [disabled]="isEditMode"
+          placeholder="T-INC001"
+          required
+          class="form-control"
+        />
+        <small class="form-text">{{ 'incidentTypes.codeHelp' | translate }}</small>
+      </div>
+
+      <div class="form-group">
+        <label for="name">{{ 'incidentTypes.name' | translate }} *</label>
+        <input
+          type="text"
+          id="name"
+          [(ngModel)]="name"
+          name="name"
+          placeholder="Equipment Failure"
+          required
+          class="form-control"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="description">{{ 'incidentTypes.description' | translate }} *</label>
+        <textarea
+          id="description"
+          [(ngModel)]="description"
+          name="description"
+          rows="4"
+          placeholder="Detailed description of the incident type..."
+          required
+          class="form-control"
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="severity">{{ 'incidentTypes.severity' | translate }} *</label>
+        <select
+          id="severity"
+          [(ngModel)]="severity"
+          name="severity"
+          required
+          class="form-control"
+        >
+          @for (option of severityOptions; track option) {
+            <option [value]="option">{{ option }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="parentTypeCode">{{ 'incidentTypes.parentType' | translate }}</label>
+        <select
+          id="parentTypeCode"
+          [(ngModel)]="parentTypeCode"
+          name="parentTypeCode"
+          class="form-control"
+        >
+          <option [value]="null">{{ 'incidentTypes.noParent' | translate }}</option>
+          @for (parent of availableParents; track parent.code) {
+            <option [value]="parent.code">{{ parent.name }} ({{ parent.code }})</option>
+          }
+        </select>
+        <small class="form-text">{{ 'incidentTypes.parentHelp' | translate }}</small>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" (click)="cancel()" class="btn btn-secondary">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button type="submit" [disabled]="loading" class="btn btn-primary">
+          {{ loading ? ('common.saving' | translate) : ('common.save' | translate) }}
+        </button>
+      </div>
+    </form>
+  }
+</div>

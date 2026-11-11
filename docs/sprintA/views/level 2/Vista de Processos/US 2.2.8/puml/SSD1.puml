@@ -1,0 +1,33 @@
+@startuml Vista de Processos – Level 2 (US 2.2.8 – Create Vessel Visit Notification)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Shipping Agent Representative" as Agent
+participant "<<container (C4)>>\nVisualization (UI)" as UI #87CEEB
+participant "<<container (C4)>>\nVisits & Manifests" as VVM #87CEEB
+
+
+activate Agent
+Agent -> UI: 1: asks to create a Vessel Visit Notification (VVN)
+activate UI
+UI --> Agent: 1.1: ask for required data (Vessel, ETA/ETD, cargo manifest, crew info when needed)
+deactivate UI
+Agent -> UI: 2: provides VVN data (may be incomplete)
+activate UI
+UI -> VVM: 2.1: save VVN with "in progress" status
+activate VVM
+VVM --> UI: 2.1.1: creation confirmation
+UI --> Agent: 2.2: displays confirmation
+deactivate VVM
+deactivate UI
+deactivate Agent

@@ -1,0 +1,40 @@
+{
+  "app": {
+    "title": "Sistema de Logística Portuária",
+    "companyName": "3DB Grupo 01"
+  },
+  "nav": {
+    "home": "Início",
+    "dashboard": "Painel",
+    "userManagement": "Gestão de Utilizadores",
+    "privacyPolicyAdmin": "Política de Privacidade",
+    "operatingStaff": "Pessoal Operacional",
+    "docks": "Docas",
+    "storageAreas": "Áreas de Armazenamento",
+    "vessels": "Embarcações",
+    "vesselTypes": "Tipos de Embarcação",
+    "organizations": "Organizações",
+    "representatives": "Representantes",
+    "qualifications": "Qualificações",
+    "physicalResources": "Recursos Físicos",
+    "vesselVisits": "Notificações de Visita",
+    "operations": "Operações",
+    "dailyScheduling": "Agendamento Diário",
+    "viewer3d": "Visualizador 3D",
+    "settings": "Definições",
+    "logout": "Sair"
+  },
+  "user": {
+    "welcome": "Bem-vindo",
+    "role": {
+      "administrator": "Administrador",
+      "logisticsOperator": "Operador de Logística",
+      "portManager": "Gestor Portuário",
+      "shippingCompany": "Empresa de Navegação"
+    }
+  },
+  "language": {
+    "english": "Inglês",
+    "portuguese": "Português"
+  }
+}

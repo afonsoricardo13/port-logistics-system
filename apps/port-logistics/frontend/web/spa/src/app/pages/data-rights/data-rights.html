@@ -1,0 +1,265 @@
+<div class="data-rights-container">
+  <div class="data-rights-content">
+    <!-- Header -->
+    <div class="page-header">
+      <h1>{{ 'dataRights.title' | translate }}</h1>
+      <p class="subtitle">{{ 'dataRights.subtitle' | translate }}</p>
+    </div>
+
+    <!-- Success Message -->
+    <div *ngIf="successMessage" class="alert alert-success">
+      <span class="alert-icon">✓</span>
+      {{ successMessage }}
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="error" class="alert alert-danger">
+      <span class="alert-icon">⚠️</span>
+      {{ error }}
+      <button class="close-btn" (click)="error = null">&times;</button>
+    </div>
+
+    <!-- GDPR Rights Info -->
+    <div class="gdpr-info-card">
+      <div class="info-icon">ℹ️</div>
+      <div class="info-content">
+        <h3>{{ 'dataRights.gdprInfo.title' | translate }}</h3>
+        <p>{{ 'dataRights.gdprInfo.description' | translate }}</p>
+      </div>
+    </div>
+
+    <!-- Action Cards -->
+    <div class="action-cards">
+      <!-- Access Data Card -->
+      <div class="action-card">
+        <div class="card-icon">📥</div>
+        <h3>{{ 'dataRights.access.title' | translate }}</h3>
+        <p>{{ 'dataRights.access.description' | translate }}</p>
+        <p class="legal-reference">RGPD Art. 15 & 20</p>
+        <button class="btn btn-primary" (click)="openExportModal()">
+          {{ 'dataRights.access.button' | translate }}
+        </button>
+      </div>
+
+      <!-- Rectification Card -->
+      <div class="action-card">
+        <div class="card-icon">✏️</div>
+        <h3>{{ 'dataRights.rectification.title' | translate }}</h3>
+        <p>{{ 'dataRights.rectification.description' | translate }}</p>
+        <p class="legal-reference">RGPD Art. 16</p>
+        <button class="btn btn-warning" (click)="openRectificationModal()">
+          {{ 'dataRights.rectification.button' | translate }}
+        </button>
+      </div>
+
+      <!-- Deletion Card -->
+      <div class="action-card">
+        <div class="card-icon">🗑️</div>
+        <h3>{{ 'dataRights.deletion.title' | translate }}</h3>
+        <p>{{ 'dataRights.deletion.description' | translate }}</p>
+        <p class="legal-reference">RGPD Art. 17</p>
+        <button class="btn btn-danger" (click)="openDeletionModal()">
+          {{ 'dataRights.deletion.button' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Request History -->
+    <div class="requests-section">
+      <h2>{{ 'dataRights.history.title' | translate }}</h2>
+      
+      <!-- Loading -->
+      <div *ngIf="loading" class="loading-state">
+        <div class="spinner"></div>
+        <p>{{ 'dataRights.history.loading' | translate }}</p>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!loading && requests.length === 0" class="empty-state">
+        <p>{{ 'dataRights.history.empty' | translate }}</p>
+      </div>
+
+      <!-- Requests Table -->
+      <table *ngIf="!loading && requests.length > 0" class="requests-table">
+        <thead>
+          <tr>
+            <th>{{ 'dataRights.history.table.id' | translate }}</th>
+            <th>{{ 'dataRights.history.table.type' | translate }}</th>
+            <th>{{ 'dataRights.history.table.status' | translate }}</th>
+            <th>{{ 'dataRights.history.table.createdAt' | translate }}</th>
+            <th>{{ 'dataRights.history.table.processedAt' | translate }}</th>
+            <th>{{ 'dataRights.history.table.notes' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let request of requests">
+            <td>#{{ request.id }}</td>
+            <td>
+              <span class="badge" [ngClass]="getTypeClass(request.requestType)">
+                {{ request.requestTypeDisplay }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="getStatusClass(request.status)">
+                {{ request.statusDisplay }}
+              </span>
+            </td>
+            <td>{{ formatDate(request.createdAt) }}</td>
+            <td>{{ request.processedAt ? formatDate(request.processedAt) : '-' }}</td>
+            <td>
+              <span *ngIf="request.adminResponse">{{ request.adminResponse }}</span>
+              <span *ngIf="!request.adminResponse">-</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal-overlay" *ngIf="showExportModal" (click)="closeModals()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ 'dataRights.exportModal.title' | translate }}</h2>
+      <button class="close-btn" (click)="closeModals()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>{{ 'dataRights.exportModal.description' | translate }}</p>
+      
+      <!-- Export Preview -->
+      <div *ngIf="loadingExport" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading preview...</p>
+      </div>
+      
+      <div *ngIf="exportPreview && !loadingExport" class="export-preview">
+        <h4>{{ 'dataRights.exportModal.preview' | translate }}</h4>
+        <ul>
+          <li><strong>Email:</strong> {{ exportPreview.email }}</li>
+          <li><strong>Name:</strong> {{ exportPreview.name }}</li>
+          <li><strong>Role:</strong> {{ exportPreview.role }}</li>
+          <li><strong>Account Created:</strong> {{ formatDate(exportPreview.createdAt || '') }}</li>
+        </ul>
+      </div>
+
+      <!-- Format Selection -->
+      <div class="form-group">
+        <label>{{ 'dataRights.exportModal.format' | translate }}</label>
+        <div class="format-options">
+          <label class="radio-option">
+            <input type="radio" name="format" value="json" [(ngModel)]="exportFormat">
+            <span>JSON</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="format" value="pdf" [(ngModel)]="exportFormat">
+            <span>PDF</span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeModals()" [disabled]="submitting">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button class="btn btn-primary" (click)="submitAccessRequest()" [disabled]="submitting">
+        <span *ngIf="submitting" class="spinner-small"></span>
+        {{ 'dataRights.exportModal.download' | translate }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Rectification Modal -->
+<div class="modal-overlay" *ngIf="showRectificationModal" (click)="closeModals()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ 'dataRights.rectificationModal.title' | translate }}</h2>
+      <button class="close-btn" (click)="closeModals()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>{{ 'dataRights.rectificationModal.description' | translate }}</p>
+      
+      <!-- Field Selection -->
+      <div class="form-group">
+        <label>{{ 'dataRights.rectificationModal.selectFields' | translate }}</label>
+        <div class="fields-list">
+          <div *ngFor="let field of availableFields" class="field-item">
+            <label class="checkbox-option">
+              <input 
+                type="checkbox" 
+                [checked]="selectedFieldsForRectification.includes(field.key)"
+                (change)="toggleFieldForRectification(field.key)">
+              <span>{{ field.label }}</span>
+            </label>
+            <input 
+              *ngIf="selectedFieldsForRectification.includes(field.key)"
+              type="text" 
+              class="form-control"
+              [(ngModel)]="rectificationFields[field.key]"
+              placeholder="Enter correct value">
+          </div>
+        </div>
+      </div>
+
+      <!-- Reason -->
+      <div class="form-group">
+        <label>{{ 'dataRights.rectificationModal.reason' | translate }}</label>
+        <textarea 
+          class="form-control" 
+          rows="3" 
+          [(ngModel)]="rectificationReason"
+          placeholder="Optional: Explain why this data needs correction"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeModals()" [disabled]="submitting">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button 
+        class="btn btn-warning" 
+        (click)="submitRectificationRequest()" 
+        [disabled]="submitting || selectedFieldsForRectification.length === 0">
+        <span *ngIf="submitting" class="spinner-small"></span>
+        {{ 'dataRights.rectificationModal.submit' | translate }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Deletion Modal -->
+<div class="modal-overlay" *ngIf="showDeletionModal" (click)="closeModals()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ 'dataRights.deletionModal.title' | translate }}</h2>
+      <button class="close-btn" (click)="closeModals()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="warning-box">
+        <span class="warning-icon">⚠️</span>
+        <p>{{ 'dataRights.deletionModal.warning' | translate }}</p>
+      </div>
+      
+      <p>{{ 'dataRights.deletionModal.description' | translate }}</p>
+
+      <!-- Reason -->
+      <div class="form-group">
+        <label>{{ 'dataRights.deletionModal.reason' | translate }}</label>
+        <textarea 
+          class="form-control" 
+          rows="3" 
+          [(ngModel)]="deletionReason"
+          placeholder="Optional: Explain why you want your data deleted"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeModals()" [disabled]="submitting">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button class="btn btn-danger" (click)="submitDeletionRequest()" [disabled]="submitting">
+        <span *ngIf="submitting" class="spinner-small"></span>
+        {{ 'dataRights.deletionModal.submit' | translate }}
+      </button>
+    </div>
+  </div>
+</div>

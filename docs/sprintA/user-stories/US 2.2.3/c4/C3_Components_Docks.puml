@@ -1,0 +1,25 @@
+@startuml C4 Components - Docks
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+LAYOUT_LEFT_RIGHT()
+
+Container_Boundary(api, "API (DDDNetCore)") {
+  Component(docksController, "DocksController", "ASP.NET Core Controller", "Exposes /api/docks (POST, PUT, GET, GET/{id})")
+  Component(dockAppService, "DockAppService", "Application Service", "Orchestrates use cases, validation, mapping")
+  Component(dockRepo, "DockRepository", "Repository", "Persists Dock aggregate")
+  Component(dbContext, "DbContext", "EF Core", "Unit of Work / EF context")
+  Component(domainDock, "Dock Aggregate", "Domain", "Dock entity + VOs; invariants")
+  Component(domainVesselType, "VesselType", "Domain", "Allowed types for docking")
+}
+
+ContainerDb(db, "Database", "EF Core Provider", "Persisted aggregates")
+
+Rel(docksController, dockAppService, "Calls")
+Rel(dockAppService, domainDock, "Create/Update/Validate")
+Rel(dockAppService, domainVesselType, "Checks allowed types")
+Rel(dockAppService, dockRepo, "Save/Load")
+Rel(dockRepo, dbContext, "Uses")
+Rel(dbContext, db, "CRUD")
+
+SHOW_LEGEND()
+@enduml

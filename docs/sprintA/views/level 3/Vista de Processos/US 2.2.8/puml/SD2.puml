@@ -1,0 +1,71 @@
+@startuml Vista de Processos – Level 3 (US 2.2.8 – Submit Vessel Visit Notification)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Shipping Agent Representative" as Agent
+participant "«container (C4)»\nVisualization (UI)" as UI_CTRL #87CEEB
+participant "«container (C4)»\nVisits & Manifests\nController" as VVN_CTRL #87CEEB
+participant "«component»\nApplication Service" as VVN_APP #87CEEB
+participant "«component»\nDomain Model (VesselVisitNotification)" as VVN_DOMAIN #87CEEB
+participant "«component»\nRepository" as VVN_REPO #87CEEB
+participant "«component»\nData Model" as VVN_DATA #87CEEB
+participant "«component»\nPersistence" as VVN_PERSIST #87CEEB
+
+activate Agent
+Agent -> UI_CTRL: 1: asks to submit a VVN
+activate UI_CTRL
+UI_CTRL --> Agent: 1.1: shows active VVN and asks to select one
+deactivate UI_CTRL
+Agent -> UI_CTRL: 2: selects VVN and requests submission
+activate UI_CTRL
+UI_CTRL -> VVN_CTRL: 2.1: submit selected VVN (vvnId)
+activate VVN_CTRL
+VVN_CTRL -> VVN_APP: 2.1.1: submitVesselVisitNotification(vvnId)
+activate VVN_APP
+VVN_APP -> VVN_REPO: 2.1.1.1: getById(vvnId)
+activate VVN_REPO
+VVN_REPO -> VVN_PERSIST: 2.1.1.1.1: fetch(record)
+activate VVN_PERSIST
+VVN_PERSIST --> VVN_REPO: 2.1.1.1.2: record
+deactivate VVN_PERSIST
+VVN_REPO -> VVN_DATA: 2.1.1.1.3: map to domain
+activate VVN_DATA
+VVN_DATA --> VVN_REPO: 2.1.1.1.4: VVN aggregate
+deactivate VVN_DATA
+VVN_REPO --> VVN_APP: 2.1.1.2: VVN aggregate
+deactivate VVN_REPO
+VVN_APP -> VVN_DOMAIN: 2.1.1.3: mark SUBMITTED
+activate VVN_DOMAIN
+VVN_DOMAIN --> VVN_APP: 2.1.1.4: VVN submitted
+deactivate VVN_DOMAIN
+VVN_APP -> VVN_REPO: 2.1.1.5: save(updated VVN)
+activate VVN_REPO
+VVN_REPO -> VVN_DATA: 2.1.1.5.1: map to data model
+activate VVN_DATA
+VVN_DATA --> VVN_REPO: 2.1.1.5.2: updated record
+deactivate VVN_DATA
+VVN_REPO -> VVN_PERSIST: 2.1.1.5.3: persist(updated record)
+activate VVN_PERSIST
+VVN_PERSIST --> VVN_REPO: 2.1.1.5.4: ok
+deactivate VVN_PERSIST
+VVN_REPO --> VVN_APP: 2.1.1.6: persisted(updated VVN)
+deactivate VVN_REPO
+VVN_APP --> VVN_CTRL: 2.1.2: submission confirmation (VesselVisitNotificationDTO)
+deactivate VVN_APP
+VVN_CTRL --> UI_CTRL: 2.2: VVN submitted (status SUBMITTED) and Port Authority Officer notified
+deactivate VVN_CTRL
+UI_CTRL --> Agent: 2.3: show submission confirmation
+deactivate UI_CTRL
+deactivate Agent
+
+@enduml

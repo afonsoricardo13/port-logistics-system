@@ -1,0 +1,531 @@
+.privacy-policy-container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 2rem 0;
+}
+
+.privacy-policy-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: white;
+  padding: 3rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+  }
+}
+
+.loading-state {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+
+  .spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #0066cc;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-state {
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border-radius: 8px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  text-align: center;
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+  }
+
+  .btn {
+    margin-top: 1rem;
+  }
+}
+
+.policy-header {
+  border-bottom: 3px solid #0066cc;
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+
+  h1 {
+    color: #0066cc;
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .subtitle {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 1.5rem;
+    font-style: italic;
+  }
+}
+
+.policy-metadata {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  background: #f8f9fa;
+  padding: 1rem 1.5rem;
+  border-radius: 6px;
+  border-left: 4px solid #0066cc;
+
+  .metadata-item {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+
+    .label {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .value {
+      color: #666;
+    }
+  }
+}
+
+// GDPR Compliance Notice (US 4.5.2)
+.gdpr-notice {
+  display: flex;
+  gap: 1rem;
+  background: #e8f4ff;
+  border: 2px solid #0066cc;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+
+  .notice-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+  }
+
+  .notice-content {
+    p {
+      margin: 0;
+      color: #004085;
+      line-height: 1.6;
+
+      strong {
+        color: #0066cc;
+      }
+    }
+  }
+}
+
+.policy-content {
+  line-height: 1.8;
+  color: #333;
+  font-size: 1.05rem;
+
+  // Style for rendered HTML content from GDPR template
+  ::ng-deep {
+    h1 {
+      color: #0066cc;
+      font-size: 2.2rem;
+      margin-top: 0;
+      margin-bottom: 1.5rem;
+      font-weight: 700;
+    }
+
+    h2 {
+      color: #0066cc;
+      font-size: 1.8rem;
+      margin-top: 3rem;
+      margin-bottom: 1rem;
+      font-weight: 600;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    h3 {
+      color: #333;
+      font-size: 1.4rem;
+      margin-top: 2rem;
+      margin-bottom: 0.8rem;
+      font-weight: 600;
+    }
+
+    h4 {
+      color: #555;
+      font-size: 1.2rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.6rem;
+      font-weight: 600;
+    }
+
+    p {
+      margin-bottom: 1rem;
+    }
+
+    ul, ol {
+      margin-bottom: 1.5rem;
+      padding-left: 2rem;
+
+      li {
+        margin-bottom: 0.5rem;
+
+        strong {
+          color: #0066cc;
+        }
+      }
+    }
+
+    a {
+      color: #0066cc;
+      text-decoration: none;
+      font-weight: 500;
+      
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    em {
+      color: #666;
+      font-style: italic;
+    }
+
+    // Table styling for data purposes (GDPR template)
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.95rem;
+
+      thead {
+        background: #0066cc;
+        color: white;
+
+        th {
+          padding: 0.75rem;
+          text-align: left;
+          font-weight: 600;
+        }
+      }
+
+      tbody {
+        tr {
+          border-bottom: 1px solid #e0e0e0;
+
+          &:hover {
+            background: #f8f9fa;
+          }
+
+          td {
+            padding: 0.75rem;
+            vertical-align: top;
+          }
+        }
+      }
+    }
+
+    // Rights grid styling
+    .rights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin: 2rem 0;
+
+      .right-card {
+        background: #f8f9fa;
+        border: 1px solid #e0e0e0;
+        border-left: 4px solid #0066cc;
+        border-radius: 6px;
+        padding: 1.25rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 102, 204, 0.15);
+        }
+
+        h4 {
+          margin-top: 0;
+          margin-bottom: 0.75rem;
+          color: #0066cc;
+          font-size: 1.1rem;
+        }
+
+        p {
+          margin: 0;
+          font-size: 0.95rem;
+          line-height: 1.6;
+        }
+      }
+    }
+
+    // Section styling
+    section {
+      margin-bottom: 3rem;
+
+      &:last-of-type {
+        margin-bottom: 2rem;
+      }
+    }
+
+    // Last updated notice
+    .last-updated {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 1rem 1.5rem;
+      margin-bottom: 2rem;
+      border-radius: 4px;
+    }
+
+    // Footer within content
+    .policy-footer {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 2px solid #e0e0e0;
+      font-style: italic;
+      color: #666;
+    }
+  }
+
+  strong {
+    font-weight: 600;
+    color: #222;
+  }
+}
+
+// US 4.5.4: Non-System Users Rights Section
+.non-users-rights-section {
+  margin-top: 3rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+  border-radius: 12px;
+  border: 2px solid #667eea;
+
+  h2 {
+    color: #1565c0;
+    font-size: 1.6rem;
+    margin-top: 0;
+    margin-bottom: 0.25rem;
+    font-weight: 700;
+  }
+
+  h3 {
+    color: #7b1fa2;
+    font-size: 1.2rem;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+    font-style: italic;
+  }
+
+  h4 {
+    color: #1565c0;
+    font-size: 1.15rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+  }
+
+  .info-box {
+    background: white;
+    border-left: 4px solid #667eea;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 0 8px 8px 0;
+
+    p {
+      margin: 0.25rem 0;
+      line-height: 1.5;
+    }
+  }
+
+  p {
+    color: #333;
+    line-height: 1.7;
+    margin-bottom: 1rem;
+
+    em {
+      color: #555;
+    }
+  }
+
+  .rights-list {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+
+    li {
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      background: white;
+      border-radius: 8px;
+      border-left: 4px solid #28a745;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+      strong {
+        color: #1565c0;
+      }
+
+      em {
+        color: #666;
+        font-size: 0.95rem;
+      }
+    }
+  }
+
+  .contact-box {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    ol {
+      margin: 0;
+      padding-left: 1.5rem;
+
+      li {
+        margin-bottom: 1rem;
+        line-height: 1.6;
+
+        ul {
+          margin-top: 0.5rem;
+          padding-left: 1.5rem;
+
+          li {
+            margin-bottom: 0.25rem;
+            font-size: 0.95rem;
+          }
+        }
+      }
+    }
+
+    a {
+      color: #667eea;
+      font-weight: 500;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .legal-notice {
+    margin-top: 1.5rem;
+    padding: 1rem 1.5rem;
+    background: #fff3cd;
+    border-radius: 8px;
+    border-left: 4px solid #ffc107;
+
+    p {
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
+.policy-footer {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 2px solid #e0e0e0;
+
+  .footer-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+
+    h3 {
+      color: #0066cc;
+      font-size: 1.3rem;
+      margin-top: 0;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+    }
+
+    p {
+      margin-bottom: 0.5rem;
+      line-height: 1.6;
+      color: #333;
+    }
+
+    .contact-list {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0;
+
+      li {
+        padding: 0.5rem 0;
+        
+        strong {
+          color: #333;
+        }
+
+        a {
+          color: #0066cc;
+          text-decoration: none;
+          font-weight: 500;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+    }
+  }
+
+  .back-link {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e0e0e0;
+    text-align: center;
+
+    a {
+      color: #0066cc;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .privacy-policy-content {
+    padding: 2rem 1.5rem;
+  }
+
+  .policy-header h1 {
+    font-size: 2rem;
+  }
+
+  .policy-metadata {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}

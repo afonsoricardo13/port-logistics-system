@@ -1,0 +1,140 @@
+@startuml Vista Logica - Level 4 (US 2.2.1 - Vessel Type Management)
+
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor<<Controller>> LightBlue
+    BackgroundColor<<Service>> LightGreen
+    BackgroundColor<<Repository>> LightYellow
+    BackgroundColor<<Entity>> LightCoral
+    BackgroundColor<<DTO>> Wheat
+    BackgroundColor<<Factory>> LightCyan
+}
+
+package "WebApi Layer" {
+    class VesselTypesController <<Controller>> {
+        - _service: VesselTypeService
+        - _logger: ILogger<VesselTypesController>
+        - _errors: List<string>
+        + GetAll(name: string?, description: string?): Task<ActionResult<IEnumerable<VesselTypeDTO>>>
+        + GetByName(name: string): Task<ActionResult<VesselTypeDTO>>
+        + Create(dto: VesselTypeDTO): Task<ActionResult<VesselTypeDTO>>
+        + Update(name: string, dto: VesselTypeDTO): Task<IActionResult>
+    }
+}
+
+package "Application Layer" {
+    class VesselTypeService <<Service>> {
+        - _repository: IVesselTypeRepository
+        + GetAll(): Task<IEnumerable<VesselTypeDTO>>
+        + GetByName(name: string): Task<VesselTypeDTO?>
+        + Search(name: string?, description: string?): Task<IEnumerable<VesselTypeDTO>>
+        + Add(dto: VesselTypeDTO, errors: List<string>): Task<VesselTypeDTO?>
+        + Update(name: string, dto: VesselTypeDTO, errors: List<string>): Task<bool>
+    }
+
+    class VesselTypeDTO <<DTO>> {
+        + Name: string
+        + Description: string
+        + Capacity: int
+        + MaxRows: int
+        + MaxBays: int
+        + MaxTiers: int
+        + {static} ToDTO(vt: VesselType): VesselTypeDTO
+        + {static} ToDTO(items: IEnumerable<VesselType>): IEnumerable<VesselTypeDTO>
+        + {static} ToDomain(dto: VesselTypeDTO): VesselType
+        + {static} UpdateToDomain(vt: VesselType, dto: VesselTypeDTO): VesselType
+    }
+}
+
+package "Domain Layer" {
+    class VesselType <<Entity>> {
+        + Id: long
+        - _name: string
+        - _description: string
+        - _capacity: int
+        - _maxRows: int
+        - _maxBays: int
+        - _maxTiers: int
+        + Name: string {get}
+        + Description: string {get}
+        + Capacity: int {get}
+        + MaxRows: int {get}
+        + MaxBays: int {get}
+        + MaxTiers: int {get}
+        + VesselType(name, description, capacity, maxRows, maxBays, maxTiers)
+        + Update(description?, capacity?, maxRows?, maxBays?, maxTiers?): void
+    }
+
+    interface IVesselTypeRepository <<Repository>> {
+        + GetAllAsync(): Task<IEnumerable<VesselType>>
+        + GetByNameAsync(name: string): Task<VesselType?>
+        + SearchAsync(name: string?, description: string?): Task<IEnumerable<VesselType>>
+        + Add(vesselType: VesselType): Task<VesselType>
+        + Update(vesselType: VesselType, errorMessages: List<string>): Task<VesselType?>
+        + Exists(name: string): Task<bool>
+    }
+
+    interface IVesselTypeFactory <<Factory>> {
+        + NewVesselType(name, description, capacity, maxRows, maxBays, maxTiers): VesselType
+    }
+}
+
+package "DataModel Layer" {
+    class VesselTypeRepository <<Repository>> {
+        - _context: AbsanteeContext
+        - _mapper: VesselTypeMapper
+        + GetAllAsync(): Task<IEnumerable<VesselType>>
+        + GetByNameAsync(name: string): Task<VesselType?>
+        + SearchAsync(name: string?, description: string?): Task<IEnumerable<VesselType>>
+        + Add(vesselType: VesselType): Task<VesselType>
+        + Update(vesselType: VesselType, errorMessages: List<string>): Task<VesselType?>
+        + Exists(name: string): Task<bool>
+    }
+
+    class VesselTypeMapper {
+        - _factory: IVesselTypeFactory
+        + ToDomain(dm: VesselTypeDataModel): VesselType
+        + ToDomain(items: IEnumerable<VesselTypeDataModel>): IEnumerable<VesselType>
+        + ToDataModel(vt: VesselType): VesselTypeDataModel
+        + UpdateDataModel(dm: VesselTypeDataModel, vt: VesselType): void
+    }
+
+    class VesselTypeDataModel {
+        + Id: long
+        + Name: string
+        + Description: string
+        + Capacity: int
+        + MaxRows: int
+        + MaxBays: int
+        + MaxTiers: int
+    }
+
+    class AbsanteeContext {
+        + VesselTypes: DbSet<VesselTypeDataModel>
+        + SaveChangesAsync(): Task<int>
+    }
+}
+
+' Relationships
+VesselTypesController --> VesselTypeService : uses
+VesselTypesController ..> VesselTypeDTO : receives/returns
+
+VesselTypeService --> IVesselTypeRepository : uses
+VesselTypeService ..> VesselTypeDTO : uses
+VesselTypeService ..> VesselType : uses
+
+VesselTypeDTO ..> VesselType : converts to/from
+
+VesselTypeRepository ..|> IVesselTypeRepository : implements
+VesselTypeRepository --> AbsanteeContext : uses
+VesselTypeRepository --> VesselTypeMapper : uses
+VesselTypeRepository ..> VesselType : manages
+VesselTypeRepository ..> VesselTypeDataModel : uses
+
+VesselTypeMapper --> IVesselTypeFactory : uses
+VesselTypeMapper ..> VesselType : maps
+VesselTypeMapper ..> VesselTypeDataModel : maps
+
+AbsanteeContext --> VesselTypeDataModel : manages
+
+@enduml

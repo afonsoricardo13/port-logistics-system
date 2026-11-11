@@ -1,0 +1,365 @@
+openapi: 3.0.3
+info:
+  title: Port Logistics - Planning & Scheduling API
+  description: |
+    REST API infrastructure for data consumption from Port Logistics backend (US 3.4.1)
+    and daily vessel scheduling (US 3.4.2).
+    
+    This module provides endpoints to aggregate operational data including vessel visits,
+    physical resources, staff, docks, and storage areas. It also computes optimal schedules
+    for vessel loading/unloading operations minimizing delays.
+    
+    **Key Features:**
+    - Health check endpoint
+    - Data aggregation endpoint (consumes 5 backend APIs)
+    - Daily vessel scheduling with resource assignment (US 3.4.2)
+    - Real-time data consumption without persistence
+    
+    **Authentication:** Uses X-User-Email header with DevAuthenticationMiddleware
+  version: 2.0.0
+  contact:
+    name: LEI-ISEP Team
+    email: support@portlogistics.example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:5003/api/scheduling
+    description: Local development server (Prolog)
+  - url: https://localhost:7096/api
+    description: Main backend (C# .NET)
+
+tags:
+  - name: Health
+    description: Server health and status endpoints
+  - name: Scheduling
+    description: Schedule generation and computation endpoints
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Verify that the scheduling server is running and accessible
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "ok"
+                message: "Scheduling server is running"
+                version: "2.0"
+                module: "planning_scheduling_prolog"
+  
+  /daily:
+    post:
+      tags:
+        - Scheduling
+      summary: Generate daily vessel schedule (US 3.4.2)
+      description: |
+        Computes optimal daily schedule for vessel loading/unloading operations.
+        
+        Minimizes total delay between actual completion and desired departure times.
+        
+        **Constraints:**
+        - One vessel per dock at a time
+        - One crane per unloading/loading operation
+        - One storage location per operation
+        - Resource availability within operational windows
+        
+        **Limitations:**
+        - Maximum 10 vessels per day (permutation algorithm)
+        - Returns error if more vessels scheduled
+      operationId: generateDailySchedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataRequest'
+            examples:
+              basic:
+                summary: Schedule for specific date
+                value:
+                  date: "2025-11-18"
+      responses:
+        '200':
+          description: Schedule computed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleResponse'
+              example:
+                success: true
+                date: "2025-11-18"
+                vessel_count: 5
+                total_delay: 12
+                computation_time_ms: 45.3
+                schedule:
+                  - vessel_id: "IMO1234567"
+                    start_time: 8
+                    end_time: 15
+                    assigned_crane: "C001"
+                    assigned_staff: "M001"
+                    assigned_storage: "SA001"
+                warnings: []
+        '400':
+          description: Too many vessels or invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error during computation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /generate:
+    post:
+      tags:
+        - Scheduling
+      summary: Aggregate operational data
+      description: |
+        Aggregates operational data from backend APIs including vessel visits,
+        physical resources, staff, docks, and storage areas.
+        
+        No scheduling computation is performed - this endpoint only fetches and
+        returns aggregated data for use by other modules.
+      operationId: aggregateData
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataRequest'
+            examples:
+              basic:
+                summary: Basic data request
+                value:
+                  date: "2025-11-15"
+      responses:
+        '200':
+          description: Data aggregated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataResponse'
+              example:
+                success: true
+                data:
+                  vessel_visits:
+                    - id: 1
+                      vessel_name: "MSC Napoli"
+                      arrival: "2025-11-15T08:00:00"
+                      departure: "2025-11-15T14:00:00"
+                  resources:
+                    - code: "C001"
+                      type: "Crane"
+                      available: true
+                  staff:
+                    - mecanographicNumber: "M001"
+                      name: "John Doe"
+                      qualifications: ["Crane Operator"]
+                  docks:
+                    - code: "D001"
+                      maxVesselLength: 250
+                  storage_areas:
+                    - identifier: "SA001"
+                      capacity: 1000
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error during data aggregation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - message
+        - version
+        - module
+      properties:
+        status:
+          type: string
+          enum: [ok, error]
+          description: Server health status
+        message:
+          type: string
+          description: Human-readable status message
+        version:
+          type: string
+          description: API version
+        module:
+          type: string
+          description: Module identifier
+
+    DataRequest:
+      type: object
+      required:
+        - date
+      properties:
+        date:
+          type: string
+          format: date
+          description: Target date for data aggregation (YYYY-MM-DD)
+          example: "2025-11-15"
+
+    DataResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          description: Whether data aggregation succeeded
+        data:
+          type: object
+          description: Aggregated operational data from backend
+          properties:
+            vessel_visits:
+              type: array
+              description: Vessel visit notifications
+              items:
+                type: object
+            resources:
+              type: array
+              description: Physical resources (cranes)
+              items:
+                type: object
+            staff:
+              type: array
+              description: Operating staff members
+              items:
+                type: object
+            docks:
+              type: array
+              description: Available docks
+              items:
+                type: object
+            storage_areas:
+              type: array
+              description: Storage areas
+              items:
+                type: object
+
+    ScheduleResponse:
+      type: object
+      required:
+        - success
+        - date
+        - vessel_count
+      properties:
+        success:
+          type: boolean
+          description: Whether schedule computation succeeded
+        date:
+          type: string
+          format: date
+          description: Target date for schedule
+        vessel_count:
+          type: integer
+          description: Number of vessels in schedule
+        total_delay:
+          type: number
+          description: Total delay in hours (sum of all vessel delays)
+        computation_time_ms:
+          type: number
+          description: Time taken to compute schedule in milliseconds
+        schedule:
+          type: array
+          description: Scheduled operations with resource assignments
+          items:
+            $ref: '#/components/schemas/ScheduleOperation'
+        warnings:
+          type: array
+          description: Warnings about resource availability or constraints
+          items:
+            type: string
+        error:
+          type: string
+          description: Error message if success=false
+        message:
+          type: string
+          description: Additional information
+
+    ScheduleOperation:
+      type: object
+      required:
+        - vessel_id
+        - start_time
+        - end_time
+        - assigned_crane
+        - assigned_staff
+        - assigned_storage
+      properties:
+        vessel_id:
+          type: string
+          description: Vessel IMO number
+        vessel_name:
+          type: string
+          description: Vessel name (optional)
+        start_time:
+          type: integer
+          description: Start time in hours (0-23)
+        end_time:
+          type: integer
+          description: End time in hours (0-23+)
+        assigned_crane:
+          type: string
+          description: Crane code or NO_CRANE_AVAILABLE
+        assigned_staff:
+          type: string
+          description: Staff mecanographic number or NO_STAFF_AVAILABLE
+        assigned_storage:
+          type: string
+          description: Storage area identifier or NO_STORAGE_AVAILABLE
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error type/code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true
+
+  securitySchemes:
+    DevEmailAuth:
+      type: apiKey
+      in: header
+      name: X-User-Email
+      description: |
+        Development authentication using email header.
+        Uses DevAuthenticationMiddleware from the main backend.
+        
+        Example: `X-User-Email: admin@portlogistics.com`
+
+security:
+  - DevEmailAuth: []

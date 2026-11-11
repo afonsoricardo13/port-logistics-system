@@ -1,0 +1,110 @@
+@startuml Mapping Logical ↔ Implementation – Level 3 (Port Logistics Backend)
+left to right direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+skinparam rectangle {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam component {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ================= LEFT: Logical View (Level 3 / Onion) =================
+rectangle "Logical View (Level 3 / Onion)" as LOG {
+
+  rectangle "Port Logistics (logical)" as DR_L {
+
+    rectangle "Frameworks & Drivers" as DR_L_FD {
+      component "Routing"                as DR_L_ROUT
+      component "Persistence"            as DR_L_PERS
+      component "Data Model"             as DR_L_DMODEL
+    }
+
+    rectangle "Interface Adapters" as DR_L_ADP {
+      component "Controllers"            as DR_L_CTRL
+      component "Repositories"           as DR_L_REPO
+      component "DTOs"                   as DR_L_DTO
+      component "Authorization"          as DR_L_AUTH
+    }
+
+    rectangle "Application Business Rules" as DR_L_APP {
+      component "Application Services" as DR_L_APPSVC
+    }
+
+    rectangle "Enterprise Business Rules" as DR_L_DOM {
+      component "Domain Model" as DR_L_DOMAIN
+    }
+
+    ' ---- logical internal links ----
+    DR_L_ROUT  --> DR_L_CTRL
+    DR_L_CTRL  --> DR_L_DTO
+    DR_L_CTRL  --> DR_L_APPSVC
+    DR_L_APPSVC --> DR_L_DOMAIN
+    DR_L_APPSVC --> DR_L_REPO
+    DR_L_REPO  --> DR_L_PERS
+    DR_L_REPO  --> DR_L_DMODEL
+  }
+
+}
+
+' ================= RIGHT: Implementation View (Level 3) =================
+rectangle "Implementation View (Level 3)" as IMP {
+
+  rectangle "Port Operations System — Implementation" as DR_I {
+    rectangle "Infrastructure" as DR_I_INF {
+      component "Routes"      as DR_I_ROUTES
+      component "Persistence" as DR_I_PERS
+    }
+    rectangle "Interface Adapters" as DR_I_ADP {
+      component "Controllers"  as DR_I_CTRL
+      component "Repositories" as DR_I_REPO
+    }
+    rectangle "Application Services / Use Case Services" as DR_I_APP {
+      component "App Services" as DR_I_APPSVC
+    }
+    rectangle "Entities / Core / Domain" as DR_I_DOM {
+      component "Aggregates"    as DR_I_AGG
+      component "Value Objects" as DR_I_VO
+      component "Services"      as DR_I_SVC
+    }
+
+    ' ---- internal impl links ----
+    DR_I_ROUTES ..down..> DR_I_CTRL
+    DR_I_REPO   ..up..>   DR_I_PERS
+    DR_I_CTRL   ..down..> DR_I_APPSVC
+    DR_I_REPO   ..right..> DR_I_APPSVC
+    DR_I_APPSVC ..down..> DR_I_AGG
+    DR_I_APPSVC ..down..> DR_I_VO
+    DR_I_APPSVC ..down..> DR_I_SVC
+  }
+
+}
+
+' ======================= MAPPINGS Logical → Implementation ========================
+DR_L_ROUT   ..> DR_I_ROUTES : maps to
+DR_L_PERS   ..> DR_I_PERS   : maps to
+DR_L_DMODEL ..> DR_I_AGG    : maps to
+DR_L_DMODEL ..> DR_I_VO     : maps to
+DR_L_CTRL   ..> DR_I_CTRL   : realized by
+DR_L_REPO   ..> DR_I_REPO   : realized by
+DR_L_DTO    ..> DR_I_APPSVC : transformed by
+DR_L_APPSVC ..> DR_I_APPSVC : realized by
+DR_L_DOMAIN ..> DR_I_AGG    : realized by
+DR_L_DOMAIN ..> DR_I_VO     : realized by
+DR_L_DOMAIN ..> DR_I_SVC    : realized by
+
+' ======================= External Component: Database ========================
+component "«external»\nDatabase" as DB #F5F5DC
+
+DR_L_PERS ..> DB : accesses
+DR_I_PERS ..> DB : accesses
+
+@enduml

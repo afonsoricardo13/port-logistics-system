@@ -1,0 +1,114 @@
+@startuml Vista Logica - Level 4 (US 4.1.12 - Incident Types)
+
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor<<Controller>> LightBlue
+    BackgroundColor<<Service>> LightGreen
+    BackgroundColor<<Repository>> LightYellow
+    BackgroundColor<<Entity>> LightCoral
+    BackgroundColor<<DTO>> Wheat
+    BackgroundColor<<ValueObject>> LightGray
+}
+
+package "WebApi Layer" {
+    class IncidentTypesController <<Controller>> {
+        - _service: IncidentTypeService
+        - _logger: ILogger<IncidentTypesController>
+        + GetAll(rootOnly?, parentCode?): Task<ActionResult<IEnumerable<IncidentTypeDTO>>>
+        + GetByCode(code: string): Task<ActionResult<IncidentTypeDTO>>
+        + Create(dto: CreateIncidentTypeDTO): Task<ActionResult<IncidentTypeDTO>>
+        + Update(code: string, dto: UpdateIncidentTypeDTO): Task<ActionResult<IncidentTypeDTO>>
+        + Delete(code: string): Task<ActionResult>
+    }
+}
+
+package "Application Layer" {
+    class IncidentTypeService <<Service>> {
+        - _repository: IIncidentTypeRepository
+        - _logger: ILogger<IncidentTypeService>
+        + GetAllAsync(rootOnly?, parentCode?): Task<IEnumerable<IncidentTypeDTO>>
+        + GetByCodeAsync(code: string): Task<IncidentTypeDTO?>
+        + CreateAsync(dto: CreateIncidentTypeDTO): Task<IncidentTypeDTO>
+        + UpdateAsync(code: string, dto: UpdateIncidentTypeDTO): Task<IncidentTypeDTO>
+        + DeleteAsync(code: string): Task<bool>
+        - ValidateParentExists(parentCode: string): Task<bool>
+        - ValidateCodeUnique(code: string): Task<bool>
+    }
+
+    class IncidentTypeDTO <<DTO>> {
+        + Code: string
+        + Name: string
+        + Description: string
+        + Severity: string
+        + ParentCode: string?
+        + Children: List<IncidentTypeDTO>
+    }
+
+    class CreateIncidentTypeDTO <<DTO>> {
+        + Code: string
+        + Name: string
+        + Description: string
+        + Severity: string
+        + ParentCode: string?
+    }
+
+    class UpdateIncidentTypeDTO <<DTO>> {
+        + Name: string?
+        + Description: string?
+        + Severity: string?
+        + ParentCode: string?
+    }
+}
+
+package "Domain Layer" {
+    class IncidentType <<Entity>> {
+        + Code: string {get; private set}
+        + Name: string {get; private set}
+        + Description: string {get; private set}
+        + Severity: Severity {get; private set}
+        + ParentCode: string? {get; private set}
+        + IncidentType(code, name, description, severity, parentCode?)
+        + Update(name?, description?, severity?, parentCode?): void
+        - ValidateCode(code: string): void
+    }
+
+    enum Severity <<ValueObject>> {
+        Minor
+        Major
+        Critical
+    }
+
+    interface IIncidentTypeRepository <<Repository>> {
+        + GetAllAsync(): Task<IEnumerable<IncidentType>>
+        + GetByCodeAsync(code: string): Task<IncidentType?>
+        + GetByParentCodeAsync(parentCode: string): Task<IEnumerable<IncidentType>>
+        + GetRootTypesAsync(): Task<IEnumerable<IncidentType>>
+        + AddAsync(type: IncidentType): Task<IncidentType>
+        + UpdateAsync(type: IncidentType): Task<IncidentType>
+        + DeleteAsync(code: string): Task<bool>
+        + ExistsAsync(code: string): Task<bool>
+    }
+}
+
+package "DataModel Layer" {
+    class IncidentTypeRepository <<Repository>> {
+        - _context: OEMDbContext
+        + GetAllAsync(): Task<IEnumerable<IncidentType>>
+        + GetByCodeAsync(code: string): Task<IncidentType?>
+        + GetByParentCodeAsync(parentCode: string): Task<IEnumerable<IncidentType>>
+        + GetRootTypesAsync(): Task<IEnumerable<IncidentType>>
+        + AddAsync(type: IncidentType): Task<IncidentType>
+        + UpdateAsync(type: IncidentType): Task<IncidentType>
+        + DeleteAsync(code: string): Task<bool>
+        + ExistsAsync(code: string): Task<bool>
+    }
+}
+
+' Relationships
+IncidentTypesController --> IncidentTypeService
+IncidentTypeService --> IIncidentTypeRepository
+IncidentTypeService --> IncidentTypeDTO
+IncidentTypeRepository ..|> IIncidentTypeRepository
+IncidentType --> IncidentType : parent
+
+@enduml

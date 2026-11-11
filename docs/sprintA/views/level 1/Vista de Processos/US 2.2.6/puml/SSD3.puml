@@ -1,0 +1,32 @@
+@startuml SSD US 2.2.6 - Update Representative
+      skinparam shadowing true
+      skinparam ArrowColor #000000
+      skinparam sequence {
+        ActorBorderColor #000000
+        ActorBackgroundColor #87CEEB
+        ParticipantBorderColor #000000
+        ParticipantBackgroundColor #87CEEB
+        LifeLineBorderColor #000000
+        LifeLineBackgroundColor #87CEEB
+      }
+    
+      actor "Port Authority Officer" as Officer
+      participant "«system (C4)»\nPort Operations System" as System
+    
+      activate Officer
+      Officer -> System : 1: start update representative\n
+      activate System
+      System --> Officer : 1.1: request updated representative data
+      deactivate System
+    
+      Officer -> System : 2: provide update payload
+      activate System
+      System -> System : 2.1: fetch organization and representative
+      System -> System : 2.2: if org or rep not found -> prepare 404 response
+      System -> System : 2.3: validate payload (name, citizenId, email, phone)
+      System -> System : 2.4: apply updates
+      System -> System : 2.5: record audit (updatedBy, updatedAt)
+      System --> Officer : 2.6:  Representative updated
+      deactivate System
+      deactivate Officer
+  @enduml

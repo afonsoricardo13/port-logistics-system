@@ -1,0 +1,139 @@
+<div class="tasks-container">
+  <div class="header">
+    <h2>Complementary Tasks Management</h2>
+    <button class="btn btn-primary" (click)="createTask()">
+      Create Task
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label>Status</label>
+        <select [(ngModel)]="statusFilter" class="filter-input">
+          <option *ngFor="let opt of statusOptions" [value]="opt">{{ opt || 'All' }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Impact Type</label>
+        <select [(ngModel)]="impactTypeFilter" class="filter-input">
+          <option *ngFor="let opt of impactTypeOptions" [value]="opt">{{ opt || 'All' }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Start Date</label>
+        <input type="date" [(ngModel)]="startDateFilter" class="filter-input" />
+      </div>
+
+      <div class="filter-group">
+        <label>End Date</label>
+        <input type="date" [(ngModel)]="endDateFilter" class="filter-input" />
+      </div>
+
+      <div class="filter-group">
+        <label>VVE ID</label>
+        <input type="text" [(ngModel)]="vveIdFilter" placeholder="VVE-xxx" class="filter-input" />
+      </div>
+
+      <div class="filter-group checkbox-group">
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="ongoingOnlyFilter" />
+          <span>Ongoing Only</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="filter-actions">
+      <button class="btn btn-secondary" (click)="applyFilters()">Apply Filters</button>
+      <button class="btn btn-outline" (click)="resetFilters()">Reset</button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+  <div *ngIf="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading tasks...</p>
+  </div>
+
+  <!-- Tasks List -->
+  <div *ngIf="!isLoading && filteredTasks.length > 0" class="tasks-list">
+    <div class="results-summary">
+      <p>Found {{ filteredTasks.length }} task(s)</p>
+      <p class="page-info">Page {{ currentPage }} of {{ totalPages }}</p>
+    </div>
+
+    <div class="tasks-grid">
+      <div *ngFor="let task of paginatedTasks" class="task-card">
+        <div class="card-header">
+          <div class="header-left">
+            <span class="task-category">{{ task.categoryName }}</span>
+            <span class="badge" [ngClass]="getStatusClass(task.status)">{{ task.status }}</span>
+            <span class="badge" [ngClass]="getImpactClass(task.impactType)">{{ task.impactType }}</span>
+          </div>
+          <div class="card-actions">
+            <button *ngIf="task.status === 'Ongoing'" 
+                    class="btn-icon" 
+                    (click)="completeTask(task)"
+                    title="Mark as Completed">✓</button>
+            <button class="btn-icon" (click)="editTask(task.id)" title="Edit">✎</button>
+            <button class="btn-icon btn-danger" (click)="deleteTask(task)" title="Delete">×</button>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">VVE ID:</span>
+              <span class="value">{{ task.vveId }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Vessel:</span>
+              <span class="value">{{ task.vesselName || 'N/A' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Responsible Team:</span>
+              <span class="value">{{ task.responsibleTeam }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Start Time:</span>
+              <span class="value">{{ formatDate(task.startTime) }}</span>
+            </div>
+            <div *ngIf="task.endTime" class="info-item">
+              <span class="label">End Time:</span>
+              <span class="value">{{ formatDate(task.endTime) }}</span>
+            </div>
+            <div *ngIf="task.durationMinutes" class="info-item">
+              <span class="label">Duration:</span>
+              <span class="value">{{ formatDuration(task.durationMinutes) }}</span>
+            </div>
+          </div>
+
+          <div *ngIf="task.notes" class="notes">
+            <strong>Notes:</strong>
+            <p>{{ task.notes }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="btn btn-sm" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">Previous</button>
+      <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+      <button class="btn btn-sm" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages">Next</button>
+    </div>
+  </div>
+
+  <!-- No Results -->
+  <div *ngIf="!isLoading && filteredTasks.length === 0" class="no-results">
+    <p>No complementary tasks found</p>
+    <button class="btn btn-primary" (click)="createTask()">Create First Task</button>
+  </div>
+</div>

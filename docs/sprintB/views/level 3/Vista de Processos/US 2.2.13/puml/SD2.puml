@@ -1,0 +1,68 @@
+@startuml Vista de Processos – Level 3 (US 2.2.13 – Manage Qualification)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Admin" as PA
+participant "«container (C4)»\nAdmin UI" as UI_CTRL #87CEEB
+participant "«container (C4)»\nQualifications\nController" as Q_CTRL #87CEEB
+participant "«component»\nApplication Service" as Q_APP #87CEEB
+participant "«component»\nDomain Model (Qualification)" as Q_DOMAIN #87CEEB
+participant "«component»\nRepository" as Q_REPO #87CEEB
+participant "«component»\nData Model" as Q_DATA #87CEEB
+participant "«component»\nPersistence" as Q_PERSIST #87CEEB
+
+activate PA
+PA -> UI_CTRL: 1: open edit for qualification
+activate UI_CTRL
+UI_CTRL --> PA: 1.1: ask for qualification code and new data
+deactivate UI_CTRL
+PA -> UI_CTRL: 2: qualification code + data
+activate UI_CTRL
+UI_CTRL -> Q_CTRL: 2.1: request to update qualification (code, dto)
+activate Q_CTRL
+Q_CTRL -> Q_APP: 2.1.1: updateQualification(code, dto)
+activate Q_APP
+Q_APP -> Q_REPO: 2.1.1.1: getByCode(code)
+activate Q_REPO
+Q_REPO -> Q_PERSIST: 2.1.1.1.1: select where code
+activate Q_PERSIST
+Q_PERSIST --> Q_REPO: 2.1.1.1.2: row
+deactivate Q_PERSIST
+Q_REPO --> Q_APP: 2.1.1.1.3: entity
+deactivate Q_REPO
+Q_APP -> Q_DOMAIN: 2.1.1.2: validate update
+activate Q_DOMAIN
+Q_DOMAIN --> Q_APP: 2.1.1.2.1: ok
+deactivate Q_DOMAIN
+Q_APP -> Q_REPO: 2.1.1.3: update(entity)
+activate Q_REPO
+Q_REPO -> Q_DATA: 2.1.1.3.1: map to data model
+activate Q_DATA
+Q_DATA --> Q_REPO: 2.1.1.3.2: record
+deactivate Q_DATA
+Q_REPO -> Q_PERSIST: 2.1.1.3.3: persist update
+activate Q_PERSIST
+Q_PERSIST --> Q_REPO: 2.1.1.3.4: ok
+deactivate Q_PERSIST
+Q_REPO --> Q_APP: 2.1.1.4: persisted
+deactivate Q_REPO
+Q_APP --> Q_CTRL: 2.1.2: qualification updated (QualificationDTO)
+deactivate Q_APP
+Q_CTRL --> UI_CTRL: 2.2: qualification updated (QualificationDTO)
+deactivate Q_CTRL
+UI_CTRL --> PA: 2.3: qualification updated
+deactivate UI_CTRL
+deactivate PA
+
+@enduml
+

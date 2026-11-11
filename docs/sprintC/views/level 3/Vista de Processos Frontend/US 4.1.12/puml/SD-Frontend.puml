@@ -1,0 +1,86 @@
+@startuml Vista de Processos Frontend – US 4.1.12 (Manage Incident Types - SPA)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Port Authority Officer" as USER
+
+box "SPA (Angular)" #LightBlue
+    participant "IncidentTypesComponent" as COMP
+    participant "IncidentTypeService" as IT_SVC
+    participant "MatTreeControl" as TREE
+    participant "MatDialog" as DIALOG
+    participant "AuthService" as AUTH
+end box
+
+participant "<<external>>\nIAM" as IAM #F5F5DC
+
+USER -> COMP: 1: navigate to /incident-types
+activate COMP
+
+COMP -> AUTH: 1.1: getToken()
+activate AUTH
+AUTH -> IAM: 1.1.1: validate (Port Authority Officer role)
+activate IAM
+IAM --> AUTH: 1.1.2: authorized
+deactivate IAM
+AUTH --> COMP: 1.1.3: token
+deactivate AUTH
+
+COMP -> IT_SVC: 1.2: getAll()
+activate IT_SVC
+IT_SVC --> COMP: 1.2.1: hierarchical incident types
+deactivate IT_SVC
+
+COMP -> TREE: 1.3: buildTree(incidentTypes)
+activate TREE
+TREE --> COMP: 1.3.1: tree structure ready
+deactivate TREE
+
+COMP --> USER: 1.4: display tree view of incident types
+deactivate COMP
+
+USER -> COMP: 2: click "Add New Type"
+activate COMP
+
+COMP -> DIALOG: 2.1: open(CreateIncidentTypeDialogComponent)
+activate DIALOG
+DIALOG --> USER: 2.2: display create form
+deactivate DIALOG
+deactivate COMP
+
+USER -> DIALOG: 3: fill form (code, name, severity, parent), click "Create"
+activate DIALOG
+
+DIALOG -> DIALOG: 3.1: validateForm()
+note right
+    Validations:
+    - Code format: T-INC###
+    - Name required
+    - Severity: Minor/Major/Critical
+    - Parent code exists (if provided)
+end note
+
+DIALOG -> IT_SVC: 3.2: create(CreateIncidentTypeDTO)
+activate IT_SVC
+IT_SVC --> DIALOG: 3.2.1: created incident type
+deactivate IT_SVC
+
+DIALOG --> COMP: 3.3: close(createdType)
+deactivate DIALOG
+
+activate COMP
+COMP -> COMP: 3.4: refreshTree()
+COMP --> USER: 3.5: display updated tree with new type
+deactivate COMP
+
+@enduml

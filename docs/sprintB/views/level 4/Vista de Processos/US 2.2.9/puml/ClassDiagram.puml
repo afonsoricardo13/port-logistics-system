@@ -1,0 +1,185 @@
+@startuml Class Diagram - Level 4 (US 2.2.9 - Storage Area Management)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+' ===== Presentation Layer (Controllers) =====
+package "<<layer>> Presentation" #87CEEB {
+  class StorageAreaController <<Controller>> {
+    - _service: IStorageAreaService
+    + CreateStorageArea(dto: CreateStorageAreaDTO): IActionResult
+    + UpdateStorageArea(id: string, dto: UpdateStorageAreaDTO): IActionResult
+    + GetStorageArea(id: string): IActionResult
+    + ListStorageAreas(filters: StorageAreaFilters): IActionResult
+  }
+}
+
+' ===== Application Layer (Services & DTOs) =====
+package "<<layer>> Application" #87CEEB {
+  class StorageAreaService <<Service>> {
+    - _repository: IStorageAreaRepository
+    - _mapper: IMapper
+    + CreateStorageArea(dto: CreateStorageAreaDTO): StorageAreaDTO
+    + UpdateStorageArea(id: string, dto: UpdateStorageAreaDTO): StorageAreaDTO
+    + GetStorageArea(id: string): StorageAreaDTO
+    + ListStorageAreas(filters: StorageAreaFilters): List<StorageAreaDTO>
+  }
+
+  interface IStorageAreaService {
+    + CreateStorageArea(dto: CreateStorageAreaDTO): StorageAreaDTO
+    + UpdateStorageArea(id: string, dto: UpdateStorageAreaDTO): StorageAreaDTO
+  }
+
+  class CreateStorageAreaDTO <<DTO>> {
+    + Identifier: string
+    + Type: string
+    + Location: string
+    + MaxCapacityTeu: int
+    + CurrentOccupancyTeu: int
+    + ServedDocks: List<ServedDockDTO>
+  }
+
+  class UpdateStorageAreaDTO <<DTO>> {
+    + Type: string
+    + Location: string
+    + MaxCapacityTeu: int
+    + CurrentOccupancyTeu: int
+    + ServedDocks: List<ServedDockDTO>
+  }
+
+  class StorageAreaDTO <<DTO>> {
+    + Identifier: string
+    + Type: string
+    + Location: string
+    + MaxCapacityTeu: int
+    + CurrentOccupancyTeu: int
+    + ServedDocks: List<ServedDockDTO>
+  }
+
+  class ServedDockDTO <<DTO>> {
+    + DockCode: string
+    + DistanceMeters: double
+  }
+}
+
+' ===== Domain Layer (Aggregates, Entities, Value Objects) =====
+package "<<layer>> Domain" #87CEEB {
+  class StorageArea <<Aggregate Root>> {
+    - _id: long
+    - _identifier: string
+    - _type: string
+    - _location: string
+    - _maxCapacityTeu: int
+    - _currentOccupancyTeu: int
+    - _servedDocks: List<ServedDock>
+    + StorageArea(identifier, type, location, maxCapacity, currentOccupancy)
+    + Update(type, location, maxCapacity, currentOccupancy): void
+    + SetServedDocks(docks: List<ServedDock>): void
+    + AddServedDock(dock: ServedDock): void
+    + RemoveServedDock(dockCode: string): void
+    + ValidateCapacity(): void
+    + {static} NormalizeType(type: string): string
+  }
+
+  class ServedDock <<Value Object>> {
+    + DockCode: string
+    + DistanceMeters: double
+    + ServedDock(dockCode: string, distance: double)
+    + Equals(other: ServedDock): bool
+  }
+
+  interface IStorageAreaRepository <<Repository Interface>> {
+    + GetAllAsync(): Task<List<StorageArea>>
+    + GetByIdentifierAsync(identifier: string): Task<StorageArea>
+    + Exists(identifier: string): Task<bool>
+    + Add(area: StorageArea): Task<StorageArea>
+    + Update(area: StorageArea, errors: List<string>): Task<StorageArea>
+  }
+}
+
+' ===== Infrastructure Layer (Repositories & Persistence) =====
+package "<<layer>> Infrastructure" #87CEEB {
+  class StorageAreaRepository <<Repository>> {
+    - _context: PortLogisticsContext
+    + GetAllAsync(): Task<List<StorageArea>>
+    + GetByIdentifierAsync(identifier: string): Task<StorageArea>
+    + Exists(identifier: string): Task<bool>
+    + Add(area: StorageArea): Task<StorageArea>
+    + Update(area: StorageArea, errors: List<string>): Task<StorageArea>
+    - MapToDomain(dataModel: StorageAreaDataModel): StorageArea
+    - MapToDataModel(area: StorageArea): StorageAreaDataModel
+  }
+
+  class StorageAreaDataModel <<Entity>> {
+    + Id: long
+    + Identifier: string
+    + Type: string
+    + Location: string
+    + MaxCapacityTeu: int
+    + CurrentOccupancyTeu: int
+    + ServedDocks: List<StorageAreaServedDockDataModel>
+  }
+
+  class StorageAreaServedDockDataModel <<Entity>> {
+    + Id: long
+    + StorageAreaId: long
+    + DockCode: string
+    + DistanceMeters: double
+  }
+
+  class PortLogisticsContext <<Context>> {
+    + StorageAreas: DbSet<StorageAreaDataModel>
+    + StorageAreaServedDocks: DbSet<StorageAreaServedDockDataModel>
+    + SaveChangesAsync(): Task<int>
+  }
+}
+
+' ===== Relationships =====
+StorageAreaController --> IStorageAreaService : uses
+StorageAreaController ..> CreateStorageAreaDTO : receives
+StorageAreaController ..> UpdateStorageAreaDTO : receives
+StorageAreaController ..> StorageAreaDTO : returns
+
+StorageAreaService ..|> IStorageAreaService : implements
+StorageAreaService --> IStorageAreaRepository : uses
+StorageAreaService ..> StorageArea : manipulates
+StorageAreaService ..> CreateStorageAreaDTO : receives
+StorageAreaService ..> UpdateStorageAreaDTO : receives
+StorageAreaService ..> StorageAreaDTO : returns
+
+CreateStorageAreaDTO *-- ServedDockDTO
+UpdateStorageAreaDTO *-- ServedDockDTO
+StorageAreaDTO *-- ServedDockDTO
+
+StorageArea *-- "0..*" ServedDock : has
+
+StorageAreaRepository ..|> IStorageAreaRepository : implements
+StorageAreaRepository --> PortLogisticsContext : uses
+StorageAreaRepository ..> StorageArea : returns
+StorageAreaRepository ..> StorageAreaDataModel : maps
+
+PortLogisticsContext *-- StorageAreaDataModel : manages
+StorageAreaDataModel *-- "0..*" StorageAreaServedDockDataModel : has
+
+note right of StorageArea
+  **Aggregate Root**
+  Enforces business rules:
+  - Identifier unique & required
+  - Type: Yard or Warehouse
+  - MaxCapacity >= CurrentOccupancy
+  - CurrentOccupancy >= 0
+  - ServedDocks optional (default: serves all)
+  - Distance > 0
+end note
+
+note right of StorageAreaService
+  **Application Service**
+  Orchestrates:
+  - Identifier uniqueness check
+  - Capacity validation
+  - Domain validation
+  - Persistence operations
+  - DTO mapping
+end note
+
+@enduml

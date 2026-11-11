@@ -1,0 +1,87 @@
+<div class="qualifications-container">
+  <div class="header">
+    <h1>Qualifications Management</h1>
+    <p class="subtitle">Register and manage qualifications for staff members and resources</p>
+  </div>
+
+  <!-- Actions Bar -->
+  <div class="actions-bar">
+    <div class="search-box">
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (input)="filterQualifications()"
+        placeholder="Search by qualification name..."
+        class="search-input"
+      />
+      <button *ngIf="searchTerm" (click)="clearSearch()" class="clear-btn" title="Clear search">
+        ✕
+      </button>
+    </div>
+    <button (click)="createQualification()" class="btn-primary">
+      + New Qualification
+    </button>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="error-message">
+    {{ errorMessage }}
+    <button (click)="loadQualifications()" class="retry-btn">Retry</button>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="loading-spinner">
+    <div class="spinner"></div>
+    <p>Loading qualifications...</p>
+  </div>
+
+  <!-- Qualifications Table -->
+  <div *ngIf="!isLoading && !errorMessage" class="table-container">
+    <table class="qualifications-table">
+      <thead>
+        <tr>
+          <th>Qualification Name</th>
+          <th>Required Number</th>
+          <th class="actions-column">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let qualification of filteredQualifications">
+          <td>
+            <strong>{{ qualification.qualificationName }}</strong>
+          </td>
+          <td>
+            <span class="required-number">{{ qualification.requiredNumber }}</span>
+          </td>
+          <td class="actions-column">
+            <button
+              (click)="editQualification(qualification.qualificationName)"
+              class="btn-edit"
+              title="Edit qualification"
+            >
+              Edit
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="filteredQualifications.length === 0">
+          <td colspan="3" class="no-data">
+            <div class="empty-state">
+              <p *ngIf="searchTerm">No qualifications match your search.</p>
+              <p *ngIf="!searchTerm">No qualifications registered yet.</p>
+              <button *ngIf="!searchTerm" (click)="createQualification()" class="btn-primary">
+                Create First Qualification
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Summary -->
+  <div *ngIf="!isLoading && !errorMessage && filteredQualifications.length > 0" class="summary">
+    <p>
+      Showing {{ filteredQualifications.length }} of {{ qualifications.length }} qualification(s)
+    </p>
+  </div>
+</div>

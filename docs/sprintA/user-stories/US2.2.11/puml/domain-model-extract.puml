@@ -1,0 +1,74 @@
+@startuml US2.2.11 - Domain Model Extract
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam monochrome true
+
+package "Staff Management" {
+    enum Staff <<Entity root>>
+    class StaffMecanographicNumber <<ValueObject>> {
+        +ID
+    }
+    class StaffName <<ValueObject>>
+    class StaffEmail <<ValueObject>>
+    class StaffPhoneNumber <<ValueObject>>
+    class StaffOperationalWindow <<ValueObject>> 
+    class StaffCurrentStatus <<ValueObject>>
+
+    Staff "1"--"1" StaffMecanographicNumber
+    Staff "1"--"1" StaffName
+    Staff "1"--"1" StaffEmail
+    Staff "1"--"1" StaffPhoneNumber
+    Staff "1"--"1" StaffOperationalWindow
+    Staff "1"--"1" StaffCurrentStatus
+}
+
+package "Staff Qualification Management" {
+    enum StaffQualification <<Entity root>>
+    
+    class QualificationName <<ValueObject>> {
+        +ID
+    }
+    class RequiredNumber <<ValueObject>>
+    
+    StaffQualification "1"--"1" QualificationName
+    StaffQualification "1"--"1" RequiredNumber
+}
+
+package "Logistics Operator Management" {
+    enum LogisticsOperator <<Entity root>>
+    class LogisticsOperatorID <<ValueObject>> {
+        +ID
+    }
+    class LogisticsOperatorName <<ValueObject>>
+    
+    LogisticsOperator "1"--"1" LogisticsOperatorID
+    LogisticsOperator "1"--"1" LogisticsOperatorName
+}
+
+package "Physical Resources" {
+    enum PhysicalResource <<Entity root>>
+    class PhysicalResourceID <<ValueObject>> {
+        +ID
+    }
+    class PhysicalResourceOperationalWindow <<ValueObject>>
+    class PhysicalResourceCapacity <<ValueObject>>
+    class PhysicalResourceStatus <<ValueObject>>
+    class PhysicalResourceSetupTime <<ValueObject>>
+    class PhysicalResourceType <<ValueObject>>
+    class PhysicalResourceDescription <<ValueObject>>
+
+    PhysicalResource "1"--"1" PhysicalResourceID
+    PhysicalResource "1"--"1" PhysicalResourceOperationalWindow
+    PhysicalResource "1"--"1" PhysicalResourceCapacity
+    PhysicalResource "1"--"1" PhysicalResourceStatus
+    PhysicalResource "1"--"1" PhysicalResourceSetupTime
+    PhysicalResource "1"--"1" PhysicalResourceType
+    PhysicalResource "1"--"1" PhysicalResourceDescription
+}
+
+' Relationships relevant to US 2.2.11
+PhysicalResource "1" -- "*" StaffQualification : requires
+Staff "*" -- "*" PhysicalResource : operates
+Staff "*" -- "*" StaffQualification : has
+
+@enduml

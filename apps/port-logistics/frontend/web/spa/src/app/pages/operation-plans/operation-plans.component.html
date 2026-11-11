@@ -1,0 +1,1141 @@
+<!-- US 4.1.2 - Operation Plans Management -->
+<!-- US 4.1.5 - Missing Plans Identification and Regeneration -->
+<div class="daily-scheduling-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1>Operation Plans</h1>
+    <p class="subtitle">Generate and manage operation plans for vessel visit notifications</p>
+  </div>
+
+  <!-- Tabs Navigation -->
+  <div class="tabs">
+    <button 
+      class="tab" 
+      [class.active]="activeTab === 'generate'"
+      (click)="switchToTab('generate')"
+    >
+      Generate Plans
+    </button>
+    <button 
+      class="tab" 
+      [class.active]="activeTab === 'missing'"
+      (click)="switchToTab('missing')"
+    >
+      Missing Plans
+    </button>
+    <button 
+      class="tab" 
+      [class.active]="activeTab === 'search'"
+      (click)="switchToTab('search')"
+    >
+      Search Plans
+    </button>
+  </div>
+
+  <!-- Tab: Generate Operation Plans (US 4.1.2) -->
+  <div *ngIf="activeTab === 'generate'">
+  <!-- US 4.1.2: Generation Form -->
+  <div class="scheduling-form">
+    <div class="form-card">
+      <h2>Generate Operation Plans</h2>
+      
+      <div class="form-group">
+        <label for="targetDate">Target Date</label>
+        <input 
+          type="date" 
+          id="targetDate" 
+          [(ngModel)]="selectedDate" 
+          [min]="minDate"
+          class="date-input"
+        />
+        <p class="help-text">Select the date for which to generate operation plans</p>
+      </div>
+
+      <div class="form-group">
+        <label>Scheduling Algorithm</label>
+        <div class="radio-group">
+          <label class="radio-option recommended">
+            <input 
+              type="radio" 
+              name="algorithm" 
+              value="auto" 
+              [(ngModel)]="selectedAlgorithm"
+            />
+            <span class="radio-label">
+              <strong>Auto (Recommended)</strong> - Automatically selects the best algorithm based on problem size
+            </span>
+          </label>
+          <label class="radio-option">
+            <input 
+              type="radio" 
+              name="algorithm" 
+              value="optimal" 
+              [(ngModel)]="selectedAlgorithm"
+            />
+            <span class="radio-label">
+              <strong>Optimal</strong> - Minimizes total delay using single crane (best for ≤5 vessels)
+            </span>
+          </label>
+          <label class="radio-option">
+            <input 
+              type="radio" 
+              name="algorithm" 
+              value="heuristic" 
+              [(ngModel)]="selectedAlgorithm"
+            />
+            <span class="radio-label">
+              <strong>Heuristic</strong> - Fast greedy approach based on urgency (best for 6-15 vessels)
+            </span>
+          </label>
+          <label class="radio-option">
+            <input 
+              type="radio" 
+              name="algorithm" 
+              value="multi_crane" 
+              [(ngModel)]="selectedAlgorithm"
+            />
+            <span class="radio-label">
+              <strong>Multi-Crane</strong> - Uses multiple cranes to eliminate delays when needed
+            </span>
+          </label>
+          <label class="radio-option">
+            <input 
+              type="radio" 
+              name="algorithm" 
+              value="genetic" 
+              [(ngModel)]="selectedAlgorithm"
+            />
+            <span class="radio-label">
+              <strong>Genetic Algorithm</strong> - Explores broader solution spaces for near-optimal schedules
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- US 4.3.1: Genetic Algorithm Parameters -->
+      <div *ngIf="selectedAlgorithm === 'genetic'" class="form-group ga-parameters">
+        <label>Genetic Algorithm Parameters</label>
+        <div class="ga-params-grid">
+          <div class="param-item">
+            <label for="gaPopSize">Population Size</label>
+            <input 
+              type="number" 
+              id="gaPopSize" 
+              [(ngModel)]="gaPopulationSize" 
+              min="5" 
+              max="100"
+              class="param-input"
+              [class.invalid]="gaPopulationSize < 5 || gaPopulationSize > 100"
+            />
+            <span class="param-help">Number of individuals (5-100)</span>
+            <span class="param-error" *ngIf="gaPopulationSize < 5 || gaPopulationSize > 100">
+              Must be between 5 and 100
+            </span>
+          </div>
+          <div class="param-item">
+            <label for="gaGenerations">Max Generations</label>
+            <input 
+              type="number" 
+              id="gaGenerations" 
+              [(ngModel)]="gaGenerations" 
+              min="10" 
+              max="500"
+              class="param-input"
+              [class.invalid]="gaGenerations < 10 || gaGenerations > 500"
+            />
+            <span class="param-help">Maximum iterations (10-500)</span>
+            <span class="param-error" *ngIf="gaGenerations < 10 || gaGenerations > 500">
+              Must be between 10 and 500
+            </span>
+          </div>
+          <div class="param-item">
+            <label for="gaCrossover">Crossover Rate (%)</label>
+            <input 
+              type="number" 
+              id="gaCrossover" 
+              [(ngModel)]="gaCrossoverRate" 
+              min="0" 
+              max="100"
+              class="param-input"
+              [class.invalid]="gaCrossoverRate < 0 || gaCrossoverRate > 100"
+            />
+            <span class="param-help">Probability of crossover (0-100%)</span>
+            <span class="param-error" *ngIf="gaCrossoverRate < 0 || gaCrossoverRate > 100">
+              Must be between 0 and 100
+            </span>
+          </div>
+          <div class="param-item">
+            <label for="gaMutation">Mutation Rate (%)</label>
+            <input 
+              type="number" 
+              id="gaMutation" 
+              [(ngModel)]="gaMutationRate" 
+              min="0" 
+              max="100"
+              class="param-input"
+              [class.invalid]="gaMutationRate < 0 || gaMutationRate > 100"
+            />
+            <span class="param-help">Probability of mutation (0-100%)</span>
+            <span class="param-error" *ngIf="gaMutationRate < 0 || gaMutationRate > 100">
+              Must be between 0 and 100
+            </span>
+          </div>
+          <div class="param-item">
+            <label for="gaTimeLimit">Time Limit (ms)</label>
+            <input 
+              type="number" 
+              id="gaTimeLimit" 
+              [(ngModel)]="gaTimeLimit" 
+              min="1000" 
+              max="60000"
+              class="param-input"
+              [class.invalid]="gaTimeLimit < 1000 || gaTimeLimit > 60000"
+            />
+            <span class="param-help">Max execution time (1000-60000ms)</span>
+            <span class="param-error" *ngIf="gaTimeLimit < 1000 || gaTimeLimit > 60000">
+              Must be between 1000 and 60000
+            </span>
+          </div>
+          <div class="param-item checkbox-item">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="gaUseMultiCrane"
+              />
+              <span>Use Multi-Crane Mode</span>
+            </label>
+            <span class="param-help">Enable multiple cranes per vessel</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button 
+          class="btn btn-primary" 
+          (click)="generateSchedule()" 
+          [disabled]="isGenerating || !selectedDate"
+        >
+          <span *ngIf="!isGenerating">Generate Schedule</span>
+          <span *ngIf="isGenerating" class="loading">
+            <svg class="spinner" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+            </svg>
+            Computing...
+          </span>
+        </button>
+
+        <!-- US 4.3.3: Rebalance Docks Button -->
+        <button 
+          class="btn btn-rebalance" 
+          [class.btn-rebalance-required]="rebalanceExecutedForDate !== selectedDate"
+          (click)="openRebalanceModal()" 
+          [disabled]="isGenerating || !selectedDate"
+        >
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          <span *ngIf="rebalanceExecutedForDate !== selectedDate">⚠️ Suggest Rebalancing (Required)</span>
+          <span *ngIf="rebalanceExecutedForDate === selectedDate">✓ Rebalancing Analyzed</span>
+        </button>
+
+        <!-- US 4.3.1 AC: Compare Algorithms Button -->
+        <button 
+          class="btn btn-accent" 
+          (click)="openCompareModal()" 
+          [disabled]="isGenerating || !selectedDate"
+        >
+          Compare Algorithms
+        </button>
+
+        <button 
+          class="btn btn-secondary" 
+          (click)="reset()" 
+          [disabled]="isGenerating || !hasResult"
+        >
+          Reset
+        </button>
+
+        <!-- US 4.1.2: Save to Operation Plans -->
+        <button 
+          class="btn btn-success" 
+          (click)="saveOperationPlans()" 
+          [disabled]="isSaving || !hasResult || !scheduleResult"
+          title="Save schedule as Operation Plans in OEM database"
+        >
+          <span *ngIf="!isSaving">💾 Save to Operation Plans</span>
+          <span *ngIf="isSaving" class="loading">
+            <svg class="spinner" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+            </svg>
+            Saving...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AC5: Rebalancing Required Warning -->
+  <div *ngIf="showRebalanceRequiredWarning && activeTab === 'generate'" class="alert alert-warning rebalance-warning">
+    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+    </svg>
+    <div>
+      <strong>Dock Rebalancing Required</strong>
+      <p>Before generating schedules, you must analyze dock rebalancing to ensure optimal dock assignments. Click "Suggest Rebalancing" to proceed.</p>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage && !hasResult && !showRebalanceRequiredWarning" class="alert alert-warning">
+    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+    </svg>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <!-- Save Success Message -->
+  <div *ngIf="saveSuccess" class="alert alert-success">
+    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <div>
+      <strong>Operation Plans Saved Successfully!</strong>
+      <ul class="save-details">
+        <li *ngFor="let msg of saveMessages">{{ msg }}</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Save Error Message -->
+  <div *ngIf="saveError" class="alert alert-error">
+    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <div>
+      <strong>{{ saveError }}</strong>
+      <ul class="save-details" *ngIf="saveMessages && saveMessages.length > 0">
+        <li *ngFor="let msg of saveMessages">{{ msg }}</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Schedule Preview Results -->
+  <div *ngIf="hasResult && scheduleResult" class="results-section">
+    
+    <!-- US 4.3.2: Auto Algorithm Selection Info -->
+    <div *ngIf="scheduleResult.algorithm === 'auto' && scheduleResult.selected_algorithm" class="auto-selection-section">
+      <h2 class="section-title">Automatic Algorithm Selection</h2>
+      <div class="summary-cards">
+        <div class="stat-card auto-highlight">
+          <div class="stat-label">Selected Algorithm</div>
+          <div class="stat-value">{{ scheduleResult.selected_algorithm }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Selection Reason</div>
+          <div class="stat-value stat-value-small">{{ formatSelectionReason(scheduleResult.selection_reason || '') }}</div>
+        </div>
+        <div class="stat-card" *ngIf="scheduleResult.problem_analysis">
+          <div class="stat-label">Vessels Analyzed</div>
+          <div class="stat-value">{{ scheduleResult.problem_analysis.vessel_count }}</div>
+        </div>
+        <div class="stat-card" *ngIf="scheduleResult.problem_analysis">
+          <div class="stat-label">Docks</div>
+          <div class="stat-value">{{ scheduleResult.problem_analysis.dock_count }}</div>
+        </div>
+        <div class="stat-card" *ngIf="scheduleResult.problem_analysis">
+          <div class="stat-label">Complexity Score</div>
+          <div class="stat-value">{{ scheduleResult.problem_analysis.complexity_score }}</div>
+        </div>
+        <div class="stat-card" *ngIf="scheduleResult.problem_analysis">
+          <div class="stat-label">Time Limit</div>
+          <div class="stat-value">{{ scheduleResult.problem_analysis.time_limit_ms || 5000 }} ms</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <h2 *ngIf="scheduleResult.algorithm === 'auto'" class="section-title">Schedule Results</h2>
+    <div class="summary-cards">
+      <div class="stat-card">
+        <div class="stat-label">Algorithm Used</div>
+        <div class="stat-value">
+          <span *ngIf="scheduleResult.algorithm === 'auto'">
+            {{ scheduleResult.selected_algorithm }}
+            <small class="auto-badge">(auto)</small>
+          </span>
+          <span *ngIf="scheduleResult.algorithm !== 'auto'">
+            {{ scheduleResult.algorithm || 'optimal' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Vessels Scheduled</div>
+        <div class="stat-value">{{ scheduleResult.vessel_count }}</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Total Delay (hours)</div>
+        <div class="stat-value" [class.delay-high]="scheduleResult.total_delay > 0">
+          {{ scheduleResult.total_delay | number:'1.2-2' }}
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Computation Time</div>
+        <div class="stat-value">{{ scheduleResult.computation_time_ms.toFixed(2) }} ms</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Schedule Date</div>
+        <div class="stat-value">{{ scheduleResult.date }}</div>
+      </div>
+    </div>
+
+    <!-- Multi-Crane Optimization Results (for Multi-Crane and Genetic with Multi-Crane) -->
+    <div *ngIf="hasMultiCraneResults()" class="multi-crane-results">
+      <h3>🏗️ Multi-Crane Optimization Results</h3>
+      <p class="subtitle">Comparison between single-crane baseline and optimized multi-crane strategy</p>
+      
+      <div class="comparison-cards">
+        <div class="comparison-card baseline">
+          <h4>Single Crane (Baseline)</h4>
+          <div class="metric">
+            <span class="label">Total Delay</span>
+            <span class="value delay">{{ getBaselineDelay() }}h</span>
+          </div>
+          <div class="metric">
+            <span class="label">Crane-Hours</span>
+            <span class="value">{{ getBaselineCraneHours() }}h</span>
+          </div>
+        </div>
+
+        <div class="arrow">→</div>
+
+        <div class="comparison-card optimized">
+          <h4>Multi-Crane (Optimized)</h4>
+          <div class="metric">
+            <span class="label">Total Delay</span>
+            <span class="value delay-optimized">{{ getOptimizedDelay() }}h</span>
+          </div>
+          <div class="metric">
+            <span class="label">Crane-Hours</span>
+            <span class="value">{{ getOptimizedCraneHours() }}h</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="improvement-badge" *ngIf="getDelayReduction() > 0">
+        ✓ Delay reduced by {{ getDelayReduction() }}h
+      </div>
+
+      <div class="multi-crane-vessels">
+        🏗️ Multi-crane used on vessel(s): <strong>{{ getMultiCraneVessels() }}</strong>
+      </div>
+    </div>
+
+    <!-- Schedule Table -->
+    <div class="schedule-table-container">
+      <h2>Schedule Details</h2>
+      
+      <table class="schedule-table">
+        <thead>
+          <tr>
+            <th>Vessel ID</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Duration</th>
+            <th>Assigned Dock</th>
+            <th>Assigned Crane</th>
+            <th *ngIf="hasMultiCraneResults()">Cranes Used</th>
+            <th>Assigned Staff</th>
+            <th>Storage Area</th>
+            <th>Individual Delay</th>
+            <th *ngIf="hasMultiCraneResults()">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let operation of scheduleResult.schedule; let i = index">
+            <td class="vessel-id">{{ operation.vessel_id }}</td>
+            <td>{{ formatTime(operation.start_time) }}</td>
+            <td>{{ formatTime(operation.end_time) }}</td>
+            <td>{{ getDuration(operation) }}</td>
+            <td>{{ operation.assigned_dock }}</td>
+            <td>{{ getAssignedCranes(operation) }}</td>
+            <td *ngIf="hasMultiCraneResults()">
+              <span class="crane-badge" [class.multi]="getCranesUsed(i) > 1">
+                {{ getCranesUsed(i) }} {{ getCranesUsed(i) === 1 ? 'Crane' : 'Cranes' }}
+              </span>
+            </td>
+            <td>{{ operation.assigned_staff }}</td>
+            <td>{{ operation.assigned_storage }}</td>
+            <td>
+              <span class="delay-badge" [class.has-delay]="(operation.delay || 0) > 0">{{ operation.delay || 0 | number:'1.2-2' }}h</span>
+            </td>
+            <td *ngIf="hasMultiCraneResults()">
+              <span class="status-badge success">✓ OK</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p *ngIf="scheduleResult.schedule.length === 0" class="no-data">
+        No operations scheduled for this date.
+      </p>
+    </div>
+  </div>
+  </div>
+  <!-- End of Generate Tab -->
+
+  <!-- Tab: Missing Plans (US 4.1.5) -->
+  <div *ngIf="activeTab === 'missing'" class="missing-plans-tab">
+    <!-- Date Selection -->
+    <div class="scheduling-form">
+      <div class="form-card">
+        <h2>Identify VVNs without Operation Plans</h2>
+        
+        <div class="form-group">
+          <label for="missingPlansDate">Target Date</label>
+          <input 
+            type="date" 
+            id="missingPlansDate" 
+            [(ngModel)]="selectedDate" 
+            [min]="minDate"
+            class="date-input"
+          />
+          <p class="help-text">Select the date to check for missing operation plans</p>
+        </div>
+
+        <div class="button-group">
+          <button 
+            class="btn btn-primary" 
+            (click)="loadMissingPlans()" 
+            [disabled]="isLoadingMissing || !selectedDate"
+          >
+            <span *ngIf="!isLoadingMissing">Check Missing Plans</span>
+            <span *ngIf="isLoadingMissing" class="loading">
+              <svg class="spinner" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+              </svg>
+              Loading...
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="missingPlansError" class="alert alert-error">
+      <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <span>{{ missingPlansError }}</span>
+    </div>
+
+    <!-- Save Success Message (for regeneration) -->
+    <div *ngIf="saveSuccess" class="alert alert-success">
+      <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <div>
+        <strong>Operation Plans Regenerated Successfully!</strong>
+        <ul class="save-details">
+          <li *ngFor="let msg of saveMessages">{{ msg }}</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Missing Plans Results -->
+    <div *ngIf="missingPlansData && !isLoadingMissing" class="results-section">
+      <!-- Summary Statistics -->
+      <div class="summary-cards">
+        <div class="stat-card">
+          <div class="stat-label">Total Approved VVNs</div>
+          <div class="stat-value">{{ missingPlansData.totalApprovedVvns }}</div>
+        </div>
+
+        <div class="stat-card stat-success">
+          <div class="stat-label">VVNs with Plans</div>
+          <div class="stat-value">{{ missingPlansData.vvnsWithPlans }}</div>
+        </div>
+
+        <div class="stat-card" [class.stat-warning]="missingPlansData.vvnsWithoutPlans > 0">
+          <div class="stat-label">VVNs without Plans</div>
+          <div class="stat-value">{{ missingPlansData.vvnsWithoutPlans }}</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Date</div>
+          <div class="stat-value">{{ selectedDate }}</div>
+        </div>
+      </div>
+
+      <!-- Missing Plans List -->
+      <div class="missing-plans-container">
+        <div class="section-header">
+          <h2>
+            <svg class="header-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+            </svg>
+            VVNs without Operation Plans
+          </h2>
+          <button 
+            *ngIf="missingPlansData.vvnsWithoutPlans > 0"
+            class="btn btn-warning btn-regenerate" 
+            (click)="promptRegenerate()"
+            [disabled]="isRegenerating"
+          >
+            <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Regenerate All Plans for This Day
+          </button>
+        </div>
+
+        <div *ngIf="missingPlansData.vvnsWithoutPlans === 0" class="alert alert-success">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span>{{ missingPlansData.message }}</span>
+        </div>
+
+        <div *ngIf="missingPlansData.vvnsWithoutPlans > 0" class="vvn-cards-grid">
+          <div *ngFor="let vvn of missingPlansData.missingPlans" class="vvn-card">
+            <div class="vvn-card-header">
+              <div class="vvn-id-badge">
+                <svg class="badge-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <span class="vvn-id">VVN #{{ vvn.id }}</span>
+              </div>
+            </div>
+            
+            <div class="vvn-card-body">
+              <div class="vvn-info-row">
+                <div class="info-label">
+                  <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                  </svg>
+                  Vessel IMO
+                </div>
+                <div class="info-value vessel-imo">{{ vvn.vesselImoNumber }}</div>
+              </div>
+
+              <div class="time-info-grid">
+                <div class="time-info-item eta">
+                  <div class="time-label">
+                    <svg class="time-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                    ETA
+                  </div>
+                  <div class="time-value">{{ vvn.estimatedTimeOfArrival | date:'short' }}</div>
+                </div>
+
+                <div class="time-info-item etd">
+                  <div class="time-label">
+                    <svg class="time-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                    ETD
+                  </div>
+                  <div class="time-value">{{ vvn.estimatedTimeOfDeparture | date:'short' }}</div>
+                </div>
+              </div>
+
+              <div class="vvn-info-row dock-row">
+                <div class="info-label">
+                  <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  </svg>
+                  Assigned Dock
+                </div>
+                <div class="dock-badge">{{ vvn.assignedDockCode || 'Not assigned' }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Regenerate Confirmation Modal -->
+    <div *ngIf="showRegenerateConfirm" class="modal-overlay" (click)="cancelRegenerate()">
+      <div class="modal-content regenerate-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-header-content">
+            <svg class="warning-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <h2>Confirm Regeneration</h2>
+          </div>
+        </div>
+        
+        <div class="modal-body">
+          <div class="alert alert-warning regenerate-warning">
+            <div class="alert-icon">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+              </svg>
+            </div>
+            <div class="alert-content">
+              <strong class="alert-title">Warning:</strong>
+              <p class="alert-message">
+                This action will <strong class="highlight-text">DELETE</strong> all existing Operation Plans for<br>
+                <span class="date-badge">{{ regenerateDate }}</span><br>
+                and create new ones.
+              </p>
+            </div>
+          </div>
+
+          <div class="form-group algorithm-selection">
+            <label class="section-label">
+              <svg class="label-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
+              Select Scheduling Algorithm
+            </label>
+            <div class="radio-group">
+              <label class="radio-option recommended">
+                <input 
+                  type="radio" 
+                  name="regenerateAlgorithm" 
+                  value="auto" 
+                  [(ngModel)]="regenerateAlgorithm"
+                />
+                <div class="radio-content">
+                  <span class="radio-title">Auto (Recommended)</span>
+                  <span class="radio-description">Automatically selects the best algorithm based on problem size</span>
+                </div>
+              </label>
+              <label class="radio-option">
+                <input 
+                  type="radio" 
+                  name="regenerateAlgorithm" 
+                  value="optimal" 
+                  [(ngModel)]="regenerateAlgorithm"
+                />
+                <div class="radio-content">
+                  <span class="radio-title">Optimal</span>
+                  <span class="radio-description">Minimizes total delay</span>
+                </div>
+              </label>
+              <label class="radio-option">
+                <input 
+                  type="radio" 
+                  name="regenerateAlgorithm" 
+                  value="heuristic" 
+                  [(ngModel)]="regenerateAlgorithm"
+                />
+                <div class="radio-content">
+                  <span class="radio-title">Heuristic</span>
+                  <span class="radio-description">Fast greedy approach</span>
+                </div>
+              </label>
+              <label class="radio-option">
+                <input 
+                  type="radio" 
+                  name="regenerateAlgorithm" 
+                  value="multi_crane" 
+                  [(ngModel)]="regenerateAlgorithm"
+                />
+                <div class="radio-content">
+                  <span class="radio-title">Multi-Crane</span>
+                  <span class="radio-description">Uses multiple cranes</span>
+                </div>
+              </label>
+              <label class="radio-option">
+                <input 
+                  type="radio" 
+                  name="regenerateAlgorithm" 
+                  value="genetic" 
+                  [(ngModel)]="regenerateAlgorithm"
+                />
+                <div class="radio-content">
+                  <span class="radio-title">Genetic Algorithm</span>
+                  <span class="radio-description">Explores broader solution spaces</span>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="cancelRegenerate()">
+            <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            Cancel
+          </button>
+          <button 
+            class="btn btn-danger" 
+            (click)="confirmRegenerate()"
+            [disabled]="isRegenerating"
+          >
+            <span *ngIf="!isRegenerating" class="btn-content">
+              <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+              Confirm Regeneration
+            </span>
+            <span *ngIf="isRegenerating" class="loading">
+              <svg class="spinner" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+              </svg>
+              Regenerating...
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- End of Missing Plans Tab -->
+
+  <!-- Tab: Search Plans (US 4.1.3) -->
+  <div *ngIf="activeTab === 'search'">
+    <app-operation-plans-list></app-operation-plans-list>
+  </div>
+  <!-- End of Search Plans Tab -->
+
+  <!-- US 4.3.3: Dock Rebalancing Modal -->
+  <div *ngIf="showRebalanceModal" class="modal-overlay" (click)="closeRebalanceModal()">
+    <div class="modal-content rebalance-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header rebalance-header">
+        <h2>
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Dock Rebalancing Analysis
+        </h2>
+        <button class="close-btn" (click)="closeRebalanceModal()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Loading State -->
+        <div *ngIf="isLoadingRebalance" class="loading-state">
+          <svg class="spinner large" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+          </svg>
+          <p>Analyzing dock assignments...</p>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="rebalanceError && !isLoadingRebalance" class="rebalance-error">
+          <svg class="icon error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <p>{{ rebalanceError }}</p>
+        </div>
+
+        <!-- Proposal Content -->
+        <div *ngIf="rebalanceProposal && !isLoadingRebalance" class="rebalance-proposal">
+          <!-- Recommendation Banner -->
+          <div class="recommendation-banner" [class.positive]="isRebalanceRecommended()">
+            <p>{{ rebalanceProposal.recommendationReason }}</p>
+          </div>
+
+          <!-- Metrics Comparison -->
+          <div class="metrics-comparison">
+            <div class="metrics-section">
+              <h3>Current Allocation</h3>
+              <div class="metrics-grid" *ngIf="rebalanceProposal.currentMetrics">
+                <div class="metric">
+                  <span class="metric-value">{{ rebalanceProposal.currentMetrics.totalExpectedDelay | number:'1.1-1' }}h</span>
+                  <span class="metric-label">Total Expected Delay</span>
+                </div>
+                <div class="metric">
+                  <span class="metric-value">{{ rebalanceProposal.currentMetrics.balanceScore | number:'1.0-0' }}%</span>
+                  <span class="metric-label">Balance Score</span>
+                </div>
+                <div class="metric">
+                  <span class="metric-value">{{ rebalanceProposal.currentMetrics.vesselsWithDelay }}</span>
+                  <span class="metric-label">Vessels with Delay</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="metrics-arrow">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+              </svg>
+            </div>
+
+            <div class="metrics-section proposed">
+              <h3>Proposed Allocation</h3>
+              <div class="metrics-grid" *ngIf="rebalanceProposal.proposedMetrics">
+                <div class="metric" [class.improved]="rebalanceProposal.proposedMetrics!.totalExpectedDelay < rebalanceProposal.currentMetrics.totalExpectedDelay">
+                  <span class="metric-value">{{ rebalanceProposal.proposedMetrics.totalExpectedDelay | number:'1.1-1' }}h</span>
+                  <span class="metric-label">Total Expected Delay</span>
+                </div>
+                <div class="metric" [class.improved]="rebalanceProposal.proposedMetrics!.balanceScore > rebalanceProposal.currentMetrics.balanceScore">
+                  <span class="metric-value">{{ rebalanceProposal.proposedMetrics.balanceScore | number:'1.0-0' }}%</span>
+                  <span class="metric-label">Balance Score</span>
+                </div>
+                <div class="metric" [class.improved]="rebalanceProposal.proposedMetrics!.vesselsWithDelay < rebalanceProposal.currentMetrics.vesselsWithDelay">
+                  <span class="metric-value">{{ rebalanceProposal.proposedMetrics.vesselsWithDelay }}</span>
+                  <span class="metric-label">Vessels with Delay</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Improvement Summary -->
+          <div class="improvement-summary" *ngIf="rebalanceProposal.currentMetrics && rebalanceProposal.proposedMetrics">
+            <div class="improvement-item" *ngIf="getDelayImprovementPercent() > 0">
+              <span class="improvement-value positive">-{{ getDelayImprovementPercent() | number:'1.1-1' }}%</span>
+              <span class="improvement-label">Delay Reduction</span>
+            </div>
+            <div class="improvement-item" *ngIf="getBalanceImprovement() > 0">
+              <span class="improvement-value positive">+{{ getBalanceImprovement() | number:'1.1-1' }}</span>
+              <span class="improvement-label">Balance Score Points</span>
+            </div>
+          </div>
+
+          <!-- Reassignments Table -->
+          <div class="reassignments-section" *ngIf="pendingReassignments.length > 0">
+            <h3>Proposed Reassignments</h3>
+            <table class="reassignments-table">
+              <thead>
+                <tr>
+                  <th>Vessel</th>
+                  <th>IMO</th>
+                  <th>Current Dock</th>
+                  <th></th>
+                  <th>New Dock</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let r of pendingReassignments">
+                  <td>{{ getRebalanceVesselName(r.vvnId) }}</td>
+                  <td>{{ getRebalanceVesselImo(r.vvnId) }}</td>
+                  <td>{{ r.originalDock }}</td>
+                  <td class="arrow-cell">→</td>
+                  <td class="new-dock">{{ r.newDock }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- No Changes Needed -->
+          <div *ngIf="pendingReassignments.length === 0" class="no-changes">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p>Current dock allocation is optimal. No changes needed.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" *ngIf="rebalanceProposal && !isLoadingRebalance">
+        <button class="btn btn-secondary" (click)="closeRebalanceModal()">Cancel</button>
+        <button 
+          class="btn btn-primary" 
+          (click)="applyRebalancing()" 
+          [disabled]="pendingReassignments.length === 0 || isApplyingRebalance || !isRebalanceRecommended()"
+          [title]="!isRebalanceRecommended() ? 'Rebalancing not recommended - no improvement expected' : ''"
+        >
+          <span *ngIf="!isApplyingRebalance">Apply Rebalancing ({{ pendingReassignments.length }} changes)</span>
+          <span *ngIf="isApplyingRebalance" class="loading">
+            <svg class="spinner" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+            </svg>
+            Applying...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- US 4.3.1 AC: Compare Algorithms Modal -->
+  <div class="modal-backdrop" *ngIf="showCompareModal" (click)="closeCompareModal()">
+    <div class="modal compare-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Compare Scheduling Algorithms</h2>
+        <button class="modal-close" (click)="closeCompareModal()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Algorithm Selection -->
+        <div class="compare-selection">
+          <div class="algorithm-select">
+            <label>First Algorithm</label>
+            <select [(ngModel)]="compareAlgorithm1" class="form-control">
+              <option value="optimal">Optimal (Exact)</option>
+              <option value="heuristic">Heuristic (Fast)</option>
+              <option value="genetic">Genetic Algorithm</option>
+            </select>
+          </div>
+
+          <div class="vs-divider">VS</div>
+
+          <div class="algorithm-select">
+            <label>Second Algorithm</label>
+            <select [(ngModel)]="compareAlgorithm2" class="form-control">
+              <option value="optimal">Optimal (Exact)</option>
+              <option value="heuristic">Heuristic (Fast)</option>
+              <option value="genetic">Genetic Algorithm</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Validation Warning -->
+        <div *ngIf="compareAlgorithm1 === compareAlgorithm2" class="alert alert-warning">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
+          <span>Please select two different algorithms to compare.</span>
+        </div>
+
+        <!-- GA Parameters (shown when genetic is selected) -->
+        <div *ngIf="compareAlgorithm1 === 'genetic' || compareAlgorithm2 === 'genetic'" class="ga-params-compare">
+          <h4>Genetic Algorithm Parameters</h4>
+          <div class="ga-params-grid compact">
+            <div class="param-item">
+              <label>Population</label>
+              <input type="number" [(ngModel)]="gaPopulationSize" min="5" max="100" class="param-input" />
+            </div>
+            <div class="param-item">
+              <label>Generations</label>
+              <input type="number" [(ngModel)]="gaGenerations" min="10" max="500" class="param-input" />
+            </div>
+            <div class="param-item">
+              <label>Crossover %</label>
+              <input type="number" [(ngModel)]="gaCrossoverRate" min="0" max="100" class="param-input" />
+            </div>
+            <div class="param-item">
+              <label>Mutation %</label>
+              <input type="number" [(ngModel)]="gaMutationRate" min="0" max="100" class="param-input" />
+            </div>
+            <div class="param-item">
+              <label>Time Limit (ms)</label>
+              <input type="number" [(ngModel)]="gaTimeLimit" min="1000" max="60000" class="param-input" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Run Comparison Button -->
+        <div class="compare-actions">
+          <button 
+            class="btn btn-primary" 
+            (click)="compareAlgorithms()"
+            [disabled]="isComparing || compareAlgorithm1 === compareAlgorithm2"
+          >
+            <span *ngIf="!isComparing">Run Comparison</span>
+            <span *ngIf="isComparing" class="loading">
+              <svg class="spinner" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+              </svg>
+              Running {{ getAlgorithmDisplayName(compareAlgorithm1) }} vs {{ getAlgorithmDisplayName(compareAlgorithm2) }}...
+            </span>
+          </button>
+        </div>
+
+        <!-- Comparison Results -->
+        <div *ngIf="comparisonResult1 && comparisonResult2 && !comparisonResult1.error && !comparisonResult2.error" class="comparison-results">
+          <div class="comparison-header">
+            <h3>Comparison Results</h3>
+          </div>
+
+          <div class="comparison-grid">
+            <!-- Algorithm 1 Results -->
+            <div class="result-card" [class.winner]="getBetterAlgorithm() === 1">
+              <div class="result-header">
+                <h4>{{ getAlgorithmDisplayName(compareAlgorithm1) }}</h4>
+                <span class="winner-badge" *ngIf="getBetterAlgorithm() === 1">⭐ Better</span>
+              </div>
+              <div class="result-metrics">
+                <div class="metric">
+                  <span class="metric-label">Total Delay</span>
+                  <span class="metric-value">{{ comparisonResult1.totalDelay | number:'1.1-1' }}h</span>
+                </div>
+                <div class="metric">
+                  <span class="metric-label">Vessels with Delay</span>
+                  <span class="metric-value">{{ comparisonResult1.vesselsWithDelay }} / {{ comparisonResult1.totalVessels }}</span>
+                </div>
+                <div class="metric">
+                  <span class="metric-label">Computation Time</span>
+                  <span class="metric-value">{{ comparisonResult1.computationTime }}ms</span>
+                </div>
+                <div class="metric">
+                  <span class="metric-label">Max Cranes Used</span>
+                  <span class="metric-value">{{ comparisonResult1.maxCranes }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Algorithm 2 Results -->
+            <div class="result-card" [class.winner]="getBetterAlgorithm() === 2">
+              <div class="result-header">
+                <h4>{{ getAlgorithmDisplayName(compareAlgorithm2) }}</h4>
+                <span class="winner-badge" *ngIf="getBetterAlgorithm() === 2">⭐ Better</span>
+              </div>
+              <div class="result-metrics">
+                <div class="metric">
+                  <span class="metric-label">Total Delay</span>
+                  <span class="metric-value">{{ comparisonResult2.totalDelay | number:'1.1-1' }}h</span>
+                </div>
+                <div class="metric">
+                  <span class="metric-label">Vessels with Delay</span>
+                  <span class="metric-value">{{ comparisonResult2.vesselsWithDelay }} / {{ comparisonResult2.totalVessels }}</span>
+                </div>
+                <div class="metric">
+                  <span class="metric-label">Computation Time</span>
+                  <span class="metric-value">{{ comparisonResult2.computationTime }}ms</span>
+                </div>
+                <div class="metric">
+                  <span class="metric-label">Max Cranes Used</span>
+                  <span class="metric-value">{{ comparisonResult2.maxCranes }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Difference Summary -->
+          <div class="difference-summary">
+            <h4>Difference Analysis</h4>
+            <div class="diff-item">
+              <span class="diff-label">Delay Difference:</span>
+              <span class="diff-value" [class.positive]="comparisonResult1.totalDelay > comparisonResult2.totalDelay" [class.negative]="comparisonResult1.totalDelay < comparisonResult2.totalDelay">
+                {{ (comparisonResult1.totalDelay - comparisonResult2.totalDelay) | number:'1.1-1' }}h
+                <span *ngIf="comparisonResult1.totalDelay !== comparisonResult2.totalDelay">
+                  ({{ getAlgorithmDisplayName(comparisonResult1.totalDelay < comparisonResult2.totalDelay ? compareAlgorithm1 : compareAlgorithm2) }} is {{ getDelayDifferencePercent() | number:'1.0-0' }}% better)
+                </span>
+              </span>
+            </div>
+            <div class="diff-item">
+              <span class="diff-label">Speed Difference:</span>
+              <span class="diff-value">
+                {{ getAlgorithmDisplayName(comparisonResult1.computationTime < comparisonResult2.computationTime ? compareAlgorithm1 : compareAlgorithm2) }} 
+                is {{ getSpeedRatio() | number:'1.1-1' }}x faster
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error Results -->
+        <div *ngIf="comparisonResult1?.error || comparisonResult2?.error" class="alert alert-error">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <div>
+            <strong>Comparison Error</strong>
+            <p *ngIf="comparisonResult1?.error">Algorithm 1: {{ comparisonResult1.error }}</p>
+            <p *ngIf="comparisonResult2?.error">Algorithm 2: {{ comparisonResult2.error }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeCompareModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

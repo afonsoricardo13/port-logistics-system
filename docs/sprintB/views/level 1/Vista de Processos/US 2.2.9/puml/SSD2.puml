@@ -1,0 +1,28 @@
+@startuml SSD US 2.2.9 - Complete Vessel Visit Notification
+skinparam shadowing true
+skinparam ArrowColor #000000
+skinparam sequence {
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+  ParticipantBorderColor #000000
+  ParticipantBackgroundColor #87CEEB
+  LifeLineBorderColor #000000
+  LifeLineBackgroundColor #87CEEB
+}
+
+actor "Shipping Agent Representative" as Agent
+participant "«system (C4)»\nPort Operations System" as System
+
+activate Agent
+Agent -> System : 1: selects Vessel Visit Notification to complete
+activate System
+System --> Agent : 1.1: show current Vessel Visit Notification data and required checks
+deactivate System
+
+Agent -> System : 2: submit completion of Vessel Visit Notification
+activate System
+System --> Agent : 2.1: mark Vessel Visit Notification as COMPLETED and notify Port Authority
+deactivate System
+deactivate Agent
+
+@enduml

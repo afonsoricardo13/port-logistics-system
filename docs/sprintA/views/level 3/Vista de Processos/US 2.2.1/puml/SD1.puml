@@ -1,0 +1,70 @@
+@startuml Vista de Processos – Level 3 (US 2.2.1 – Create Vessel Type)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Port Authority Officer" as Officer
+participant "«container (C4)»\nVisualization (UI)" as UI_CTRL #87CEEB
+participant "«container (C4)»\nVisits & Manifests\nController" as TYPES_CTRL #87CEEB
+participant "«component»\nApplication Service" as TYPES_APP #87CEEB
+participant "«component»\nDomain Model (VesselType)" as TYPES_DOMAIN #87CEEB
+participant "«component»\nRepository" as TYPES_REPO #87CEEB
+participant "«component»\nData Model" as TYPES_DATA #87CEEB
+participant "«component»\nPersistence" as TYPES_PERSIST #87CEEB
+
+activate Officer
+Officer -> UI_CTRL: 1: asks to create a Vessel Type
+activate UI_CTRL
+UI_CTRL --> Officer: 1.1: ask for required data (name, description, capacity, constraints: rows/bays/tiers)
+deactivate UI_CTRL
+
+Officer -> UI_CTRL: 2: provides Vessel Type data (DTO)
+activate UI_CTRL
+UI_CTRL -> TYPES_CTRL: 2.1: createVesselType(VesselTypeDTO)
+activate TYPES_CTRL
+TYPES_CTRL -> TYPES_APP: 2.1.1: createVesselType(dto)
+activate TYPES_APP
+TYPES_APP -> TYPES_REPO: 2.1.1.1: existsByName(dto.name)
+activate TYPES_REPO
+TYPES_REPO -> TYPES_PERSIST: 2.1.1.1.1: query name
+activate TYPES_PERSIST
+TYPES_PERSIST --> TYPES_REPO: 2.1.1.1.2: result (true/false)
+deactivate TYPES_PERSIST
+TYPES_REPO --> TYPES_APP: 2.1.1.1.3: nameAvailable = !exists
+deactivate TYPES_REPO
+TYPES_APP -> TYPES_APP: 2.1.1.2: validate capacity & constraints (> 0)
+TYPES_APP -> TYPES_DOMAIN: 2.1.1.3: create aggregate from dto
+activate TYPES_DOMAIN
+TYPES_DOMAIN --> TYPES_APP: 2.1.1.4: VesselType aggregate
+deactivate TYPES_DOMAIN
+TYPES_APP -> TYPES_REPO: 2.1.1.5: save(entity)
+activate TYPES_REPO
+TYPES_REPO -> TYPES_DATA: 2.1.1.5.1: map to data model
+activate TYPES_DATA
+TYPES_DATA --> TYPES_REPO: 2.1.1.5.2: data record
+deactivate TYPES_DATA
+TYPES_REPO -> TYPES_PERSIST: 2.1.1.5.3: persist(record)
+activate TYPES_PERSIST
+TYPES_PERSIST --> TYPES_REPO: 2.1.1.5.4: ok
+deactivate TYPES_PERSIST
+TYPES_REPO --> TYPES_APP: 2.1.1.6: persisted(entity)
+deactivate TYPES_REPO
+TYPES_APP --> TYPES_CTRL: 2.1.2: creation confirmation (DTO)
+deactivate TYPES_APP
+TYPES_CTRL --> UI_CTRL: 2.2: creation confirmation (type available for registration/search)
+deactivate TYPES_CTRL
+UI_CTRL --> Officer: 2.3: show confirmation
+deactivate UI_CTRL
+
+deactivate Officer
+
+@enduml

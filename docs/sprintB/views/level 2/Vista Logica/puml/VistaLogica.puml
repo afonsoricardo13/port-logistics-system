@@ -1,0 +1,57 @@
+@startuml Vista Lógica – Nível 2 (Port Logistics + Scheduling)
+left to right direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+' ====== estilo ======
+skinparam component { 
+BackgroundColor #87CEEB 
+BorderColor #000000 
+RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ====== atores (bolas azuis) ======
+() "UI Port Authority Officer"        as PA #87CEEB
+() "UI Logistics Operator"            as LO #87CEEB
+() "UI Shipping Agent Representative" as SA #87CEEB
+() "UI Administrator"                 as AD #87CEEB
+() "UI System Administrator"         as SYSADMIN #87CEEB
+
+' ====== boundary do sistema ======
+component "«component»\n«system (C4)»\nPort Operations System" as SYS #87CEEB {
+
+  ' ---- UI ----
+  component "«component»\n«container (C4)»\nSPA (Web UI)" as UI
+
+  ' ---- APIs (bolas) ----
+  interface "Port Logistics API"      as API_PL
+  interface "Scheduling API"          as API_SCH
+
+  ' ---- Containers ----
+  component "«component»\n«container (C4)»\nPort Logistics (Backend)" as PORT
+  component "«component»\n«container (C4)»\nScheduling & Planning"    as PLAN
+
+  ' ---- ligações UI -> API -> Container ----
+  UI  --> API_PL
+  API_PL --> PORT
+  API_PL ---> PLAN
+
+  UI  --> API_SCH
+  API_SCH  --> PLAN
+}
+
+' ====== componente externo: base de dados ======
+component "«external»\nDatabase" as DB #F5F5DC
+
+PORT --> DB : SQL
+
+' ====== atores ligados à UI ======
+PA --> UI
+LO --> UI
+SA --> UI
+AD --> UI
+SYSADMIN --> UI
+@enduml

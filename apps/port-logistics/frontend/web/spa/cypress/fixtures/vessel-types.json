@@ -1,0 +1,44 @@
+{
+  "validVesselType": {
+    "name": "Container Ship",
+    "description": "Large vessel designed for transporting containerized cargo",
+    "capacity": 5000,
+    "maxRows": 10,
+    "maxBays": 20,
+    "maxTiers": 8
+  },
+  "vesselTypeToUpdate": {
+    "name": "Bulk Carrier",
+    "description": "Vessel for transporting bulk cargo such as grains or minerals",
+    "capacity": 3000,
+    "maxRows": 8,
+    "maxBays": 15,
+    "maxTiers": 6
+  },
+  "vesselTypeList": [
+    {
+      "name": "Container Ship",
+      "description": "Large vessel designed for transporting containerized cargo",
+      "capacity": 5000,
+      "maxRows": 10,
+      "maxBays": 20,
+      "maxTiers": 8
+    },
+    {
+      "name": "Bulk Carrier",
+      "description": "Vessel for transporting bulk cargo such as grains or minerals",
+      "capacity": 3000,
+      "maxRows": 8,
+      "maxBays": 15,
+      "maxTiers": 6
+    },
+    {
+      "name": "Tanker",
+      "description": "Vessel designed for transporting liquid cargo",
+      "capacity": 2500,
+      "maxRows": 6,
+      "maxBays": 12,
+      "maxTiers": 5
+    }
+  ]
+}

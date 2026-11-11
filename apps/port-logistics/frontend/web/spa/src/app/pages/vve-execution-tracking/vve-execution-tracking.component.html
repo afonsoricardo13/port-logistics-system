@@ -1,0 +1,208 @@
+<div class="execution-tracking-container">
+  <div class="header">
+    <button class="btn-back" (click)="goBack()">← Back</button>
+    <h2>VVE Execution Tracking</h2>
+  </div>
+
+  @if (error()) {
+    <div class="error-message">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="loading">Loading...</div>
+  }
+
+  @if (vve()) {
+    <div class="vve-details">
+      <h3>Vessel Visit Execution: {{ vve()!.vvnId }}</h3>
+      <div class="vve-info">
+        <div class="info-item">
+          <label>Status:</label>
+          <span class="status-badge" [class]="'status-' + vve()!.status.toLowerCase()">
+            {{ vve()!.status }}
+          </span>
+        </div>
+        <div class="info-item">
+          <label>Dock Used:</label>
+          <span>{{ vve()!.dockUsed || 'Not assigned' }}</span>
+        </div>
+        @if (vve()!.actualBerthTime) {
+          <div class="info-item">
+            <label>Actual Berth Time:</label>
+            <span>{{ vve()!.actualBerthTime | date:'short' }}</span>
+          </div>
+        }
+        @if (vve()!.actualArrivalTime) {
+          <div class="info-item">
+            <label>Actual Arrival Time:</label>
+            <span>{{ vve()!.actualArrivalTime | date:'short' }}</span>
+          </div>
+        }
+      </div>
+
+      @if (operationPlan()) {
+        <div class="plan-actions">
+          <button 
+            class="btn-primary" 
+            (click)="initializeFromPlan()"
+            [disabled]="operations().length > 0">
+            Initialize Operations from Plan
+          </button>
+          <button class="btn-secondary" style="margin-left: 10px;" (click)="loadOperationsFromPlan()">
+            Load from Plan (Preview)
+          </button>
+          @if (operations().length > 0) {
+            <span class="helper-text">Operations already initialized</span>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  @if (operations().length > 0) {
+    <div class="operations-section">
+      <h3>Executed Operations</h3>
+      <div class="operations-list">
+        @for (op of operations(); track op.id) {
+          <div class="operation-card">
+            <div class="operation-header">
+              <div class="operation-title">
+                <span class="operation-index">#{{ op.plannedOperationIndex }}</span>
+                <span class="operation-type">{{ op.type }}</span>
+                <span class="status-badge" [class]="getStatusBadgeClass(op.status)">
+                  {{ getStatusText(op.status) }}
+                </span>
+              </div>
+              <div class="operation-actions">
+                @if (op.status !== 'Completed') {
+                  @if (!op.actualStartTime) {
+                    <button class="btn-action" (click)="quickStart(op)">Start</button>
+                  }
+                  @if (op.actualStartTime && !op.actualEndTime) {
+                    <button class="btn-action" (click)="quickComplete(op)">Complete</button>
+                  }
+                  <button class="btn-action btn-delayed" (click)="quickDelayed(op)">Delayed</button>
+                }
+                <button class="btn-edit" (click)="editOperation(op)">Edit</button>
+                <button class="btn-delete" (click)="deleteOperation(op)">Delete</button>
+              </div>
+            </div>
+
+            <div class="operation-details">
+              <div class="time-info">
+                <div class="time-row">
+                  <label>Planned:</label>
+                  <span>{{ op.plannedStartTime | date:'short' }} - {{ op.plannedEndTime | date:'short' }}</span>
+                </div>
+                @if (op.actualStartTime || op.actualEndTime) {
+                  <div class="time-row">
+                    <label>Actual:</label>
+                    <span>
+                      {{ op.actualStartTime | date:'short' }} - {{ op.actualEndTime | date:'short' }}
+                    </span>
+                  </div>
+                }
+                @if (op.delayMinutes) {
+                  <div class="time-row delay">
+                    <label>Delay:</label>
+                    <span>{{ op.delayMinutes }} minutes</span>
+                  </div>
+                }
+              </div>
+
+              @if (op.actualResources && op.actualResources.length > 0) {
+                <div class="resources-info">
+                  <label>Resources:</label>
+                  <div class="resources-list">
+                    @for (resource of op.actualResources; track $index) {
+                      <div class="resource-item">
+                        {{ resource.resourceType }} ({{ resource.resourceId }}): {{ resource.quantity }}
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
+              @if (op.notes) {
+                <div class="notes-info">
+                  <label>Notes:</label>
+                  <p>{{ op.notes }}</p>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (editingOperation()) {
+    <div class="modal-overlay" (click)="cancelEdit()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <h3>Edit Operation #{{ editingOperation()!.plannedOperationIndex }}</h3>
+        
+        <div class="form-group">
+          <label>Actual Start Time:</label>
+          <input
+            type="datetime-local"
+            [(ngModel)]="editForm().actualStartTime"
+            class="form-control"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Actual End Time:</label>
+          <input
+            type="datetime-local"
+            [(ngModel)]="editForm().actualEndTime"
+            class="form-control"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Actual Resources:</label>
+          <div class="resources-form">
+            @for (resource of editForm().actualResources; track $index) {
+              <div class="resource-row">
+                <input
+                  type="text"
+                  [(ngModel)]="resource.resourceId"
+                  placeholder="Resource ID"
+                  class="form-control"
+                />
+                <input
+                  type="text"
+                  [(ngModel)]="resource.resourceType"
+                  placeholder="Type"
+                  class="form-control"
+                />
+                <input
+                  type="number"
+                  [(ngModel)]="resource.quantity"
+                  placeholder="Quantity"
+                  class="form-control"
+                />
+                <button class="btn-remove" (click)="removeResource($index)">Remove</button>
+              </div>
+            }
+            <button class="btn-add" (click)="addResource()">+ Add Resource</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Notes:</label>
+          <textarea
+            [(ngModel)]="editForm().notes"
+            class="form-control"
+            rows="4"
+          ></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-secondary" (click)="cancelEdit()">Cancel</button>
+          <button class="btn-primary" (click)="saveEdit()">Save</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

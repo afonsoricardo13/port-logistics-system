@@ -1,0 +1,104 @@
+@startuml Class Diagram - US 4.1.15 - Record Complementary Tasks
+skinparam shadowing true
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+title US 4.1.15 - Record Complementary Tasks (Level 4 - Class Diagram)
+
+package "WebApi" #LightBlue {
+    class ComplementaryTasksController {
+        - _taskService: IComplementaryTaskService
+        + Create(request: CreateComplementaryTaskDTO): ActionResult<ComplementaryTaskDTO>
+        + Update(id: Guid, request: UpdateComplementaryTaskDTO): ActionResult<ComplementaryTaskDTO>
+        + GetByVveId(vveId: Guid): ActionResult<List<ComplementaryTaskDTO>>
+    }
+    
+    class CreateComplementaryTaskDTO {
+        + VveId: Guid
+        + CategoryCode: string
+        + Description: string?
+        + StartTime: DateTime
+        + EndTime: DateTime?
+        + AssignedResources: List<Guid>?
+    }
+    
+    class UpdateComplementaryTaskDTO {
+        + EndTime: DateTime?
+        + Status: string?
+        + Notes: string?
+    }
+}
+
+package "Application" #LightGreen {
+    interface IComplementaryTaskService {
+        + CreateAsync(dto: CreateComplementaryTaskDTO): Task<ComplementaryTaskDTO>
+        + UpdateAsync(id: Guid, dto: UpdateComplementaryTaskDTO): Task<ComplementaryTaskDTO>
+        + GetByVveIdAsync(vveId: Guid): Task<List<ComplementaryTaskDTO>>
+    }
+    
+    class ComplementaryTaskService {
+        - _repository: IComplementaryTaskRepository
+        - _categoryRepository: IComplementaryTaskCategoryRepository
+        - _vveRepository: IVesselVisitExecutionRepository
+        + CreateAsync(dto: CreateComplementaryTaskDTO): Task<ComplementaryTaskDTO>
+        + UpdateAsync(id: Guid, dto: UpdateComplementaryTaskDTO): Task<ComplementaryTaskDTO>
+    }
+    
+    class ComplementaryTaskDTO {
+        + Id: Guid
+        + VveId: Guid
+        + CategoryCode: string
+        + CategoryName: string
+        + Description: string?
+        + StartTime: DateTime
+        + EndTime: DateTime?
+        + Status: string
+        + Duration: TimeSpan?
+    }
+}
+
+package "Domain" #LightYellow {
+    interface IComplementaryTaskRepository {
+        + AddAsync(task: ComplementaryTask): Task<ComplementaryTask>
+        + UpdateAsync(task: ComplementaryTask): Task<ComplementaryTask>
+        + GetByVveIdAsync(vveId: Guid): Task<List<ComplementaryTask>>
+    }
+    
+    class ComplementaryTask <<aggregate root>> {
+        + Id: Guid
+        + VveId: Guid
+        + CategoryCode: string
+        + Description: string?
+        + StartTime: DateTime
+        + EndTime: DateTime?
+        + Status: TaskStatus
+        + {static} Create(vveId: Guid, categoryCode: string, start: DateTime): ComplementaryTask
+        + Complete(endTime: DateTime): void
+        + GetDuration(): TimeSpan?
+    }
+    
+    class ComplementaryTaskCategory <<aggregate root>> {
+        + Code: string
+        + Name: string
+        + DefaultDuration: TimeSpan?
+        + ExpectedImpact: string?
+    }
+    
+    enum TaskStatus {
+        InProgress
+        Completed
+        Cancelled
+    }
+}
+
+ComplementaryTasksController --> IComplementaryTaskService
+ComplementaryTasksController ..> CreateComplementaryTaskDTO
+ComplementaryTasksController ..> UpdateComplementaryTaskDTO
+IComplementaryTaskService <|.. ComplementaryTaskService
+ComplementaryTaskService --> IComplementaryTaskRepository
+ComplementaryTaskService ..> ComplementaryTaskDTO
+IComplementaryTaskRepository ..> ComplementaryTask
+ComplementaryTask --> TaskStatus
+ComplementaryTask ..> ComplementaryTaskCategory
+
+@enduml

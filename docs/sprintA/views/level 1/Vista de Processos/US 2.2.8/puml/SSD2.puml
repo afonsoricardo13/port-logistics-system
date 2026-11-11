@@ -1,0 +1,27 @@
+@startuml SSD US 2.2.8 - Submit Vessel Visit Notification
+skinparam shadowing true
+skinparam ArrowColor #000000
+skinparam sequence {
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+  ParticipantBorderColor #000000
+  ParticipantBackgroundColor #87CEEB
+  LifeLineBorderColor #000000
+  LifeLineBackgroundColor #87CEEB
+}
+
+actor "Shipping Agent Representative" as Agent
+participant "«system (C4)»\nPort Operations System" as System
+
+activate Agent
+Agent -> System : 1: asks to submit a VVN
+activate System
+System --> Agent : 1.1: shows active VVN and asks to select one
+deactivate System
+Agent -> System : 2: selects VVN and requests submission
+activate System
+System --> Agent : 2.1: marks VVN as "submitted" and notifies Port Authority Officer
+deactivate System
+
+deactivate Agent
+@enduml

@@ -1,0 +1,48 @@
+﻿<div class="resource-usage">
+  <h2>Resource Usage (US 4.1.6)</h2>
+
+  <div class="form-row">
+    <label>Resource Type</label>
+    <select [(ngModel)]="resourceType">
+      <option value="crane">Crane</option>
+      <option value="dock">Dock</option>
+      <option value="staff">Staff</option>
+    </select>
+
+    <label>Resource ID</label>
+    <input [(ngModel)]="resourceId" placeholder="e.g., CRANE-01 or DOCK-A" />
+
+    <label>Start Date</label>
+    <input type="date" [(ngModel)]="startDate" />
+
+    <label>End Date</label>
+    <input type="date" [(ngModel)]="endDate" />
+
+    <button (click)="query()">Query</button>
+  </div>
+
+  <div *ngIf="loading">Loading...</div>
+  <div *ngIf="error" class="error">{{error}}</div>
+
+  <div *ngIf="result">
+    <h3>Summary</h3>
+    <p>Resource: {{result.resourceType}} {{result.resourceId}}</p>
+    <p>Period: {{result.startDate}} - {{result.endDate}}</p>
+    <p>Total Allocated Minutes: {{result.totalUsage}}</p>
+    <p>Total Operations: {{ computeDetailsTotal() }}</p>
+
+    <h3>Details by Date</h3>
+    <table>
+      <thead>
+        <tr><th>Date</th><th>Usage (minutes)</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let d of result.details">
+          <td>{{d.date}}</td>
+          <td>{{d.usage}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+

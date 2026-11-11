@@ -1,0 +1,25 @@
+@startuml SSD US 2.2.10 - View Vessel Visit Notifications
+skinparam shadowing true
+skinparam ArrowColor #000000
+skinparam sequence {
+	ArrowColor Black
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Shipping Agent Representative" as Rep
+participant "«system (C4)»\nPort Operations System" as System
+
+activate Rep
+Rep -> System : 1: request to view Vessel Visit Notifications\n(with optional filters: vessel, status,\nrepresentative, time, scope)
+activate System
+System  --> Rep : 1.1: display notifications with status information\n(in progress, pending, approved with dock,\nrejected with reason)
+deactivate System
+deactivate Rep
+
+@enduml

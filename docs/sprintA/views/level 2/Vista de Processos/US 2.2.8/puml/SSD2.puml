@@ -1,0 +1,34 @@
+@startuml Vista de Processos – Level 2 (US 2.2.8 – Submit Vessel Visit Notification)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Shipping Agent Representative" as Agent
+participant "<<container (C4)>>\nVisualization (UI)" as UI #87CEEB
+participant "<<container (C4)>>\nVisits & Manifests" as VVM #87CEEB
+
+activate Agent
+Agent -> UI: 1: asks to submit a VVN
+activate UI
+UI --> Agent: 1.1: shows active VVN and asks to select one
+deactivate UI
+Agent -> UI: 2: selects VVN and requests submission
+activate UI
+UI -> VVM: 2.1: submit selected VVN (vvnId)
+activate VVM
+VVM --> UI: 2.1.1: marked as "submitted" and Port Authority Officer notified
+UI --> Agent: 2.2: submission confirmation
+deactivate VVM
+deactivate UI
+deactivate Agent
+
+@enduml

@@ -1,0 +1,54 @@
+@startuml Vista de Implementação – Nível 2 (Sprint C)
+top to bottom direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+' ====== estilo ======
+skinparam rectangle {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam component { 
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ====== boundary do sistema ======
+rectangle "Port Operations System" as SYS {
+
+  ' ---- UI (esquerda) ----
+  component "SPA (Web UI)" as UI
+
+  ' ---- módulos (direita, em coluna) ----
+  component "Port Logistics (Backend)" as PORT
+  component "Operations & Execution\nManagement (OEM)" as OEM
+  component "Scheduling & Planning"    as PLAN
+
+  ' ---- Internal databases ----
+  database "Port Logistics DB" as PORT_DB #87CEEB
+  database "OEM DB" as OEM_DB #87CEEB
+
+  ' ---- setas tracejadas (como no exemplo) ----
+  UI  ..> PORT
+  UI  ..> OEM
+  UI  ..> PLAN
+
+  OEM ..> PORT : REST
+  OEM ..> PLAN : REST
+
+  PORT ..> PORT_DB : SQL
+  OEM ..> OEM_DB : SQL
+}
+
+' ====== componente externo: IAM ======
+component "«external»\nIAM\n(Identity & Access Management)" as IAM #F5F5DC
+
+UI ..> IAM : OAuth/OIDC
+PORT ..> IAM : JWT
+OEM ..> IAM : JWT
+@enduml

@@ -1,0 +1,92 @@
+@startuml Logical View - Level 3 (All Containers)
+left to right direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+' ===== estilo =====
+skinparam component { 
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ===== APIs externas =====
+() "UI API"                 as UI_API  #87CEEB
+() "Docks & Resources API"  as DR_API  #87CEEB
+() "Planning API"           as PL_API  #87CEEB
+() "Visits & Manifests API" as VM_API  #87CEEB
+() "filesystem API"         as FS_API  #87CEEB
+
+' ===== boundary do container =====
+rectangle "«component»\n«container (C4)»\nVisualization (UI)" as UI #87CEEB {
+  component "«component»\nController" as UI_CTRL
+  component "«component»\nDTO"        as UI_DTO
+  UI_CTRL --> UI_DTO
+}
+
+rectangle "«component»\n«container (C4)»\nDocks & Resources" as DR #87CEEB {
+  component "«component»\nController"          as DR_CTRL
+  interface "App Service API"      as DR_I_APP
+  interface "DTO API"              as DR_I_DTO
+  component "«component»\nDTO"                as DR_DTO
+
+  component "«component»\nApplication Service" as DR_APP
+  interface "Repo API"            as DR_I_REPO
+  interface "Model API"           as DR_I_MODEL
+
+  component "«component»\nDomain Model (DDD)"   as DR_DOMAIN
+
+  component "«component»\nRepository"          as DR_REPO
+  interface "Persistence API"      as DR_I_PERSIST
+  interface "Data Model API"        as DR_I_DATA
+  component "«component»\nData Model"          as DR_DATA
+  component "«component»\nPersistence"         as DR_PERSIST
+
+  ' Wiring
+  DR_CTRL --> DR_I_DTO
+  DR_I_DTO --> DR_DTO
+  DR_CTRL --> DR_I_APP
+  DR_I_APP --> DR_APP
+  DR_APP  --> DR_I_MODEL
+  DR_I_MODEL --> DR_DOMAIN
+  DR_APP  --> DR_I_REPO
+  DR_I_REPO --> DR_REPO
+  DR_REPO --> DR_I_PERSIST
+  DR_I_PERSIST --> DR_PERSIST
+  DR_REPO --> DR_I_DATA
+  DR_I_DATA --> DR_DATA
+}
+
+rectangle "«component»\n«container (C4)»\nPlanning & Scheduling" as PLAN #87CEEB {
+  component "«component»\nService"     as PL_SVC
+  component "«component»\nPlanner"     as PL_COMP
+  PL_SVC --> PL_COMP
+}
+
+rectangle "«component»\n«container (C4)»\nVisits & Manifests" as VM #87CEEB {
+  component "«component»\nController"  as VM_CTRL
+  component "«component»\nService"     as VM_SVC
+  component "«component»\nRepository"  as VM_REPO
+  component "«component»\nDTO"         as VM_DTO
+  component "«component»\nDomain Model" as VM_DOMAIN
+  VM_CTRL --> VM_DTO
+  VM_CTRL --> VM_SVC
+  VM_SVC  --> VM_REPO
+  VM_SVC  --> VM_DOMAIN
+}
+
+' ===== Entradas/saidas por API =====
+UI_API --> UI
+DR_API --> DR
+PL_API --> PLAN
+VM_API --> VM
+FS_API --> DR
+
+' ===== Layout helpers =====
+UI -[hidden]-> DR
+DR -[hidden]-> PLAN
+PLAN -[hidden]-> VM
+@enduml

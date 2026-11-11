@@ -1,0 +1,54 @@
+{
+  "validResource": {
+    "code": "CRANE-001",
+    "description": "Mobile container crane with 50-ton capacity",
+    "type": "Crane",
+    "capacity": 50,
+    "assignedArea": "DOCK-A1",
+    "status": "Active",
+    "setupTimeMinutes": 30,
+    "qualificationRequirementIds": ["QUAL-001", "QUAL-002"]
+  },
+  "resourceToUpdate": {
+    "code": "TRUCK-001",
+    "description": "Forklift truck for container handling",
+    "type": "Truck",
+    "capacity": 10,
+    "assignedArea": "WAREHOUSE-B",
+    "status": "Active",
+    "setupTimeMinutes": 15,
+    "qualificationRequirementIds": ["QUAL-003"]
+  },
+  "resourceList": [
+    {
+      "code": "CRANE-001",
+      "description": "Mobile container crane with 50-ton capacity",
+      "type": "Crane",
+      "capacity": 50,
+      "assignedArea": "DOCK-A1",
+      "status": "Active",
+      "setupTimeMinutes": 30,
+      "qualificationRequirementIds": ["QUAL-001", "QUAL-002"]
+    },
+    {
+      "code": "TRUCK-001",
+      "description": "Forklift truck for container handling",
+      "type": "Truck",
+      "capacity": 10,
+      "assignedArea": "WAREHOUSE-B",
+      "status": "Active",
+      "setupTimeMinutes": 15,
+      "qualificationRequirementIds": ["QUAL-003"]
+    },
+    {
+      "code": "CRANE-002",
+      "description": "Gantry crane for heavy loads",
+      "type": "Crane",
+      "capacity": 100,
+      "assignedArea": "DOCK-C3",
+      "status": "UnderMaintenance",
+      "setupTimeMinutes": 45,
+      "qualificationRequirementIds": ["QUAL-001"]
+    }
+  ]
+}

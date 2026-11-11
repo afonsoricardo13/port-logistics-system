@@ -1,0 +1,68 @@
+/* Global styles - Consistent design system (US 3.1.2 - AC) */
+
+// CSS Reset
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+// Design system variables - Port Logistics theme
+:root {
+  --primary-color: #0f2b4a;
+  --primary-dark: #0a1e33;
+  --secondary-color: #1a4d7a;
+  --background: #f5f7fa;
+  --surface: #ffffff;
+  --text-primary: #0f2b4a;
+  --text-secondary: #4a5568;
+  --border-color: #e2e8f0;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+// Global typography
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--text-primary);
+  background: var(--background);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+// Utility classes
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.card {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &-primary {
+    background: var(--primary-color);
+    color: white;
+    
+    &:hover {
+      background: var(--primary-dark);
+    }
+  }
+}

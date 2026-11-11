@@ -1,0 +1,77 @@
+@startuml Class Diagram - US 4.1.10 - Search VVEs
+skinparam shadowing true
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+title US 4.1.10 - Search VVEs with Metrics (Level 4 - Class Diagram)
+
+package "WebApi" #LightBlue {
+    class VesselVisitExecutionsController {
+        - _vveService: IVesselVisitExecutionService
+        + Search(query: VveSearchQuery): ActionResult<List<VveSearchResultDTO>>
+    }
+    
+    class VveSearchQuery {
+        + StartDate: DateOnly?
+        + EndDate: DateOnly?
+        + VesselImo: string?
+        + Status: VveStatus?
+    }
+}
+
+package "Application" #LightGreen {
+    interface IVesselVisitExecutionService {
+        + SearchWithMetricsAsync(query: VveSearchQuery): Task<List<VveSearchResultDTO>>
+    }
+    
+    class VesselVisitExecutionService {
+        - _repository: IVesselVisitExecutionRepository
+        - _executedOpRepository: IExecutedOperationRepository
+        + SearchWithMetricsAsync(query: VveSearchQuery): Task<List<VveSearchResultDTO>>
+        - CalculateMetrics(vve: VesselVisitExecution): VveMetrics
+    }
+    
+    class VveSearchResultDTO {
+        + Id: Guid
+        + VvnId: Guid
+        + VesselName: string
+        + VesselImo: string
+        + Status: string
+        + ArrivalTime: DateTime
+        + TotalTurnaroundTime: double?
+        + BerthOccupancyTime: double?
+        + WaitingTimeForBerthing: double?
+        + ArrivalDelay: double?
+        + DepartureDelay: double?
+        + ExecutedOperationsCount: int
+    }
+}
+
+package "Domain" #LightYellow {
+    interface IVesselVisitExecutionRepository {
+        + SearchAsync(query: VveSearchQuery): Task<List<VesselVisitExecution>>
+    }
+    
+    class VesselVisitExecution <<aggregate root>> {
+        + Id: Guid
+        + VvnId: Guid
+        + Status: VveStatus
+        + ArrivalTime: DateTime
+        + BerthingStart: DateTime?
+        + BerthingEnd: DateTime?
+        + ActualDeparture: DateTime?
+        + ExecutedOperations: List<ExecutedOperation>
+        + CalculateTotalTurnaroundTime(): TimeSpan?
+        + CalculateBerthOccupancyTime(): TimeSpan?
+        + CalculateWaitingTimeForBerthing(): TimeSpan?
+    }
+}
+
+VesselVisitExecutionsController --> IVesselVisitExecutionService
+VesselVisitExecutionsController ..> VveSearchQuery
+IVesselVisitExecutionService <|.. VesselVisitExecutionService
+VesselVisitExecutionService --> IVesselVisitExecutionRepository
+VesselVisitExecutionService ..> VveSearchResultDTO
+IVesselVisitExecutionRepository ..> VesselVisitExecution
+
+@enduml

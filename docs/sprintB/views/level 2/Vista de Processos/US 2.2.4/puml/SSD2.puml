@@ -1,0 +1,34 @@
+@startuml Vista de Processos – Level 2 (US 2.2.4 – Update Storage Area)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+  ArrowColor Black
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+  LifeLineBorderColor Black
+  LifeLineBackgroundColor #87CEEB
+  ParticipantBorderColor Black
+  ParticipantBackgroundColor #87CEEB
+  ParticipantFontStyle bold
+}
+
+actor "Port Authority Officer" as PA
+participant "«container (C4)»\nVisualization (UI)" as UI #87CEEB
+participant "«container (C4)»\nDocks & Resources" as SA #87CEEB
+
+activate PA
+PA -> UI: 1: update storage area
+activate UI
+UI --> PA: 1.1: show current storage area data
+deactivate UI
+PA -> UI: 2: storage area data update
+activate UI
+UI --> SA: 2.1: request to update storage area
+activate SA
+SA -> UI: 2.2: storage area updated
+deactivate SA
+UI --> PA: 2.3: storage area updated
+deactivate UI
+deactivate PA
+
+@enduml

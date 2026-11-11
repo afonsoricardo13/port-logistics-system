@@ -1,0 +1,95 @@
+@startuml Vista de Processos - Level 4 (US 2.2.10 - View Vessel Visit Notifications)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Shipping Agent Representative" as Rep
+participant "<<container (C4)>>\nSPA (Web UI)" as UI_CTRL #87CEEB
+participant "<<container (C4)>>\nPort Logistics (Backend)\nController" as VV_CTRL #87CEEB
+participant "<<component>>\nApplication Service" as VV_APP #87CEEB
+participant "<<component>>\nDomain Model\n(VesselVisitNotification)" as VV_DOMAIN #87CEEB
+participant "<<component>>\nRepository" as VV_REPO #87CEEB
+participant "<<component>>\nData Model" as VV_DATA #87CEEB
+participant "<<component>>\nPersistence" as VV_PERSIST #87CEEB
+
+activate Rep
+Rep -> UI_CTRL: 1: GET /api/vessel-visits/notifications\n?vessel={vessel}&status={status}&representative={rep}&dateFrom={date}&dateTo={date}
+activate UI_CTRL
+UI_CTRL -> VV_CTRL: 1.1: getNotifications(filters, representativeId)
+activate VV_CTRL
+VV_CTRL -> VV_APP: 1.1.1: getVesselVisitNotifications(filters, representativeId)
+activate VV_APP
+
+VV_APP -> VV_APP: 1.1.1.1: retrieve representative's organization ID
+
+VV_APP -> VV_REPO: 1.1.1.2: findByFilters(filters, representativeId, organizationId)
+activate VV_REPO
+VV_REPO -> VV_PERSIST: 1.1.1.2.1: query notifications\nWHERE organization_id = {orgId}\nAND (representative_id = {repId} OR scope = 'organization')\nAND vessel LIKE {vessel}\nAND status IN {statuses}\nAND eta BETWEEN {dateFrom} AND {dateTo}
+activate VV_PERSIST
+VV_PERSIST --> VV_REPO: 1.1.1.2.2: notification records
+deactivate VV_PERSIST
+
+alt no records found
+  VV_REPO --> VV_APP: 1.1.1.2.3: empty list
+  VV_APP --> VV_CTRL: 1.1.2: empty list []
+  VV_CTRL --> UI_CTRL: 1.2: HTTP 200 OK {notifications: []}
+  UI_CTRL --> Rep: 1.3: display "No notifications found"
+else records found
+  VV_REPO -> VV_DATA: 1.1.1.2.4: map to domain aggregates
+  activate VV_DATA
+  VV_DATA --> VV_REPO: 1.1.1.2.5: notification aggregates
+  deactivate VV_DATA
+  VV_REPO --> VV_APP: 1.1.1.2.6: list of notifications
+  deactivate VV_REPO
+
+  VV_APP -> VV_DOMAIN: 1.1.1.3: enrich with status details\n(dock assignment, rejection reason)
+  activate VV_DOMAIN
+  loop for each notification
+    VV_DOMAIN -> VV_DOMAIN: extract status-specific data:\n- InProgress: no additional data\n- Submitted: pending approval\n- Approved: assignedDockCode\n- Rejected: rejectionReason
+  end
+  VV_DOMAIN --> VV_APP: 1.1.1.4: enriched notifications
+  deactivate VV_DOMAIN
+
+  VV_APP -> VV_APP: 1.1.1.5: map to DTOs\n(id, vessel, eta, etd, status, assignedDock, rejectionReason)
+
+  VV_APP --> VV_CTRL: 1.1.2: notifications list (VesselVisitNotificationDTO[])
+  deactivate VV_APP
+  VV_CTRL --> UI_CTRL: 1.2: HTTP 200 OK\n{notifications: [{id, vessel, status, ...}]}
+  deactivate VV_CTRL
+  UI_CTRL --> Rep: 1.3: display notifications table\n(in progress, pending, approved with dock,\nrejected with reason)
+end
+
+deactivate UI_CTRL
+deactivate Rep
+
+note right of VV_APP
+  Business Rules enforced:
+  - Representative can view own notifications (BR1)
+  - Representative can view organization's notifications (BR2)
+  - Filters: vessel, status, representative, time range
+  - Status details:
+    * InProgress: editable
+    * Submitted: pending approval
+    * Approved: shows assigned dock
+    * Rejected: shows rejection reason
+end note
+
+note right of VV_REPO
+  Query scope:
+  - Filter by organization ID (mandatory)
+  - Include notifications created by representative
+  - Include notifications from same organization
+  - Apply optional filters (vessel, status, dates)
+  - Sort by ETA descending
+end note
+
+@enduml

@@ -1,0 +1,93 @@
+@startuml Logical View - Level 3 (Onion) - SPA Web UI
+top to bottom direction
+skinparam shadowing true
+skinparam defaultTextAlignment center
+skinparam packageStyle rectangle
+
+skinparam component { 
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ===== API externa =====
+() "UI API" as UI_API #87CEEB
+
+' ===== Container SPA com camadas concêntricas (Onion) =====
+package "«component»\n«container (C4)»\nSPA (Web UI)" #87CEEB {
+
+  ' --------- Presentation Layer (outer - azul claro) ---------
+  package "Presentation Layer                                                                                                                                " #AEEEEE {
+    
+    component "Routing\n(app.routes.ts)" as ROUTE
+    component "Guards\n(4 guards)" as GUARDS
+    component "Interceptors" as INTERCEPT
+
+    interface "Route API" as I_ROUTE
+    interface "Guard API" as I_GUARD
+
+    ' --------- UI Components Layer (verde) ---------
+    package "UI Components Layer                                                                                                        " #C7F0C7 {
+      
+      component "Pages\n(7 pages)" as PAGES
+      component "Components\n(layout, navbar)" as COMP
+      
+      interface "Component API" as I_COMP
+      interface "Service API" as I_SVC
+
+      ' --------- Application Services Layer (rosa) ---------
+      package "Application Services Layer                                                                      " #F7BFBF {
+        
+        component "Services\n(5 services)" as SVC
+        
+        interface "HTTP API" as I_HTTP
+        
+        ' --------- Core Layer (bege - core) ---------
+        package "Core Layer                    " #F7E5B5 {
+          component "HTTP Client\n(HttpClient)" as HTTP
+          component "Environment\nConfig" as ENV
+        }
+      }
+    }
+  }
+}
+
+' ===== Ligações da API externa para Routing =====
+UI_API --> ROUTE
+
+' ===== Ligações do Routing para Guards e Components =====
+ROUTE --> I_ROUTE
+I_ROUTE --> GUARDS
+
+ROUTE --> I_COMP
+I_COMP --> PAGES
+I_COMP --> COMP
+
+' ===== Ligações dos Components para Services =====
+PAGES --> I_SVC
+COMP --> I_SVC
+I_SVC --> SVC
+
+' ===== Ligações dos Guards para Services =====
+GUARDS --> I_GUARD
+I_GUARD --> SVC
+
+' ===== Ligações dos Services para HTTP Client =====
+SVC --> I_HTTP
+I_HTTP --> HTTP
+
+SVC --> ENV
+
+' ===== Ligações dos Interceptors =====
+INTERCEPT --> HTTP
+
+' ===== Conexões a APIs externas (backends) =====
+() "Port Logistics API" as PORT_API #87CEEB
+() "Scheduling API" as SCHED_API #87CEEB
+
+HTTP --> PORT_API
+HTTP --> SCHED_API
+
+@enduml

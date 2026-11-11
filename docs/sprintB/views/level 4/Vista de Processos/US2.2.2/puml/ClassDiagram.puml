@@ -1,0 +1,172 @@
+@startuml Class Diagram - Level 4 (US 2.2.2 - Vessel Management)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+' ===== Presentation Layer (Controllers) =====
+package "Presentation Layer" #87CEEB {
+    class VesselsController <<Controller>> {
+        - _service: VesselService
+        - _logger: ILogger
+        - _errors: List
+        + GetAll(filters): Task
+        + GetByImoNumber(imo: string): Task
+        + Create(dto: VesselDTO): Task
+        + Update(imo: string, dto: VesselDTO): Task
+    }
+}
+
+' ===== Application Layer (Services & DTOs) =====
+package "Application Layer" #87CEEB {
+    class VesselService <<Service>> {
+        - _vesselRepository: IVesselRepository
+        + GetAll(): Task
+        + GetByImoNumber(imo: string): Task
+        + Add(dto: VesselDTO, errors: List): Task
+        + Update(imo: string, dto: VesselDTO, errors: List): Task
+        + Search(filters): Task
+        - ValidateImoFormat(imo: string): bool
+    }
+
+    interface IVesselService {
+        + GetAll(): Task
+        + Add(dto: VesselDTO, errors: List): Task
+        + Update(imo: string, dto: VesselDTO, errors: List): Task
+    }
+
+    class VesselDTO <<DTO>> {
+        + ImoNumber: string
+        + Name: string
+        + VesselType: string
+        + Operator: string
+        + ToDTO(v: Vessel): VesselDTO
+        + ToDomain(dto: VesselDTO): Vessel
+        + UpdateToDomain(vessel: Vessel, dto: VesselDTO): Vessel
+    }
+}
+
+' ===== Domain Layer (Aggregates, Entities, Value Objects) =====
+package "Domain Layer" #87CEEB {
+    class Vessel <<Aggregate Root>> {
+        + Id: long
+        - _imoNumber: string
+        - _name: string
+        - _vesselType: string
+        - _operator: string
+        + ImoNumber: string
+        + Name: string
+        + VesselType: string
+        + Operator: string
+        + Vessel(imo, name, type, operator)
+        + Update(name, type, operator): void
+        + IsValidImoNumber(imo: string): bool
+        - ValidateInvariants(): void
+    }
+
+    interface IVesselRepository <<Repository Interface>> {
+        + GetAllAsync(): Task
+        + GetByImoNumberAsync(imo: string): Task
+        + Add(vessel: Vessel): Task
+        + Update(vessel: Vessel, errors): Task
+        + Exists(imo: string): Task
+        + SearchAsync(imo, name, operator): Task
+    }
+}
+
+' ===== Infrastructure Layer (Repositories & Persistence) =====
+package "Infrastructure Layer" #87CEEB {
+    class VesselRepository <<Repository>> {
+        - _context: AbsanteeContext
+        - _mapper: VesselMapper
+        + GetAllAsync(): Task
+        + GetByImoNumberAsync(imo: string): Task
+        + Add(vessel: Vessel): Task
+        + Update(vessel: Vessel, errors): Task
+        + Exists(imo: string): Task
+        + SearchAsync(filters): Task
+    }
+
+    class VesselDataModel <<Entity>> {
+        + Id: long
+        + ImoNumber: string
+        + Name: string
+        + VesselType: string
+        + Operator: string
+    }
+
+    class VesselMapper <<Mapper>> {
+        + ToDomain(dm: VesselDataModel): Vessel
+        + ToDataModel(v: Vessel): VesselDataModel
+        + UpdateDataModel(v: Vessel, dm: VesselDataModel): void
+    }
+
+    class AbsanteeContext <<Context>> {
+        + Vessels: DbSet
+        + VesselTypes: DbSet
+        + SaveChangesAsync(): Task
+        + OnModelCreating(modelBuilder): void
+    }
+}
+
+' ===== Relationships =====
+VesselsController --> IVesselService : uses
+VesselsController ..> VesselDTO : receives/returns
+
+VesselService ..|> IVesselService : implements
+VesselService --> IVesselRepository : uses
+VesselService ..> Vessel : manipulates
+VesselService ..> VesselDTO : receives/returns
+
+VesselDTO ..> Vessel : maps to/from
+
+IVesselRepository <|.. VesselRepository : implements
+VesselRepository --> AbsanteeContext : uses
+VesselRepository --> VesselMapper : uses
+VesselRepository ..> Vessel : returns
+VesselRepository ..> VesselDataModel : queries/persists
+
+VesselMapper ..> Vessel : creates
+VesselMapper ..> VesselDataModel : creates
+
+AbsanteeContext *-- VesselDataModel : manages
+
+note right of Vessel
+  **Aggregate Root**
+  Enforces business rules:
+  - IMO number: 7 digits with valid check digit
+  - Name, Type, Operator: required, non-empty
+  - IMO is immutable (business key)
+  
+  **US 2.2.2 - Create:**
+  1. Validate IMO format and uniqueness
+  2. Create Vessel aggregate
+  3. Persist via repository
+  
+  **US 2.2.2 - Update:**
+  1. Retrieve by IMO (immutable key)
+  2. Update mutable fields
+  3. Persist changes
+end note
+
+note right of VesselService
+  **Application Service**
+  Orchestrates:
+  - Use case coordination
+  - DTO validation
+  - Repository operations
+  - Error collection
+  - Transactional boundaries
+end note
+
+note right of VesselRepository
+  **Repository**
+  Responsibilities:
+  - Abstracts data access
+  - Maps domain to data models
+  - Handles EF Core operations
+  - Returns pure domain objects
+end note
+
+@enduml
+
+@enduml

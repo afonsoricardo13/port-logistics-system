@@ -1,0 +1,7 @@
+@startuml
+actor "Port Authority Officer" as Officer
+
+( Register and manage representatives ) as ManageReps
+
+Officer --> ManageReps
+@enduml

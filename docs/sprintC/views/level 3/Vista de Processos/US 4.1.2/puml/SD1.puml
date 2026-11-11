@@ -1,0 +1,71 @@
+@startuml Vista de Processos – Level 3 (US 4.1.2 – Generate Operation Plans)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+participant "«container (C4)»\nSPA (Web UI)" as UI #87CEEB
+participant "«component»\nPort Logistics API" as PL_API #87CEEB
+participant "«component»\nScheduling API" as SCHED_API #87CEEB
+participant "«component»\nOperationPlansController" as OP_CTRL #87CEEB
+participant "«component»\nOperationPlanService" as OP_SVC #87CEEB
+participant "«component»\nIOperationPlanRepository" as OP_REPO #87CEEB
+participant "«component»\nOEMDbContext" as DB_CTX #87CEEB
+participant "«external»\nIAM" as IAM #F5F5DC
+
+-> UI: 1: request to generate Operation Plans
+activate UI
+UI -> IAM: 1.1: validate JWT token
+activate IAM
+IAM --> UI: 1.1.1: token valid
+deactivate IAM
+UI --> : 1.2: display date/algorithm selection form
+deactivate UI
+
+-> UI: 2: select date and algorithm
+activate UI
+UI -> PL_API: 2.1: GET /api/vesselvisitnotifications?status=Approved&date=X
+activate PL_API
+PL_API --> UI: 2.1.1: list of approved VVNs
+deactivate PL_API
+
+UI -> SCHED_API: 2.2: POST /api/scheduling/daily (VVNs, algorithm)
+activate SCHED_API
+SCHED_API --> UI: 2.2.1: generated plans (preview)
+deactivate SCHED_API
+
+UI --> : 2.3: display plans preview
+deactivate UI
+
+-> UI: 3: confirm save
+activate UI
+UI -> OP_CTRL: 3.1: POST /api/operationplans/batch
+activate OP_CTRL
+OP_CTRL -> OP_SVC: 3.1.1: SaveBatchAsync(plans, userEmail)
+activate OP_SVC
+loop for each plan
+    OP_SVC -> OP_REPO: 3.1.1.1: AddAsync(plan)
+    activate OP_REPO
+    OP_REPO -> DB_CTX: 3.1.1.1.1: SaveChangesAsync()
+    activate DB_CTX
+    DB_CTX --> OP_REPO: 3.1.1.1.2: saved
+    deactivate DB_CTX
+    OP_REPO --> OP_SVC: 3.1.1.2: plan persisted
+    deactivate OP_REPO
+end
+OP_SVC --> OP_CTRL: 3.1.2: batch saved (with metadata)
+deactivate OP_SVC
+OP_CTRL --> UI: 3.2: 201 Created (plans)
+deactivate OP_CTRL
+UI --> : 3.3: display success confirmation
+deactivate UI
+
+@enduml

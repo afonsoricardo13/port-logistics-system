@@ -1,0 +1,136 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>{{ 'incidentTypes.title' | translate }}</h1>
+    <div class="header-actions">
+      <a routerLink="/operations/incident-types/new" class="btn btn-primary">
+        {{ 'incidentTypes.create' | translate }}
+      </a>
+    </div>
+  </div>
+
+  <div class="filters-bar">
+    <div class="filter-group">
+      <label>{{ 'incidentTypes.filterBySeverity' | translate }}:</label>
+      <select [(ngModel)]="filterSeverity" (change)="onSeverityChange()" class="filter-select">
+        <option value="all">{{ 'incidentTypes.allSeverities' | translate }}</option>
+        <option value="Minor">Minor</option>
+        <option value="Major">Major</option>
+        <option value="Critical">Critical</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>{{ 'incidentTypes.filterByParent' | translate }}:</label>
+      <select [(ngModel)]="filterParent" (change)="onParentChange()" class="filter-select">
+        <option value="all">{{ 'incidentTypes.allTypes' | translate }}</option>
+        @for (parent of parentTypes; track parent.code) {
+          <option [value]="parent.code">{{ parent.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <button class="btn btn-secondary" (click)="toggleRootFilter()">
+        {{ filterRootOnly ? ('incidentTypes.showAll' | translate) : ('incidentTypes.showRootOnly' | translate) }}
+      </button>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="loading">{{ 'common.loading' | translate }}</div>
+  }
+
+  @if (error) {
+    <div class="alert alert-error">{{ error }}</div>
+  }
+
+  @if (!loading && !error) {
+    <div class="incident-types-grid">
+      @for (type of filteredTypes; track type.code) {
+        <div class="incident-type-card">
+          <div class="card-header">
+            <div class="type-info">
+              <h3>{{ type.name }}</h3>
+              <span class="type-code">{{ type.code }}</span>
+            </div>
+            <span class="severity-badge" [ngClass]="getSeverityClass(type.severity)">
+              {{ type.severity }}
+            </span>
+          </div>
+
+          <p class="description">{{ type.description }}</p>
+
+          @if (type.parentTypeName) {
+            <div class="parent-info">
+              <span class="label">Parent:</span>
+              <span class="value">{{ type.parentTypeName }}</span>
+            </div>
+          }
+
+          @if (type.childTypes && type.childTypes.length > 0) {
+            <div class="children-info">
+              <span class="label">Children ({{ type.childTypes.length }}):</span>
+              <ul class="children-list">
+                @for (child of type.childTypes; track child.code) {
+                  <li>
+                    <span class="child-name">{{ child.name }}</span>
+                    <span class="child-severity" [ngClass]="getSeverityClass(child.severity)">
+                      {{ child.severity }}
+                    </span>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+
+          <div class="card-actions">
+            <a [routerLink]="['/operations/incident-types', type.code, 'edit']" class="btn btn-sm btn-secondary">
+              {{ 'common.edit' | translate }}
+            </a>
+            <button (click)="deleteIncidentType(type.code, type.name)" class="btn btn-sm btn-danger">
+              {{ 'common.delete' | translate }}
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (filteredTypes.length === 0 && incidentTypes.length > 0) {
+      <div class="empty-state">
+        <p>{{ 'incidentTypes.noMatchingTypes' | translate }}</p>
+      </div>
+    }
+
+    @if (incidentTypes.length === 0) {
+      <div class="empty-state">
+        <p>{{ 'incidentTypes.noData' | translate }}</p>
+        <a routerLink="/operations/incident-types/new" class="btn btn-primary">
+          {{ 'incidentTypes.createFirst' | translate }}
+        </a>
+      </div>
+    }
+  }
+
+  <!-- Delete Confirmation Modal -->
+  @if (showDeleteModal && deleteTarget) {
+    <div class="modal-overlay" (click)="cancelDelete()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ 'incidentTypes.confirmDelete' | translate }}</h2>
+        </div>
+        <div class="modal-body">
+          <p>{{ 'incidentTypes.deleteMessage' | translate }}</p>
+          <p class="delete-target">"{{ deleteTarget.name }}" ({{ deleteTarget.code }})</p>
+        </div>
+        <div class="modal-actions">
+          <button (click)="cancelDelete()" class="btn btn-secondary">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button (click)="confirmDelete()" class="btn btn-danger">
+            {{ 'common.delete' | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

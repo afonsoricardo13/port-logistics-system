@@ -1,0 +1,71 @@
+@startuml Vista de Processos – Level 3 (US 2.2.9 – Change Vessel Visit Notification)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Port Authority Officer" as PA
+participant "«container (C4)»\nVisualization (UI)" as UI_CTRL #87CEEB
+participant "«container (C4)»\nVessel Visits\nController" as VVM_CTRL #87CEEB
+participant "«component»\nApplication Service" as VVM_APP #87CEEB
+participant "«component»\nDomain Model (VesselVisit)" as VVM_DOMAIN #87CEEB
+participant "«component»\nRepository" as VVM_REPO #87CEEB
+participant "«component»\nData Model" as VVM_DATA #87CEEB
+participant "«component»\nPersistence" as VVM_PERSIST #87CEEB
+
+activate PA
+PA -> UI_CTRL: 1: change vessel visit
+activate UI_CTRL
+UI_CTRL --> PA: 1.1: show current vessel visit details
+deactivate UI_CTRL
+PA -> UI_CTRL: 2: submit change (arrival, departure, berth, remarks)
+activate UI_CTRL
+UI_CTRL -> VVM_CTRL: 2.1: request to change vessel visit (VesselVisitDTO)
+activate VVM_CTRL
+VVM_CTRL -> VVM_APP: 2.1.1: changeVesselVisit(visitId, VesselVisitDTO)
+activate VVM_APP
+VVM_APP -> VVM_REPO: 2.1.1.1: getById(visitId)
+activate VVM_REPO
+VVM_REPO -> VVM_PERSIST: 2.1.1.1.1: fetch(record)
+activate VVM_PERSIST
+VVM_PERSIST --> VVM_REPO: 2.1.1.1.2: record
+deactivate VVM_PERSIST
+VVM_REPO -> VVM_DATA: 2.1.1.1.3: map to domain
+activate VVM_DATA
+VVM_DATA --> VVM_REPO: 2.1.1.1.4: vessel visit aggregate
+deactivate VVM_DATA
+VVM_REPO --> VVM_APP: 2.1.1.2: vessel visit aggregate
+deactivate VVM_REPO
+VVM_APP -> VVM_DOMAIN: 2.1.1.3: validate & apply changes
+activate VVM_DOMAIN
+VVM_DOMAIN --> VVM_APP: 2.1.1.4: vessel visit updated
+deactivate VVM_DOMAIN
+VVM_APP -> VVM_REPO: 2.1.1.5: save(updated vessel visit)
+activate VVM_REPO
+VVM_REPO -> VVM_DATA: 2.1.1.5.1: map to data model
+activate VVM_DATA
+VVM_DATA --> VVM_REPO: 2.1.1.5.2: updated record
+deactivate VVM_DATA
+VVM_REPO -> VVM_PERSIST: 2.1.1.5.3: persist(updated record)
+activate VVM_PERSIST
+VVM_PERSIST --> VVM_REPO: 2.1.1.5.4: ok
+deactivate VVM_PERSIST
+VVM_REPO --> VVM_APP: 2.1.1.6: persisted(updated vessel visit)
+deactivate VVM_REPO
+VVM_APP --> VVM_CTRL: 2.1.2: vessel visit changed (VesselVisitDTO)
+deactivate VVM_APP
+VVM_CTRL --> UI_CTRL: 2.2: change confirmation
+deactivate VVM_CTRL
+UI_CTRL --> PA: 2.3: show change confirmation
+deactivate UI_CTRL
+deactivate PA
+
+@enduml

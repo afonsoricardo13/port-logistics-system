@@ -1,0 +1,45 @@
+@startuml Vista de Implementação – Nível 2 (Port Operations System)
+left to right direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+' ====== estilo (como pedes) ======
+skinparam rectangle {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam component { 
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ====== boundary do sistema ======
+rectangle "Port Operations System" as SYS {
+
+  ' ---- UI (esquerda) ----
+  component "UI" as UI
+
+  ' ---- módulos (direita, em coluna) ----
+  component "Planning & Scheduling" as PLAN
+  component "Docks & Resources"     as RES
+  component "Visits & Manifests"    as VIS
+
+  ' ---- ordenar/posicionar (ligações ocultas) ----
+  UI  -[hidden]-> PLAN
+  PLAN -[hidden]-> RES
+  RES -[hidden]-> VIS
+
+  ' ---- setas tracejadas (como no exemplo) ----
+  UI  ..> PLAN
+  UI  ..> RES
+  UI  ..> VIS
+
+  PLAN ..down..> RES
+  RES  ..down..> VIS
+}
+@enduml

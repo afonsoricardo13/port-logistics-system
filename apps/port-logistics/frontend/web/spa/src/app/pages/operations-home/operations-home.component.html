@@ -1,0 +1,22 @@
+<div class="operations-container">
+  <div class="operations-header">
+    <h1>{{ 'operations.title' | translate }}</h1>
+    <p class="subtitle">{{ 'operations.subtitle' | translate }}</p>
+  </div>
+
+  <nav class="operations-tabs">
+    @for (tab of visibleTabs; track tab.route) {
+      <a 
+        [routerLink]="tab.route" 
+        routerLinkActive="active"
+        class="tab-link">
+        <span class="tab-icon">{{ tab.icon }}</span>
+        <span class="tab-label">{{ tab.label | translate }}</span>
+      </a>
+    }
+  </nav>
+
+  <div class="operations-content">
+    <router-outlet></router-outlet>
+  </div>
+</div>

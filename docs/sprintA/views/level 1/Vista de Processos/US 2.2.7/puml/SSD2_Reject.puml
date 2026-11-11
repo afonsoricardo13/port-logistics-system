@@ -1,0 +1,35 @@
+@startuml SSD US 2.2.7 - Reject Vessel Visit Notification
+skinparam shadowing true
+skinparam ArrowColor #000000
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Port Authority Officer" as Officer
+participant "«system (C4)»\nPort Operations System" as System
+
+activate Officer
+Officer -> System : 1: select notification to reject
+activate System
+System --> Officer : 1.1: show notification details
+deactivate System
+
+Officer -> System : 2: reject notification
+activate System
+System --> Officer : 2.1: request rejection reason
+deactivate System
+
+Officer -> System : 3: provide reason and confirm
+activate System
+System --> Officer : 3.1: notification rejected successfully\n(reason logged, agent notified)
+deactivate System
+deactivate Officer
+
+@enduml

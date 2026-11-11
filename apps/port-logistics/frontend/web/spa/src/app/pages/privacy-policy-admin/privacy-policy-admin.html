@@ -1,0 +1,236 @@
+<div class="admin-container">
+  <div class="admin-header">
+    <h1>Privacy Policy Management</h1>
+    <p class="subtitle">Manage privacy policy versions and notifications (US 4.5.1 - GDPR Compliance)</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'history'"
+      (click)="switchTab('history')">
+      History & Versions
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'create'"
+      (click)="switchTab('create')">
+      Create New Version
+    </button>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <!-- History Tab -->
+  <div *ngIf="activeTab === 'history'" class="tab-content">
+    <div class="history-header">
+      <h2>Policy Version History</h2>
+      <button class="btn btn-secondary" (click)="loadHistory()" [disabled]="historyLoading">
+        {{ historyLoading ? 'Loading...' : 'Refresh' }}
+      </button>
+    </div>
+
+    <!-- History List -->
+    <div *ngIf="historyLoading" class="loading">Loading history...</div>
+
+    <div *ngIf="!historyLoading && history.length === 0" class="empty-state">
+      <p>No privacy policy versions found. Create the first version.</p>
+    </div>
+
+    <div *ngIf="!historyLoading && history.length > 0" class="history-list">
+      <div *ngFor="let policy of history" class="history-card" [class.active]="policy.isActive">
+        <div class="card-header">
+          <div>
+            <h3>Version {{ policy.version }}</h3>
+            <span *ngIf="policy.isActive" class="badge badge-active">ACTIVE</span>
+            <span *ngIf="!policy.isActive" class="badge badge-inactive">INACTIVE</span>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-sm btn-primary" (click)="viewPolicy(policy.version)">
+              View Full Content
+            </button>
+            <button 
+              *ngIf="!policy.isActive" 
+              class="btn btn-sm btn-success" 
+              (click)="activatePolicy(policy.id, policy.version)"
+              [disabled]="loading">
+              Activate
+            </button>
+            <button 
+              *ngIf="policy.isActive && !policy.notifiedAt" 
+              class="btn btn-sm btn-warning" 
+              (click)="notifyUsers(policy.id, policy.version)"
+              [disabled]="loading">
+              Notify Users
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="policy-meta">
+            <p><strong>Effective Date:</strong> {{ formatDate(policy.effectiveDate) }}</p>
+            <p><strong>Created:</strong> {{ formatDate(policy.createdAt) }} by {{ policy.createdBy }}</p>
+            <p *ngIf="policy.notifiedAt"><strong>Users Notified:</strong> {{ formatDate(policy.notifiedAt) }}</p>
+          </div>
+          
+          <div *ngIf="policy.changeNotes" class="change-notes">
+            <strong>Change Notes:</strong> {{ policy.changeNotes }}
+          </div>
+
+          <div class="content-preview">
+            <strong>Content Preview:</strong>
+            <p>{{ policy.contentPreview }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Tab -->
+  <div *ngIf="activeTab === 'create'" class="tab-content">
+    <div class="create-header">
+      <h2>Create New Privacy Policy Version</h2>
+      <p class="gdpr-notice">
+        <strong>US 4.5.2 - GDPR Compliance:</strong> 
+        The policy must comply with RGPD Articles 13-14 and include information about 
+        non-user personal data (vessel crew, etc.)
+      </p>
+    </div>
+    
+    <form class="policy-form" (ngSubmit)="createPolicy()">
+      <!-- GDPR Template Actions (US 4.5.2) -->
+      <div class="template-actions">
+        <button 
+          type="button" 
+          class="btn btn-info"
+          (click)="loadGDPRTemplate()">
+          📋 Load GDPR-Compliant Template
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-secondary"
+          (click)="validateContent()"
+          [disabled]="!newPolicy.content">
+          ✓ Validate GDPR Compliance
+        </button>
+        <span class="template-hint">Start with the template to ensure full GDPR compliance</span>
+      </div>
+
+      <!-- Content Editor -->
+      <div class="form-group">
+        <label for="content">
+          Policy Content (HTML) <span class="required">*</span>
+        </label>
+        <p class="help-text">
+          <strong>Required GDPR Elements (Arts 13-14):</strong> 
+          Data controller identity, purposes, legal basis, data categories, 
+          recipients, retention periods, data subject rights, 
+          <strong>non-user data sources</strong> (vessel crew, passengers).
+        </p>
+        <textarea 
+          id="content"
+          class="form-control" 
+          [(ngModel)]="newPolicy.content" 
+          name="content"
+          rows="25"
+          required
+          placeholder="Click 'Load GDPR-Compliant Template' above to start with a complete structure..."></textarea>
+        <small class="char-count" [class.error]="newPolicy.content.length < 500">
+          {{ newPolicy.content.length }} characters (minimum 500 for GDPR compliance)
+        </small>
+      </div>
+
+      <!-- Effective Date -->
+      <div class="form-group">
+        <label for="effectiveDate">
+          Effective Date <span class="required">*</span>
+        </label>
+        <input 
+          type="date" 
+          id="effectiveDate"
+          class="form-control" 
+          [(ngModel)]="newPolicy.effectiveDate" 
+          name="effectiveDate"
+          required />
+      </div>
+
+      <!-- Change Notes -->
+      <div class="form-group">
+        <label for="changeNotes">Change Notes (Optional)</label>
+        <textarea 
+          id="changeNotes"
+          class="form-control" 
+          [(ngModel)]="newPolicy.changeNotes" 
+          name="changeNotes"
+          rows="3"
+          placeholder="Summary of changes from previous version..."></textarea>
+      </div>
+
+      <!-- Activation Option -->
+      <div class="form-group checkbox-group">
+        <label>
+          <input 
+            type="checkbox" 
+            [(ngModel)]="newPolicy.activateImmediately" 
+            name="activateImmediately" />
+          Activate Immediately
+        </label>
+        <p class="help-text">If unchecked, policy will be saved as draft and can be activated later.</p>
+      </div>
+
+      <!-- Notification Option -->
+      <div class="form-group checkbox-group">
+        <label>
+          <input 
+            type="checkbox" 
+            [(ngModel)]="newPolicy.notifyUsers" 
+            name="notifyUsers"
+            [disabled]="!newPolicy.activateImmediately" />
+          Notify All Users via Email
+        </label>
+        <p class="help-text">Sends email notification to all registered users about policy change (RGPD Art 13.3).</p>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="form-actions">
+        <button 
+          type="submit" 
+          class="btn btn-primary btn-lg" 
+          [disabled]="loading || newPolicy.content.length < 100">
+          {{ loading ? 'Creating...' : 'Create Privacy Policy' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Policy Detail Modal (overlay) -->
+  <div *ngIf="selectedPolicy" class="modal-overlay" (click)="closeView()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Privacy Policy - Version {{ selectedPolicy.version }}</h2>
+        <button class="btn-close" (click)="closeView()">×</button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="policy-meta">
+          <p><strong>Effective Date:</strong> {{ formatDate(selectedPolicy.effectiveDate) }}</p>
+          <p><strong>Created:</strong> {{ formatDate(selectedPolicy.createdAt) }} by {{ selectedPolicy.createdBy }}</p>
+          <p><strong>Status:</strong> {{ selectedPolicy.isActive ? 'Active' : 'Inactive' }}</p>
+          <p *ngIf="selectedPolicy.notifiedAt"><strong>Users Notified:</strong> {{ formatDate(selectedPolicy.notifiedAt) }}</p>
+          <p *ngIf="selectedPolicy.changeNotes"><strong>Change Notes:</strong> {{ selectedPolicy.changeNotes }}</p>
+        </div>
+
+        <hr />
+
+        <div class="policy-full-content" [innerHTML]="selectedPolicy.content"></div>
+      </div>
+    </div>
+  </div>
+</div>

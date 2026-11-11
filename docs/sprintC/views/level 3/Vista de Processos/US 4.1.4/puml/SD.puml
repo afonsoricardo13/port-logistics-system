@@ -1,0 +1,65 @@
+@startuml SD - US 4.1.4 - View Operation Plan Details (Level 3)
+skinparam shadowing true
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+title US 4.1.4 - View Operation Plan Details (SD Level 3 - OEM Backend)
+
+actor "Logistics Operator" as LO
+
+box "SPA (Angular)" #LightBlue
+    participant "OperationPlanDetailsComponent" as COMP
+end box
+
+box "OEM Backend" #LightGreen
+    participant "OperationPlansController" as CTRL
+    participant "OperationPlanService" as SVC
+    participant "PortLogisticsClient" as PL_CLIENT
+    participant "IOperationPlanRepository" as REPO
+end box
+
+database "«internal»\nOEM DB" as DB #87CEEB
+
+LO -> COMP: 1: viewDetails(planId)
+activate COMP
+
+COMP -> CTRL: 1.1: GET /api/operation-plans/{planId}
+activate CTRL
+
+CTRL -> SVC: 1.2: GetByIdWithDetailsAsync(planId)
+activate SVC
+
+SVC -> REPO: 1.3: GetByIdWithOperationsAsync(planId)
+activate REPO
+REPO -> DB: 1.4: SELECT with PlannedOperations
+activate DB
+DB --> REPO: 1.5: plan with operations
+deactivate DB
+REPO --> SVC: 1.6: OperationPlan
+deactivate REPO
+
+SVC -> PL_CLIENT: 1.7: GetVvnAsync(plan.VvnId)
+activate PL_CLIENT
+PL_CLIENT --> SVC: 1.8: VvnDTO (with vessel, dock info)
+deactivate PL_CLIENT
+
+SVC -> SVC: 1.9: enrichPlanDTO(plan, vvn)
+
+SVC --> CTRL: 1.10: OperationPlanDetailsDTO
+deactivate SVC
+
+CTRL --> COMP: 1.11: 200 OK (planDetails)
+deactivate CTRL
+
+COMP --> LO: 1.12: display plan with operations timeline
+deactivate COMP
+
+@enduml

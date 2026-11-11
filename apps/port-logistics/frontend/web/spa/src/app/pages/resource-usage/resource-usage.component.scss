@@ -1,0 +1,9 @@
+﻿/* Minimal styles for resource usage page */
+.resource-usage { padding: 12px; }
+.form-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+.form-row label { font-weight:600; }
+.form-row input, .form-row select { padding:6px 8px; }
+table { width:100%; border-collapse:collapse; margin-top:12px; }
+table th, table td { border:1px solid #ddd; padding:8px; text-align:left; }
+.error { color: #b00020; }
+

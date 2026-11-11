@@ -1,0 +1,149 @@
+<div class="staff-detail-container">
+  <div class="detail-header">
+    <h1>Operating Staff Details</h1>
+    <button class="btn btn-secondary" (click)="onBack()">
+      ← Back to List
+    </button>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading staff member details...</p>
+  </div>
+
+  <!-- Staff Details -->
+  <div *ngIf="!loading && staffMember" class="staff-details">
+    <!-- Header with Actions -->
+    <div class="details-header">
+      <div class="staff-name">
+        <h2>{{ staffMember.name }}</h2>
+        <span class="status-badge" [ngClass]="'status-' + statusClass">
+          {{ staffMember.status }}
+        </span>
+      </div>
+
+      <div class="actions" *ngIf="canManageStaff()">
+        <button class="btn btn-info" (click)="onEdit()">
+          Edit
+        </button>
+        <button 
+          *ngIf="staffMember.status === 'Available'" 
+          class="btn btn-warning" 
+          (click)="onDeactivate()">
+          Deactivate
+        </button>
+        <button 
+          *ngIf="staffMember.status === 'Unavailable'" 
+          class="btn btn-success" 
+          (click)="onReactivate()">
+          Reactivate
+        </button>
+      </div>
+    </div>
+
+    <!-- Basic Information -->
+    <section class="detail-section">
+      <h3>Basic Information</h3>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <label>Mecanographic Number</label>
+          <div class="detail-value">{{ staffMember.mecanographicNumber }}</div>
+        </div>
+
+        <div class="detail-item">
+          <label>Full Name</label>
+          <div class="detail-value">{{ staffMember.name }}</div>
+        </div>
+
+        <div class="detail-item">
+          <label>Email</label>
+          <div class="detail-value">
+            <a [href]="'mailto:' + staffMember.email">{{ staffMember.email }}</a>
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <label>Phone Number</label>
+          <div class="detail-value">
+            <a [href]="'tel:' + staffMember.phoneNumber">{{ staffMember.phoneNumber }}</a>
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <label>Status</label>
+          <div class="detail-value">
+            <span class="status-badge" [ngClass]="'status-' + statusClass">
+              {{ staffMember.status }}
+            </span>
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <label>Operational Window</label>
+          <div class="detail-value">{{ formattedOperationalWindow }}</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Qualifications -->
+    <section class="detail-section">
+      <h3>Qualifications</h3>
+      <div class="qualifications-list">
+        <span 
+          *ngFor="let qualification of staffMember.qualifications" 
+          class="qualification-badge">
+          {{ qualification }}
+        </span>
+      </div>
+      <p *ngIf="staffMember.qualifications.length === 0" class="empty-message">
+        No qualifications listed.
+      </p>
+    </section>
+
+    <!-- Status History -->
+    <section class="detail-section" *ngIf="staffMember.statusHistory && staffMember.statusHistory.length > 0">
+      <h3>Status History</h3>
+      <div class="history-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Date & Time</th>
+              <th>Status</th>
+              <th>Operator</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let entry of staffMember.statusHistory">
+              <td>{{ entry.timestamp | date:'short' }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="entry.status === 'Available' ? 'status-available' : 'status-unavailable'">
+                  {{ entry.status }}
+                </span>
+              </td>
+              <td>{{ entry.operatorName }}</td>
+              <td>{{ entry.reason || '-' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- Not Found -->
+  <div *ngIf="!loading && !staffMember && !error" class="empty-state">
+    <p>Staff member not found.</p>
+    <button class="btn btn-secondary" (click)="onBack()">Back to List</button>
+  </div>
+</div>

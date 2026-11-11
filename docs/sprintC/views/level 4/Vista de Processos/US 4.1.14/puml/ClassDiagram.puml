@@ -1,0 +1,87 @@
+@startuml Vista Logica - Level 4 (US 4.1.14 - Complementary Task Categories)
+
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor<<Controller>> LightBlue
+    BackgroundColor<<Service>> LightGreen
+    BackgroundColor<<Repository>> LightYellow
+    BackgroundColor<<Entity>> LightCoral
+    BackgroundColor<<DTO>> Wheat
+    BackgroundColor<<ValueObject>> LightGray
+}
+
+package "WebApi Layer" {
+    class ComplementaryTaskCategoriesController <<Controller>> {
+        - _repository: IComplementaryTaskCategoryRepository
+        - _logger: ILogger<ComplementaryTaskCategoriesController>
+        + GetAll(): Task<ActionResult<IEnumerable<ComplementaryTaskCategory>>>
+        + GetByCode(code: string): Task<ActionResult<ComplementaryTaskCategory>>
+        + Create(category: ComplementaryTaskCategory): Task<ActionResult<ComplementaryTaskCategory>>
+        + Update(code: string, dto: UpdateComplementaryTaskCategoryDTO): Task<ActionResult<ComplementaryTaskCategory>>
+        + Delete(code: string): Task<ActionResult>
+    }
+}
+
+package "Application Layer" {
+    class ComplementaryTaskCategoryDTO <<DTO>> {
+        + Code: string
+        + Name: string
+        + Description: string
+        + DefaultDuration: TimeSpan?
+        + ExpectedImpact: string?
+    }
+
+    class UpdateComplementaryTaskCategoryDTO <<DTO>> {
+        + Name: string?
+        + Description: string?
+        + DefaultDuration: TimeSpan?
+        + ExpectedImpact: string?
+    }
+}
+
+package "Domain Layer" {
+    class ComplementaryTaskCategory <<Entity>> {
+        + Code: string {get; private set}
+        + Name: string {get; set}
+        + Description: string {get; set}
+        + DefaultDuration: TimeSpan? {get; set}
+        + ExpectedImpact: string? {get; set}
+        + ComplementaryTaskCategory(code, name, description)
+        - ValidateCode(code: string): void
+    }
+
+    interface IComplementaryTaskCategoryRepository <<Repository>> {
+        + GetAllAsync(): Task<IEnumerable<ComplementaryTaskCategory>>
+        + GetByCodeAsync(code: string): Task<ComplementaryTaskCategory?>
+        + AddAsync(category: ComplementaryTaskCategory): Task<ComplementaryTaskCategory>
+        + UpdateAsync(category: ComplementaryTaskCategory): Task<ComplementaryTaskCategory>
+        + DeleteAsync(code: string): Task<bool>
+        + ExistsAsync(code: string): Task<bool>
+    }
+}
+
+package "DataModel Layer" {
+    class ComplementaryTaskCategoryRepository <<Repository>> {
+        - _context: OEMDbContext
+        + GetAllAsync(): Task<IEnumerable<ComplementaryTaskCategory>>
+        + GetByCodeAsync(code: string): Task<ComplementaryTaskCategory?>
+        + AddAsync(category: ComplementaryTaskCategory): Task<ComplementaryTaskCategory>
+        + UpdateAsync(category: ComplementaryTaskCategory): Task<ComplementaryTaskCategory>
+        + DeleteAsync(code: string): Task<bool>
+        + ExistsAsync(code: string): Task<bool>
+    }
+}
+
+' Relationships
+ComplementaryTaskCategoriesController --> IComplementaryTaskCategoryRepository
+ComplementaryTaskCategoryRepository ..|> IComplementaryTaskCategoryRepository
+
+note right of ComplementaryTaskCategory
+    Category codes follow pattern: CTC###
+    Examples:
+    - CTC001: Security Check
+    - CTC002: Hull Maintenance
+    - CTC003: Deck Cleaning
+end note
+
+@enduml

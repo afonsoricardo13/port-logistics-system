@@ -1,0 +1,133 @@
+@startuml Logical View - Level 3 (OEM Backend)
+top to bottom direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+' ===== estilo =====
+skinparam component { 
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ===== APIs externas =====
+() "OEM API"              as OEM_API  #87CEEB
+() "Port Logistics API"   as PL_API   #87CEEB
+() "Scheduling API"       as SCHED_API #87CEEB
+
+' ===== boundary do container OEM =====
+rectangle "«component»\n«container (C4)»\nOperations & Execution Management (OEM)" as OEM #87CEEB {
+
+  component "«component»\nOperationPlansController"         as OP_CTRL
+  component "«component»\nVesselVisitExecutionsController"  as VVE_CTRL
+  component "«component»\nExecutedOperationsController"     as EO_CTRL
+  component "«component»\nIncidentTypesController"          as IT_CTRL
+  component "«component»\nIncidentsController"              as INC_CTRL
+  component "«component»\nComplementaryTaskCategoriesController" as CTC_CTRL
+  component "«component»\nComplementaryTasksController"     as CT_CTRL
+  
+  interface "App Service API"      as OEM_I_APP
+  
+  component "«component»\nOperationPlanService"             as OP_SVC
+  component "«component»\nVesselVisitExecutionService"      as VVE_SVC
+  component "«component»\nExecutedOperationService"         as EO_SVC
+  component "«component»\nIncidentTypeService"              as IT_SVC
+  component "«component»\nIncidentService"                  as INC_SVC
+  component "«component»\nComplementaryTaskService"         as CT_SVC
+  
+  interface "Domain API"           as OEM_I_DOMAIN
+  
+  component "«component»\nOperationPlan"                    as OP_DOMAIN
+  component "«component»\nVesselVisitExecution"             as VVE_DOMAIN
+  component "«component»\nExecutedOperation"                as EO_DOMAIN
+  component "«component»\nIncident"                         as INC_DOMAIN
+  component "«component»\nIncidentType"                     as IT_DOMAIN
+  component "«component»\nComplementaryTask"                as CT_DOMAIN
+  component "«component»\nComplementaryTaskCategory"        as CTC_DOMAIN
+  
+  interface "Repo API"             as OEM_I_REPO
+  
+  component "«component»\nRepositories"                     as OEM_REPO
+  
+  interface "Persistence API"      as OEM_I_PERSIST
+  
+  component "«component»\nOEMDbContext"                     as OEM_PERSIST
+
+  ' Wiring - Controllers to Services
+  OP_CTRL --> OEM_I_APP
+  VVE_CTRL --> OEM_I_APP
+  EO_CTRL --> OEM_I_APP
+  IT_CTRL --> OEM_I_APP
+  INC_CTRL --> OEM_I_APP
+  CTC_CTRL --> OEM_I_APP
+  CT_CTRL --> OEM_I_APP
+  
+  OEM_I_APP --> OP_SVC
+  OEM_I_APP --> VVE_SVC
+  OEM_I_APP --> EO_SVC
+  OEM_I_APP --> IT_SVC
+  OEM_I_APP --> INC_SVC
+  OEM_I_APP --> CT_SVC
+  
+  ' Services to Domain
+  OP_SVC --> OEM_I_DOMAIN
+  VVE_SVC --> OEM_I_DOMAIN
+  EO_SVC --> OEM_I_DOMAIN
+  IT_SVC --> OEM_I_DOMAIN
+  INC_SVC --> OEM_I_DOMAIN
+  CT_SVC --> OEM_I_DOMAIN
+  
+  OEM_I_DOMAIN --> OP_DOMAIN
+  OEM_I_DOMAIN --> VVE_DOMAIN
+  OEM_I_DOMAIN --> EO_DOMAIN
+  OEM_I_DOMAIN --> INC_DOMAIN
+  OEM_I_DOMAIN --> IT_DOMAIN
+  OEM_I_DOMAIN --> CT_DOMAIN
+  OEM_I_DOMAIN --> CTC_DOMAIN
+  
+  ' Services to Repositories
+  OP_SVC --> OEM_I_REPO
+  VVE_SVC --> OEM_I_REPO
+  EO_SVC --> OEM_I_REPO
+  IT_SVC --> OEM_I_REPO
+  INC_SVC --> OEM_I_REPO
+  CT_SVC --> OEM_I_REPO
+  
+  OEM_I_REPO --> OEM_REPO
+  
+  ' Repositories to Persistence
+  OEM_REPO --> OEM_I_PERSIST
+  OEM_I_PERSIST --> OEM_PERSIST
+}
+
+' ===== Internal Database =====
+database "«internal»\nOEM Database" as DB #87CEEB
+
+OEM_PERSIST --> DB : SQL
+
+' ===== External IAM =====
+component "«external»\nIAM" as IAM #F5F5DC
+
+OP_CTRL --> IAM : JWT validation
+VVE_CTRL --> IAM : JWT validation
+IT_CTRL --> IAM : JWT validation
+INC_CTRL --> IAM : JWT validation
+
+' ===== API connections =====
+OEM_API  --> OP_CTRL
+OEM_API  --> VVE_CTRL
+OEM_API  --> EO_CTRL
+OEM_API  --> IT_CTRL
+OEM_API  --> INC_CTRL
+OEM_API  --> CTC_CTRL
+OEM_API  --> CT_CTRL
+
+' ===== External API calls =====
+OP_SVC --> PL_API : fetch VVN data
+VVE_SVC --> PL_API : fetch VVN data
+OP_SVC --> SCHED_API : generate plans
+
+@enduml

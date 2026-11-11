@@ -1,0 +1,216 @@
+<!-- US 2.2.5: Register Organization with Initial Representative -->
+<div class="organization-form-container">
+  <div class="header">
+    <h1>{{ isEditMode ? 'Edit Organization' : 'Register New Organization' }}</h1>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>{{ isEditMode ? 'Loading...' : 'Saving...' }}</p>
+  </div>
+
+  <form *ngIf="!loading" (ngSubmit)="onSubmit()" #orgForm="ngForm">
+    
+    <!-- Organization Details Section -->
+    <div class="section">
+      <h2>Organization Details</h2>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="identifier">Identifier *</label>
+          <input 
+            id="identifier"
+            type="text" 
+            class="form-control" 
+            name="identifier"
+            [(ngModel)]="identifier"
+            [readonly]="isEditMode"
+            required
+            maxlength="50"
+            placeholder="e.g., ABC-SHIP-001" />
+          <small class="help-text">Unique identifier for the organization (cannot be changed after creation)</small>
+        </div>
+
+        <div class="form-group">
+          <label for="legalName">Legal Name *</label>
+          <input 
+            id="legalName"
+            type="text" 
+            class="form-control" 
+            name="legalName"
+            [(ngModel)]="legalName"
+            required
+            maxlength="200"
+            placeholder="e.g., ABC Shipping Lines, S.A." />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="alternativeName">Alternative Name</label>
+          <input 
+            id="alternativeName"
+            type="text" 
+            class="form-control" 
+            name="alternativeName"
+            [(ngModel)]="alternativeName"
+            maxlength="200"
+            placeholder="e.g., ABC Lines (optional)" />
+        </div>
+
+        <div class="form-group">
+          <label for="taxNumber">Tax Number *</label>
+          <input 
+            id="taxNumber"
+            type="text" 
+            class="form-control" 
+            name="taxNumber"
+            [(ngModel)]="taxNumber"
+            required
+            maxlength="20"
+            placeholder="e.g., 123456789" />
+        </div>
+      </div>
+
+      <h3 style="margin-top: 2rem; font-size: 1.2rem; color: #333;">Address</h3>
+      
+      <div class="form-row">
+        <div class="form-group" style="flex: 2;">
+          <label for="street">Street *</label>
+          <input 
+            id="street"
+            type="text" 
+            class="form-control" 
+            name="street"
+            [(ngModel)]="street"
+            required
+            maxlength="200"
+            placeholder="e.g., Rua das Flores, 123" />
+        </div>
+
+        <div class="form-group">
+          <label for="postalCode">Postal Code *</label>
+          <input 
+            id="postalCode"
+            type="text" 
+            class="form-control" 
+            name="postalCode"
+            [(ngModel)]="postalCode"
+            required
+            maxlength="20"
+            placeholder="e.g., 1200-001" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="city">City *</label>
+          <input 
+            id="city"
+            type="text" 
+            class="form-control" 
+            name="city"
+            [(ngModel)]="city"
+            required
+            maxlength="100"
+            placeholder="e.g., Lisboa" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Initial Representative Section (only in create mode) -->
+    <div *ngIf="!isEditMode" class="section representative-section">
+      <h2>Initial Representative</h2>
+      <p class="section-description">
+        Each organization must include at least one representative at the time of registration (US 2.2.5).
+      </p>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="representativeName">Representative Name *</label>
+          <input 
+            id="representativeName"
+            type="text" 
+            class="form-control" 
+            name="representativeName"
+            [(ngModel)]="representativeName"
+            required
+            maxlength="100"
+            placeholder="e.g., João Silva" />
+        </div>
+
+        <div class="form-group">
+          <label for="representativeEmail">Email *</label>
+          <input 
+            id="representativeEmail"
+            type="email" 
+            class="form-control" 
+            name="representativeEmail"
+            [(ngModel)]="representativeEmail"
+            required
+            maxlength="100"
+            placeholder="e.g., joao.silva@abcshipping.com" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="representativeCitizenId">Citizen ID *</label>
+          <input 
+            id="representativeCitizenId"
+            type="text" 
+            class="form-control" 
+            name="representativeCitizenId"
+            [(ngModel)]="representativeCitizenId"
+            required
+            maxlength="50"
+            placeholder="e.g., 12345678" />
+        </div>
+
+        <div class="form-group">
+          <label for="representativeNationality">Nationality *</label>
+          <input 
+            id="representativeNationality"
+            type="text" 
+            class="form-control" 
+            name="representativeNationality"
+            [(ngModel)]="representativeNationality"
+            required
+            maxlength="50"
+            placeholder="e.g., Portuguese" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="representativePhoneNumber">Phone Number *</label>
+          <input 
+            id="representativePhoneNumber"
+            type="tel" 
+            class="form-control" 
+            name="representativePhoneNumber"
+            [(ngModel)]="representativePhoneNumber"
+            required
+            maxlength="20"
+            placeholder="e.g., +351 91 123 4567" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancel()">
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="!orgForm.valid || loading">
+        {{ isEditMode ? 'Update Organization' : 'Register Organization' }}
+      </button>
+    </div>
+  </form>
+</div>

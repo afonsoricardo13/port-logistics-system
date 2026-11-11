@@ -1,0 +1,55 @@
+@startuml Vista de Processos – Level 3 (US 2.2.10 – View Vessel Visit Notifications)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Shipping Agent Representative" as Rep
+participant "«container (C4)»\nVisualization (UI)" as UI_CTRL #87CEEB
+participant "«container (C4)»\nVessel Visits & Notifications\nController" as VV_CTRL #87CEEB
+participant "«component»\nApplication Service" as VV_APP #87CEEB
+participant "«component»\nDomain Model\n(VesselVisitNotification)" as VV_DOMAIN #87CEEB
+participant "«component»\nRepository" as VV_REPO #87CEEB
+participant "«component»\nData Model" as VV_DATA #87CEEB
+participant "«component»\nPersistence" as VV_PERSIST #87CEEB
+
+activate Rep
+Rep -> UI_CTRL: 1: request to view Vessel Visit Notifications\n(with optional filters)
+activate UI_CTRL
+UI_CTRL -> VV_CTRL: 1.1: getNotifications(filters, representativeId)
+activate VV_CTRL
+VV_CTRL -> VV_APP: 1.1.1: getVesselVisitNotifications(filters, representativeId)
+activate VV_APP
+VV_APP -> VV_REPO: 1.1.1.1: findByFilters(filters, representativeId, organizationId)
+activate VV_REPO
+VV_REPO -> VV_PERSIST: 1.1.1.1.1: query(filters)
+activate VV_PERSIST
+VV_PERSIST --> VV_REPO: 1.1.1.1.2: notification records
+deactivate VV_PERSIST
+VV_REPO -> VV_DATA: 1.1.1.1.3: map to domain
+activate VV_DATA
+VV_DATA --> VV_REPO: 1.1.1.1.4: notification aggregates
+deactivate VV_DATA
+VV_REPO --> VV_APP: 1.1.1.2: list of notifications
+deactivate VV_REPO
+VV_APP -> VV_DOMAIN: 1.1.1.3: enrich with status details\n(dock info, rejection reason)
+activate VV_DOMAIN
+VV_DOMAIN --> VV_APP: 1.1.1.4: enriched notifications
+deactivate VV_DOMAIN
+VV_APP --> VV_CTRL: 1.1.2: notifications list (VesselVisitNotificationDTO)
+deactivate VV_APP
+VV_CTRL --> UI_CTRL: 1.2: notifications with status information
+deactivate VV_CTRL
+UI_CTRL --> Rep: 1.3: display notifications\n(in progress, pending, approved with dock,\nrejected with reason)
+deactivate UI_CTRL
+deactivate Rep
+
+@enduml

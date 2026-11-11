@@ -1,0 +1,54 @@
+@startuml Vista Lógica – Nível 2 (Port Operations System)
+left to right direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+' ====== estilo ======
+skinparam component { 
+BackgroundColor #87CEEB 
+BorderColor #000000 
+RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ====== atores (bolas azuis) ======
+() "UI Port Authority Officer"        as PA #87CEEB
+() "UI Logistics Operator"            as LO #87CEEB
+() "UI Shipping Agent Representative" as SA #87CEEB
+() "UI Administrator"                 as AD #87CEEB
+
+' ====== boundary do sistema ======
+component "«component»\n«system (C4)»\nPort Operations System" as SYS #87CEEB {
+
+  ' ---- UI ----
+  component "«component»\n«container (C4)»\nVisualization (UI)" as UI
+
+  ' ---- APIs (bolas) ----
+  interface "Planning API"            as API_PLAN
+  interface "Docks & Resources API"   as API_RES
+  interface "Visits & Manifests API"  as API_VIS
+
+  ' ---- Containers ----
+  component "«component»\n«container (C4)»\nPlanning & Scheduling" as PLAN
+  component "«component»\n«container (C4)»\nDocks & Resources"      as RES
+  component "«component»\n«container (C4)»\nVisits & Manifests"     as VIS
+
+  ' ---- ligações UI -> API -> Container ----
+  UI  --> API_PLAN
+  API_PLAN --> PLAN
+
+  UI  --> API_RES
+  API_RES  --> RES
+
+  UI  --> API_VIS
+  API_VIS  --> VIS
+}
+
+' ====== atores ligados à UI ======
+PA --> UI
+LO --> UI
+SA --> UI
+AD --> UI
+@enduml

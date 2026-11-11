@@ -1,0 +1,34 @@
+@startuml Vista de Processos – Level 2 (US 2.2.2 – Update Vessel)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Port Authority Officer" as PA
+participant "«container (C4)»\nVisualization (UI)" as UI #87CEEB
+participant "«container (C4)»\nVisits & Manifests" as VEM #87CEEB
+
+activate PA
+PA -> UI: 1: update vessel
+activate UI
+UI --> PA: 1.1: show current vessel data
+deactivate UI
+PA -> UI: 2: vessel data update
+activate UI
+UI --> VEM: 2.1: request to vessel dock
+activate VEM
+VEM -> UI: 2.2: vessel updated
+deactivate VEM
+UI --> PA: 2.3: vessel updated
+deactivate UI
+deactivate PA
+
+@enduml

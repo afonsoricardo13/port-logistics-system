@@ -1,0 +1,7 @@
+@startuml
+actor "Port Authority Officer" as Officer
+
+( Register new shipping agent organization ) as RegisterOrg
+
+Officer --> RegisterOrg
+@enduml

@@ -1,0 +1,37 @@
+﻿@startuml Vista de Processos – Level 2 (US 2.2.6 – Update Representative)
+				   		   skinparam shadowing true
+				   		   skinparam linetype ortho
+				   		   skinparam sequence {
+				   		    ArrowColor Black
+				   		    ActorBorderColor #000000
+				   		    ActorBackgroundColor #87CEEB
+				   		    LifeLineBorderColor Black
+				   		    LifeLineBackgroundColor #87CEEB
+				   		    ParticipantBorderColor Black
+				   		    ParticipantBackgroundColor #87CEEB
+				   		    ParticipantFontStyle bold
+				   		   }
+				   		   
+				   		   actor "Port Authority Officer" as PA
+				   		   participant "<<container (C4)>>\nVisualization (UI)" as UI #87CEEB
+				   		   participant "<<container (C4)>>\nPlanning & Scheduling" as PLAN #87CEEB
+				   		   
+				   		   activate PA
+				   		   PA -> UI: 1: update representative\n(org {identifier}, rep {representativeId})
+				   		   activate UI
+				   		   UI --> PA: 1.1: request updated representative data
+				   
+				   		   deactivate UI
+				   		   
+				   		   PA -> UI: 2: provide update payload
+				   		   activate UI
+				   		   UI --> PLAN: 2.1: request to update representative
+				   		   activate PLAN
+				   		   PLAN -> PLAN: 2.2: fetch organization and representative\nif not found -> prepare 404\nvalidate payload (name, citizenId, email, phone)\napply updates\nrecord audit (updatedBy, updatedAt)
+				   		   PLAN --> UI: 2.3: 200 OK (RepresentativeResponse) \nor 404 Not Found
+				   		   deactivate PLAN
+				   		   UI --> PA: 2.4: representative updated / error
+				   		   deactivate UI
+				   		   deactivate PA
+				   		   
+				   		   @enduml

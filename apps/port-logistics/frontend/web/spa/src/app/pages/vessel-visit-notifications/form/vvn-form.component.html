@@ -1,0 +1,304 @@
+<!-- US 2.2.8/2.2.9: Create/Edit Vessel Visit Notification Form -->
+<div class="vessel-visit-form-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>{{ isEditMode ? 'Edit' : 'Create' }} Vessel Visit Notification</h1>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>{{ isEditMode ? 'Loading notification...' : 'Saving notification...' }}</p>
+  </div>
+
+  <!-- Form -->
+  <form [formGroup]="form" *ngIf="!loading" class="notification-form">
+    
+    <!-- Basic Information Section -->
+    <div class="form-section">
+      <h2>Basic Information</h2>
+      
+      <div class="form-row">
+        <div class="form-group" *ngIf="userRole === 'ShippingAgentRepresentative' && organizationName">
+          <label for="organizationName">Organization</label>
+          <input 
+            id="organizationName"
+            type="text" 
+            [value]="organizationName"
+            class="form-control readonly"
+            readonly />
+          <span class="help-text">Your organization</span>
+        </div>
+
+        <div class="form-group">
+          <label for="vesselImoNumber" class="required">Vessel IMO Number</label>
+          <input 
+            id="vesselImoNumber"
+            type="text" 
+            formControlName="vesselImoNumber"
+            class="form-control"
+            placeholder="e.g., 9123456"
+            [class.error]="hasError('vesselImoNumber')"
+            [readonly]="isEditMode"
+            [class.readonly]="isEditMode" />
+          <span *ngIf="hasError('vesselImoNumber')" class="error-message">
+            {{ getErrorMessage('vesselImoNumber') }}
+          </span>
+          <span class="help-text" *ngIf="!isEditMode">7-digit IMO number</span>
+          <span class="help-text" *ngIf="isEditMode">IMO number cannot be changed after creation</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schedule Section -->
+    <div class="form-section">
+      <h2>Schedule</h2>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="estimatedTimeOfArrival" class="required">Estimated Time of Arrival (ETA)</label>
+          <input 
+            id="estimatedTimeOfArrival"
+            type="datetime-local" 
+            formControlName="estimatedTimeOfArrival"
+            class="form-control"
+            [class.error]="hasError('estimatedTimeOfArrival')" />
+          <span *ngIf="hasError('estimatedTimeOfArrival')" class="error-message">
+            {{ getErrorMessage('estimatedTimeOfArrival') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="estimatedTimeOfDeparture" class="required">Estimated Time of Departure (ETD)</label>
+          <input 
+            id="estimatedTimeOfDeparture"
+            type="datetime-local" 
+            formControlName="estimatedTimeOfDeparture"
+            class="form-control"
+            [class.error]="hasError('estimatedTimeOfDeparture')" />
+          <span *ngIf="hasError('estimatedTimeOfDeparture')" class="error-message">
+            {{ getErrorMessage('estimatedTimeOfDeparture') }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Date Range Validation Error -->
+      <div *ngIf="hasDateRangeError()" class="alert alert-error">
+        ⚠️ Estimated Time of Departure must be after Estimated Time of Arrival
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="preferredDockCode">Preferred Dock (Optional)</label>
+          <input 
+            id="preferredDockCode"
+            type="text" 
+            formControlName="preferredDockCode"
+            class="form-control"
+            placeholder="e.g., DOCK-A" />
+          <span class="help-text">Suggest a preferred dock</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cargo Manifest Section -->
+    <div class="form-section">
+      <h2>Cargo Manifest (Container IDs)</h2>
+      <p class="section-description">
+        US 2.2.8 - AC: The system must validate that container identifiers comply with ISO 6346:2022 standard
+      </p>
+      
+      <div formArrayName="containerIds">
+        <div *ngFor="let container of containers.controls; let i = index" class="array-item">
+          <div class="form-group-inline">
+            <input 
+              [formControlName]="i"
+              type="text" 
+              class="form-control"
+              placeholder="e.g., MSCU1234567 (ISO 6346)"
+              [class.error]="container.invalid && container.touched" />
+            <button 
+              type="button" 
+              class="btn btn-danger btn-sm" 
+              (click)="removeContainer(i)"
+              title="Remove container">
+              ✕
+            </button>
+          </div>
+          <span *ngIf="container.invalid && container.touched" class="error-message">
+            Container ID must follow ISO 6346 format (4 letters + 7 digits, e.g., MSCU1234567)
+          </span>
+        </div>
+      </div>
+      
+      <button 
+        type="button" 
+        class="btn btn-secondary btn-sm" 
+        (click)="addContainer()">
+        + Add Container
+      </button>
+    </div>
+
+    <!-- Crew Information Section -->
+    <div class="form-section">
+      <h2>Crew Information (Optional)</h2>
+      <p class="section-description">
+        US 2.2.8 - AC: Information about the crew might be requested when necessary for compliance with security protocols
+      </p>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="captainName">Captain's Name</label>
+          <input 
+            id="captainName"
+            type="text" 
+            formControlName="captainName"
+            class="form-control"
+            placeholder="e.g., John Smith" />
+        </div>
+
+        <div class="form-group">
+          <label for="crewCount">Total Crew Count</label>
+          <input 
+            id="crewCount"
+            type="number" 
+            formControlName="crewCount"
+            class="form-control"
+            min="1"
+            placeholder="e.g., 25"
+            [class.error]="hasError('crewCount')" />
+          <span *ngIf="hasError('crewCount')" class="error-message">
+            {{ getErrorMessage('crewCount') }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Detailed Crew Members -->
+      <div class="subsection">
+        <h3>Crew Members (Detailed)</h3>
+        <div formArrayName="crew">
+          <div *ngFor="let member of crewMembers.controls; let i = index" [formGroupName]="i" class="crew-member-item">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Name</label>
+                <input 
+                  type="text" 
+                  formControlName="name"
+                  class="form-control"
+                  placeholder="Full name" />
+              </div>
+
+              <div class="form-group">
+                <label>Citizen ID</label>
+                <input 
+                  type="text" 
+                  formControlName="citizenId"
+                  class="form-control"
+                  placeholder="Passport or ID number" />
+              </div>
+
+              <div class="form-group">
+                <label>Nationality</label>
+                <input 
+                  type="text" 
+                  formControlName="nationality"
+                  class="form-control"
+                  placeholder="e.g., Portuguese" />
+              </div>
+
+              <div class="form-group-actions">
+                <button 
+                  type="button" 
+                  class="btn btn-danger btn-sm" 
+                  (click)="removeCrewMember(i)"
+                  title="Remove crew member">
+                  ✕
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <button 
+          type="button" 
+          class="btn btn-secondary btn-sm" 
+          (click)="addCrewMember()">
+          + Add Crew Member
+        </button>
+      </div>
+    </div>
+
+    <!-- Dangerous Cargo Section -->
+    <div class="form-section">
+      <h2>Dangerous Cargo (Optional)</h2>
+      <p class="section-description">
+        US 2.2.8 - AC: When the vessel carries dangerous cargo, designated crew safety officers must be identified
+      </p>
+      
+      <div class="subsection">
+        <h3>Safety Officers</h3>
+        <div formArrayName="safetyOfficers">
+          <div *ngFor="let officer of safetyOfficersList.controls; let i = index" class="array-item">
+            <div class="form-group-inline">
+              <input 
+                [formControlName]="i"
+                type="text" 
+                class="form-control"
+                placeholder="Safety officer name" />
+              <button 
+                type="button" 
+                class="btn btn-danger btn-sm" 
+                (click)="removeSafetyOfficer(i)"
+                title="Remove safety officer">
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <button 
+          type="button" 
+          class="btn btn-secondary btn-sm" 
+          (click)="addSafetyOfficer()">
+          + Add Safety Officer
+        </button>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button 
+        type="button" 
+        class="btn btn-outline" 
+        (click)="cancel()"
+        [disabled]="loading">
+        Cancel
+      </button>
+
+      <button 
+        type="button" 
+        class="btn btn-secondary" 
+        (click)="saveAsDraft()"
+        [disabled]="loading">
+        Save as Draft
+      </button>
+
+      <button 
+        type="button" 
+        class="btn btn-primary" 
+        (click)="submitForApproval()"
+        [disabled]="loading">
+        Submit for Approval
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,115 @@
+name: Deploy Port Logistics Frontend
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'apps/port-logistics/frontend/**'
+      - '.github/workflows/deploy-portlogistics-frontend.yml'
+  workflow_dispatch:
+
+env:
+  AZURE_STORAGE_ACCOUNT: portlogisticsspa
+  NODE_VERSION: '20.x'
+  SPA_PATH: 'apps/port-logistics/frontend/web/spa'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.SPA_PATH }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ env.SPA_PATH }}
+        run: npm ci
+
+      - name: Build Angular app
+        working-directory: ${{ env.SPA_PATH }}
+        run: npm run build -- --configuration=azure
+
+      - name: Copy staticwebapp.config.json to build output
+        run: |
+          cp ${{ env.SPA_PATH }}/staticwebapp.config.json ${{ env.SPA_PATH }}/dist/spa/browser/staticwebapp.config.json
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Clear existing files
+        run: |
+          az storage blob delete-batch \
+            --account-name ${{ env.AZURE_STORAGE_ACCOUNT }} \
+            --source '$web' \
+            --delete-snapshots include \
+            --auth-mode login || echo "No files to delete or already empty"
+
+      - name: Upload to Azure Storage
+        run: |
+          az storage blob upload-batch \
+            --account-name ${{ env.AZURE_STORAGE_ACCOUNT }} \
+            --source ${{ env.SPA_PATH }}/dist/spa/browser \
+            --destination '$web' \
+            --overwrite \
+            --auth-mode login
+
+      - name: Set content types and cache control
+        continue-on-error: true
+        run: |
+          # Set content types for static files (continue on error if pattern not found)
+          az storage blob update-batch \
+            --account-name ${{ env.AZURE_STORAGE_ACCOUNT }} \
+            --source '$web' \
+            --pattern "*.js" \
+            --content-type "application/javascript" \
+            --auth-mode login || true
+
+          az storage blob update-batch \
+            --account-name ${{ env.AZURE_STORAGE_ACCOUNT }} \
+            --source '$web' \
+            --pattern "*.css" \
+            --content-type "text/css" \
+            --auth-mode login || true
+
+          az storage blob update-batch \
+            --account-name ${{ env.AZURE_STORAGE_ACCOUNT }} \
+            --source '$web' \
+            --pattern "*.html" \
+            --content-type "text/html" \
+            --auth-mode login || true
+
+      - name: Purge CDN cache
+        continue-on-error: true
+        run: |
+          az cdn endpoint purge \
+            --resource-group appsvc_windows_swedencentral \
+            --profile-name "portlogistics-cdn" \
+            --name "portlogistics-frontend" \
+            --content-paths "/*" || echo "No CDN configured"
+
+      - name: Get Frontend URL
+        id: get-url
+        run: |
+          FRONTEND_URL=$(az storage account show \
+            --name ${{ env.AZURE_STORAGE_ACCOUNT }} \
+            --resource-group appsvc_windows_swedencentral \
+            --query "primaryEndpoints.web" \
+            --output tsv)
+          echo "url=$FRONTEND_URL" >> $GITHUB_OUTPUT
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Port Logistics Frontend deployed successfully!"
+          echo "🌐 URL: ${{ steps.get-url.outputs.url }}"
+          echo ""
+          echo "⏱️ Wait 1-2 minutes for changes to propagate"
+          echo "🔄 Clear browser cache (Ctrl+Shift+R) if needed"

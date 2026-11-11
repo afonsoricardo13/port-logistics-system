@@ -1,0 +1,74 @@
+@startuml Logical View - Level 3 (Port Logistics Backend)
+top to bottom direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+' ===== estilo =====
+skinparam component { 
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ===== APIs externas =====
+() "Port Logistics API"     as PORT_API  #87CEEB
+() "filesystem API"         as FS_API  #87CEEB
+
+' ===== boundary do container Port Logistics =====
+
+rectangle "«component»\n«container (C4)»\nPort Logistics (Backend)" as PORT #87CEEB {
+
+  component "«component»\nController"          as PORT_CTRL
+  
+  interface "App Service API"      as PORT_I_APP
+  interface "DTO API"              as PORT_I_DTO
+  component "«component»\nDTO"                as PORT_DTO
+
+  component "«component»\nApplication Service" as PORT_APP
+  
+  interface "Repo API"            as PORT_I_REPO
+  interface "Model API"           as PORT_I_MODEL
+
+  component "«component»\nDomain Model (DDD)"   as PORT_DOMAIN
+
+  component "«component»\nRepository"          as PORT_REPO
+  
+  interface "Persistence API"      as PORT_I_PERSIST
+  interface "Data Model API"        as PORT_I_DATA
+  
+  component "«component»\nData Model"          as PORT_DATA
+  component "«component»\nPersistence"         as PORT_PERSIST
+
+  ' Wiring - seguindo estrutura do wiki
+  PORT_CTRL --> PORT_I_DTO
+  PORT_I_DTO --> PORT_DTO
+  
+  PORT_CTRL --> PORT_I_APP
+  PORT_I_APP --> PORT_APP
+  
+  PORT_APP  --> PORT_I_MODEL
+  PORT_I_MODEL --> PORT_DOMAIN
+  
+  PORT_APP  --> PORT_I_REPO
+  PORT_I_REPO --> PORT_REPO
+  
+  PORT_REPO --> PORT_I_PERSIST
+  PORT_I_PERSIST --> PORT_PERSIST
+  
+  PORT_REPO --> PORT_I_DATA
+  PORT_I_DATA --> PORT_DATA
+}
+
+' ===== componente externo: base de dados =====
+component "«external»\nDatabase" as DB #F5F5DC
+
+PORT_PERSIST --> DB : SQL
+
+' ===== Entradas/saidas por API =====
+PORT_API  --> PORT_CTRL
+FS_API    --> PORT_PERSIST
+
+@enduml

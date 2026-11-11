@@ -1,0 +1,226 @@
+@startuml Class Diagram - Level 4 (US 2.2.10 - View Vessel Visit Notifications)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+' ===== Presentation Layer (Controllers) =====
+package "<<layer>> Presentation" #87CEEB {
+  class VesselVisitNotificationController <<Controller>> {
+    - _service: IVesselVisitNotificationService
+    + GetNotifications(filters: NotificationFilters, representativeId: string): IActionResult
+    + GetNotificationById(id: NotificationId): IActionResult
+  }
+}
+
+' ===== Application Layer (Services & DTOs) =====
+package "<<layer>> Application" #87CEEB {
+  class VesselVisitNotificationService <<Service>> {
+    - _repository: IVesselVisitNotificationRepository
+    - _representativeRepository: IRepresentativeRepository
+    - _mapper: IMapper
+    + GetVesselVisitNotifications(filters: NotificationFilters, representativeId: string): List<VesselVisitNotificationDTO>
+    + GetNotificationById(id: NotificationId): VesselVisitNotificationDTO
+    - GetOrganizationId(representativeId: string): OrganizationId
+    - EnrichWithStatusDetails(notifications: List<VesselVisitNotification>): List<VesselVisitNotificationDTO>
+  }
+
+  interface IVesselVisitNotificationService {
+    + GetVesselVisitNotifications(filters: NotificationFilters, representativeId: string): List<VesselVisitNotificationDTO>
+  }
+
+  class NotificationFilters <<DTO>> {
+    + Vessel: string?
+    + Status: List<NotificationStatus>?
+    + RepresentativeId: string?
+    + DateFrom: DateTime?
+    + DateTo: DateTime?
+  }
+
+  class VesselVisitNotificationDTO <<DTO>> {
+    + Id: string
+    + VesselImoNumber: string
+    + VesselName: string
+    + EstimatedTimeOfArrival: DateTime
+    + EstimatedTimeOfDeparture: DateTime
+    + Status: string
+    + AssignedDockCode: string?
+    + RejectionReason: string?
+    + RepresentativeName: string
+    + OrganizationName: string
+    + CreatedAt: DateTime
+    + UpdatedAt: DateTime?
+  }
+}
+
+' ===== Domain Layer (Aggregates, Entities, Value Objects) =====
+package "<<layer>> Domain" #87CEEB {
+  class VesselVisitNotification <<Aggregate Root>> {
+    - _id: NotificationId
+    - _vesselImoNumber: ImoNumber
+    - _estimatedTimeOfArrival: DateTime
+    - _estimatedTimeOfDeparture: DateTime
+    - _status: NotificationStatus
+    - _assignedDockCode: DockCode?
+    - _rejectionReason: string?
+    - _representativeId: RepresentativeId
+    - _organizationId: OrganizationId
+    - _decisionLogs: List<DecisionLog>
+    - _cargoManifest: CargoManifest
+    - _createdAt: DateTime
+    - _updatedAt: DateTime?
+    + GetStatus(): NotificationStatus
+    + GetAssignedDock(): DockCode?
+    + GetRejectionReason(): string?
+    + IsOwnedBy(representativeId: RepresentativeId): bool
+    + BelongsToOrganization(organizationId: OrganizationId): bool
+  }
+
+  class NotificationId <<Value Object>> {
+    - _value: Guid
+    + NotificationId(value: Guid)
+    + Value: Guid
+  }
+
+  class ImoNumber <<Value Object>> {
+    - _value: string
+    + ImoNumber(value: string)
+    + Value: string
+    - ValidateCheckDigit(value: string): void
+  }
+
+  class DockCode <<Value Object>> {
+    - _value: string
+    + DockCode(value: string)
+    + Value: string
+  }
+
+  enum NotificationStatus <<Enumeration>> {
+    InProgress
+    Submitted
+    Approved
+    Rejected
+  }
+
+  class DecisionLog <<Entity>> {
+    - _timestamp: DateTime
+    - _officerId: string
+    - _decision: string
+    - _reason: string?
+    + DecisionLog(timestamp, officerId, decision, reason)
+  }
+
+  class CargoManifest <<Value Object>> {
+    - _containers: List<Container>
+    + CargoManifest(containers: List<Container>)
+    + Containers: List<Container>
+  }
+
+  class RepresentativeId <<Value Object>> {
+    - _value: Guid
+    + RepresentativeId(value: Guid)
+    + Value: Guid
+  }
+
+  class OrganizationId <<Value Object>> {
+    - _value: Guid
+    + OrganizationId(value: Guid)
+    + Value: Guid
+  }
+
+  interface IVesselVisitNotificationRepository <<Repository Interface>> {
+    + GetById(id: NotificationId): Task<VesselVisitNotification>
+    + FindByFilters(filters: NotificationFilters, representativeId: RepresentativeId, organizationId: OrganizationId): Task<List<VesselVisitNotification>>
+  }
+}
+
+' ===== Infrastructure Layer (Repositories & Persistence) =====
+package "<<layer>> Infrastructure" #87CEEB {
+  class VesselVisitNotificationRepository <<Repository>> {
+    - _context: DbContext
+    + GetById(id: NotificationId): Task<VesselVisitNotification>
+    + FindByFilters(filters: NotificationFilters, representativeId: RepresentativeId, organizationId: OrganizationId): Task<List<VesselVisitNotification>>
+    - MapToDomain(dataModel: VesselVisitNotificationDataModel): VesselVisitNotification
+    - BuildQuery(filters: NotificationFilters, representativeId: RepresentativeId, organizationId: OrganizationId): IQueryable
+  }
+
+  class VesselVisitNotificationDataModel <<Entity>> {
+    + Id: Guid
+    + VesselImoNumber: string
+    + EstimatedTimeOfArrival: DateTime
+    + EstimatedTimeOfDeparture: DateTime
+    + Status: string
+    + AssignedDockCode: string?
+    + RejectionReason: string?
+    + RepresentativeId: Guid
+    + OrganizationId: Guid
+    + CargoManifestJson: string
+    + DecisionLogsJson: string
+    + CreatedAt: DateTime
+    + UpdatedAt: DateTime?
+  }
+
+  class DbContext <<Context>> {
+    + VesselVisitNotifications: DbSet<VesselVisitNotificationDataModel>
+    + SaveChangesAsync(): Task<int>
+  }
+}
+
+' ===== Relationships =====
+VesselVisitNotificationController --> IVesselVisitNotificationService : uses
+VesselVisitNotificationController ..> NotificationFilters : receives
+VesselVisitNotificationController ..> VesselVisitNotificationDTO : returns
+
+VesselVisitNotificationService ..|> IVesselVisitNotificationService : implements
+VesselVisitNotificationService --> IVesselVisitNotificationRepository : uses
+VesselVisitNotificationService ..> VesselVisitNotification : manipulates
+VesselVisitNotificationService ..> NotificationFilters : receives
+VesselVisitNotificationService ..> VesselVisitNotificationDTO : returns
+
+VesselVisitNotification *-- NotificationId : has
+VesselVisitNotification *-- ImoNumber : has
+VesselVisitNotification *-- NotificationStatus : has
+VesselVisitNotification *-- DockCode : has (optional)
+VesselVisitNotification *-- RepresentativeId : has
+VesselVisitNotification *-- OrganizationId : has
+VesselVisitNotification *-- CargoManifest : has
+VesselVisitNotification *-- "0..*" DecisionLog : has
+
+VesselVisitNotificationRepository ..|> IVesselVisitNotificationRepository : implements
+VesselVisitNotificationRepository --> DbContext : uses
+VesselVisitNotificationRepository ..> VesselVisitNotification : returns
+VesselVisitNotificationRepository ..> VesselVisitNotificationDataModel : maps
+
+DbContext *-- VesselVisitNotificationDataModel : manages
+
+note right of VesselVisitNotification
+  **Aggregate Root**
+  Enforces business rules:
+  - Representative can view own notifications
+  - Representative can view organization's notifications
+  - Status determines available data:
+    * InProgress: editable
+    * Submitted: pending approval
+    * Approved: has assigned dock
+    * Rejected: has rejection reason
+end note
+
+note right of VesselVisitNotificationService
+  **Application Service**
+  Orchestrates:
+  - Retrieve representative's organization
+  - Filter by organization scope
+  - Enrich with status-specific details
+  - DTO mapping
+end note
+
+note right of VesselVisitNotificationRepository
+  **Repository**
+  Query logic:
+  - Filter by organization ID (mandatory)
+  - Include representative's notifications
+  - Include organization's notifications
+  - Apply optional filters (vessel, status, dates)
+  - Sort by ETA descending
+end note
+
+@enduml

@@ -1,0 +1,31 @@
+@startuml Vista de Processos – Level 2 (US 2.2.3 – Register Dock)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+participant "<<container (C4)>>\nSPA (Web UI)" as UI #87CEEB
+participant "<<container (C4)>>\nPort Logistics (Backend)" as BACKEND #87CEEB
+
+-> UI: 1: register dock
+activate UI
+UI --> : 1.1: ask for dock data
+deactivate UI
+-> UI: 2: dock data
+activate UI
+UI --> BACKEND: 2.1: request to register dock
+activate BACKEND
+BACKEND -> UI: 2.2: dock registered
+deactivate BACKEND
+UI --> : 2.3: dock registered
+deactivate UI
+
+@enduml

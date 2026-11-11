@@ -1,0 +1,31 @@
+@startuml SSD US 2.2.11 - Register Operating Staff
+skinparam shadowing true
+skinparam ArrowColor #000000
+skinparam sequence {
+	ArrowColor Black
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as Operator
+participant "«system (C4)»\nPort Operations System" as System
+
+activate Operator
+Operator -> System : 1: starts staff member creation
+activate System
+System  --> Operator : 1.1: request staff member data\n(mecanographic number, name,\nemail, phone, qualifications,\noperational window, status)
+deactivate System
+
+Operator -> System : 2: provide requested data
+activate System
+System  --> Operator : 2.1: staff member created successfully
+deactivate System
+deactivate Operator
+
+
+@enduml

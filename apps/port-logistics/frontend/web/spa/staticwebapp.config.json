@@ -1,0 +1,24 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/images/*.{png,jpg,gif,ico}", "/css/*", "/assets/*"]
+  },
+  "routes": [
+    {
+      "route": "/callback",
+      "rewrite": "/index.html"
+    },
+    {
+      "route": "/*",
+      "rewrite": "/index.html"
+    }
+  ],
+  "mimeTypes": {
+    ".json": "application/json",
+    ".js": "application/javascript",
+    ".css": "text/css"
+  },
+  "globalHeaders": {
+    "content-security-policy": "default-src 'self' https: 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https:;"
+  }
+}

@@ -1,0 +1,29 @@
+@startuml SSD US 2.2.6 - Create Representative
+        skinparam shadowing true
+        skinparam ArrowColor #000000
+        skinparam sequence {
+          ActorBorderColor #000000
+          ActorBackgroundColor #87CEEB
+          ParticipantBorderColor #000000
+          ParticipantBackgroundColor #87CEEB
+          LifeLineBorderColor #000000
+          LifeLineBackgroundColor #87CEEB
+        }
+    
+        actor "Port Authority Officer" as Officer
+        participant "«system (C4)»\nPort Operations System" as System
+    
+        activate Officer
+        Officer -> System : 1: start create representative
+        activate System
+        System --> Officer : 1.1: request representative data
+        deactivate System
+    
+        Officer -> System : 2: provide representative payload + org identifier
+        activate System
+        System -> System : 2.1: verify organization exists\n2.2: validate required fields \n2.3: validate email/phone formats\n2.4: ensure association to exactly one org
+        System --> Officer : Created (RepresentativeResponse + Location)
+    
+        deactivate System
+        deactivate Officer
+      @enduml

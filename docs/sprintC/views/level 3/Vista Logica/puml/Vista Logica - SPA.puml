@@ -1,0 +1,89 @@
+@startuml Logical View - Level 3 (SPA Web UI - Sprint C)
+top to bottom direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+' ===== estilo =====
+skinparam component { 
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ===== API externa =====
+() "UI API" as UI_API #87CEEB
+
+' ===== boundary do container SPA =====
+rectangle "«component»\n«container (C4)»\nSPA (Web UI)" as UI #87CEEB {
+  
+  ' === Pages (OEM) ===
+  component "«component»\nOperation Plans Pages" as OP_PAGES
+  component "«component»\nVVE Pages" as VVE_PAGES
+  component "«component»\nIncident Pages" as INC_PAGES
+  component "«component»\nComplementary Tasks Pages" as CT_PAGES
+  
+  ' === Components ===
+  component "«component»\nLayout Components" as LAYOUT
+  component "«component»\nForm Components" as FORMS
+  component "«component»\nTable Components" as TABLES
+  
+  ' === Services ===
+  component "«component»\nOEM Services" as OEM_SVC
+  component "«component»\nPort Logistics Services" as PL_SVC
+  component "«component»\nAuth Service" as AUTH_SVC
+  
+  ' === Models ===
+  component "«component»\nModels" as MODELS
+  
+  ' === Routing ===
+  component "«component»\nRouting" as ROUTE
+  
+  ' === HTTP ===
+  interface "HTTP Client API" as UI_I_HTTP
+  component "«component»\nHTTP Client" as UI_HTTP
+  
+  ' === Guards ===
+  component "«component»\nAuth Guards" as GUARDS
+  
+  ' Wiring
+  UI_API --> ROUTE
+  ROUTE --> OP_PAGES
+  ROUTE --> VVE_PAGES
+  ROUTE --> INC_PAGES
+  ROUTE --> CT_PAGES
+  ROUTE --> GUARDS
+  
+  OP_PAGES --> OEM_SVC
+  VVE_PAGES --> OEM_SVC
+  INC_PAGES --> OEM_SVC
+  CT_PAGES --> OEM_SVC
+  
+  OP_PAGES --> LAYOUT
+  OP_PAGES --> FORMS
+  OP_PAGES --> TABLES
+  
+  OEM_SVC --> UI_I_HTTP
+  PL_SVC --> UI_I_HTTP
+  AUTH_SVC --> UI_I_HTTP
+  UI_I_HTTP --> UI_HTTP
+  
+  OEM_SVC --> MODELS
+  PL_SVC --> MODELS
+}
+
+' ===== Conexões a APIs externas =====
+() "Port Logistics API" as PORT_API #87CEEB
+() "OEM API"            as OEM_API  #87CEEB
+() "Scheduling API"     as SCHED_API #87CEEB
+
+component "«external»\nIAM" as IAM #F5F5DC
+
+UI_HTTP --> PORT_API
+UI_HTTP --> OEM_API
+UI_HTTP --> SCHED_API
+AUTH_SVC --> IAM : OAuth/OIDC
+
+@enduml

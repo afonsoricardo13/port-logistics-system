@@ -1,0 +1,50 @@
+name: Deploy Port Logistics Backend
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'apps/port-logistics/backend/**'
+      - '.github/workflows/deploy-portlogistics-backend.yml'
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: portlogistics-api-3db01
+  AZURE_WEBAPP_PACKAGE_PATH: './publish'
+  DOTNET_VERSION: '9.0.x'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Restore dependencies
+        run: dotnet restore apps/port-logistics/backend/PortLogistics.sln
+
+      - name: Build
+        run: dotnet build apps/port-logistics/backend/PortLogistics.sln --configuration Release --no-restore
+
+      - name: Publish
+        run: dotnet publish apps/port-logistics/backend/WebApi/WebApi.csproj --configuration Release --no-build --output ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_PORTLOGISTICS }}
+          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Port Logistics Backend deployed successfully!"
+          echo "🌐 URL: https://${{ env.AZURE_WEBAPP_NAME }}-f4b3b0hgc6dvdtax.swedencentral-01.azurewebsites.net"
+          echo "📄 Swagger: https://${{ env.AZURE_WEBAPP_NAME }}-f4b3b0hgc6dvdtax.swedencentral-01.azurewebsites.net/swagger"

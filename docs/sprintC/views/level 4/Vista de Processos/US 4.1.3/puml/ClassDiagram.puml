@@ -1,0 +1,74 @@
+@startuml Class Diagram - US 4.1.3 - Generate Single Operation Plan
+skinparam shadowing true
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+title US 4.1.3 - Generate Single Operation Plan (Level 4 - Class Diagram)
+
+package "WebApi" #LightBlue {
+    class OperationPlansController {
+        - _operationPlanService: IOperationPlanService
+        + GenerateForVvn(request: GeneratePlanRequest): ActionResult<OperationPlanDTO>
+    }
+    
+    class GeneratePlanRequest {
+        + VvnId: Guid
+        + Algorithm: string
+    }
+}
+
+package "Application" #LightGreen {
+    interface IOperationPlanService {
+        + GenerateForVvnAsync(vvnId: Guid, algorithm: string): Task<OperationPlanDTO>
+    }
+    
+    class OperationPlanService {
+        - _repository: IOperationPlanRepository
+        - _portLogisticsClient: IPortLogisticsClient
+        - _schedulingClient: ISchedulingClient
+        + GenerateForVvnAsync(vvnId: Guid, algorithm: string): Task<OperationPlanDTO>
+    }
+    
+    interface IPortLogisticsClient {
+        + GetVvnDetailsAsync(vvnId: Guid): Task<VvnDTO>
+    }
+    
+    interface ISchedulingClient {
+        + GeneratePlanAsync(vvnData: object, algorithm: string): Task<ScheduledOperationsResult>
+    }
+}
+
+package "Domain" #LightYellow {
+    interface IOperationPlanRepository {
+        + AddAsync(plan: OperationPlan): Task<OperationPlan>
+    }
+    
+    class OperationPlan <<aggregate root>> {
+        + Id: Guid
+        + VvnId: Guid
+        + Date: DateOnly
+        + PlannedOperations: List<PlannedOperation>
+        + {static} Create(vvnId: Guid, date: DateOnly): OperationPlan
+        + AddOperation(operation: PlannedOperation): void
+    }
+    
+    class PlannedOperation <<entity>> {
+        + Id: Guid
+        + OperationType: string
+        + StartTime: DateTime
+        + EndTime: DateTime
+        + DockId: Guid
+        + AssignedResources: List<Guid>
+    }
+}
+
+OperationPlansController --> IOperationPlanService
+OperationPlansController ..> GeneratePlanRequest
+IOperationPlanService <|.. OperationPlanService
+OperationPlanService --> IOperationPlanRepository
+OperationPlanService --> IPortLogisticsClient
+OperationPlanService --> ISchedulingClient
+IOperationPlanRepository ..> OperationPlan
+OperationPlan *-- PlannedOperation
+
+@enduml

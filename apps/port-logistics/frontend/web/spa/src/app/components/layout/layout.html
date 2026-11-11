@@ -1,0 +1,22 @@
+<!-- Unified Layout (US 3.1.2) -->
+<div class="app-layout">
+  <!-- Header bar com navbar (sempre visível - AC) -->
+  <app-navbar></app-navbar>
+
+  <!-- Privacy Policy Change Notification (US 4.5.1) -->
+  <app-privacy-policy-notification></app-privacy-policy-notification>
+
+  <!-- Main content area -->
+  <main class="main-content">
+    <!-- RouterOutlet para renderizar páginas dinamicamente -->
+    <router-outlet />
+  </main>
+
+  <!-- Optional: Footer -->
+  <footer class="app-footer">
+    <p>
+      &copy; 2025 Port Logistics System - 3DB Group 01 | 
+      <a routerLink="/privacy-policy">Política de Privacidade</a>
+    </p>
+  </footer>
+</div>

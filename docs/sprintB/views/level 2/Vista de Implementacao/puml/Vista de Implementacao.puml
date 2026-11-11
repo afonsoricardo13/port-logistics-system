@@ -1,0 +1,46 @@
+@startuml Vista de Implementação – Nível 2 (Port Logistics + Scheduling)
+top to bottom direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+' ====== estilo (como pedes) ======
+skinparam rectangle {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam component { 
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ====== boundary do sistema ======
+rectangle "Port Operations System" as SYS {
+
+  ' ---- UI (esquerda) ----
+  component "SPA (Web UI)" as UI
+
+  ' ---- módulos (direita, em coluna) ----
+  component "Port Logistics (Backend)" as PORT
+  component "Scheduling & Planning"    as PLAN
+
+  ' ---- ordenar/posicionar (ligações ocultas) ----
+  UI  -[hidden]-> PORT
+  PORT -[hidden]-> PLAN
+
+  ' ---- setas tracejadas (como no exemplo) ----
+  UI  ..> PORT
+  UI  ..> PLAN
+
+  PORT ..down..> PLAN
+}
+
+' ====== componente externo: base de dados ======
+component "«external»\nDatabase" as DB #F5F5DC
+
+PORT ..> DB : SQL
+@enduml

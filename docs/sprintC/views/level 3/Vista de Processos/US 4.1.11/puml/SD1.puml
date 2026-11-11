@@ -1,0 +1,84 @@
+@startuml Vista de Processos – Level 3 (US 4.1.11 – Complete VVE)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+participant "«container (C4)»\nSPA (Web UI)" as UI #87CEEB
+participant "«component»\nVesselVisitExecutionsController" as VVE_CTRL #87CEEB
+participant "«component»\nVesselVisitExecutionService" as VVE_SVC #87CEEB
+participant "«component»\nVesselVisitExecution" as VVE_DOMAIN #87CEEB
+participant "«component»\nIVesselVisitExecutionRepository" as VVE_REPO #87CEEB
+participant "«component»\nIExecutedOperationRepository" as EO_REPO #87CEEB
+participant "«component»\nOEMDbContext" as DB_CTX #87CEEB
+participant "«external»\nIAM" as IAM #F5F5DC
+
+-> UI: 1: request to complete VVE
+activate UI
+UI -> IAM: 1.1: validate token
+activate IAM
+IAM --> UI: 1.1.1: token valid, get user email
+deactivate IAM
+UI --> : 1.2: display completion form
+deactivate UI
+
+-> UI: 2: provide unberth and departure times
+activate UI
+
+UI -> VVE_CTRL: 2.1: PUT /api/vesselvisitexecutions/{id}/complete (CompleteVveDTO)
+activate VVE_CTRL
+
+VVE_CTRL -> VVE_SVC: 2.1.1: CompleteAsync(id, dto, userEmail)
+activate VVE_SVC
+
+VVE_SVC -> VVE_REPO: 2.1.1.1: GetByIdAsync(id)
+activate VVE_REPO
+VVE_REPO --> VVE_SVC: 2.1.1.2: VVE entity
+deactivate VVE_REPO
+
+VVE_SVC -> EO_REPO: 2.1.1.3: GetByVveIdAsync(vveId)
+activate EO_REPO
+EO_REPO --> VVE_SVC: 2.1.1.4: executed operations
+deactivate EO_REPO
+
+VVE_SVC -> VVE_SVC: 2.1.1.5: ValidateAllOperationsCompleted()
+alt Some operations not completed
+    VVE_SVC --> VVE_CTRL: 2.1.1.6: throw ValidationException("All operations must be completed")
+    VVE_CTRL --> UI: 2.2a: 400 Bad Request
+    UI --> : 2.3a: show error message
+else All operations completed
+    VVE_SVC -> VVE_DOMAIN: 2.1.1.6: Complete(unberthTime, departureTime)
+    activate VVE_DOMAIN
+    VVE_DOMAIN -> VVE_DOMAIN: 2.1.1.6.1: SetActualUnberthTime(time)
+    VVE_DOMAIN -> VVE_DOMAIN: 2.1.1.6.2: SetActualDepartureTime(time)
+    VVE_DOMAIN -> VVE_DOMAIN: 2.1.1.6.3: SetStatus(Completed)
+    VVE_DOMAIN --> VVE_SVC: 2.1.1.7: updated VVE
+    deactivate VVE_DOMAIN
+    
+    VVE_SVC -> VVE_REPO: 2.1.1.8: UpdateAsync(vve)
+    activate VVE_REPO
+    VVE_REPO -> DB_CTX: 2.1.1.8.1: SaveChangesAsync()
+    activate DB_CTX
+    note right: Log timestamp, user, changes
+    DB_CTX --> VVE_REPO: 2.1.1.8.2: saved
+    deactivate DB_CTX
+    VVE_REPO --> VVE_SVC: 2.1.1.9: updated
+    deactivate VVE_REPO
+    
+    VVE_SVC --> VVE_CTRL: 2.1.2: VesselVisitExecutionDTO (status: Completed)
+    deactivate VVE_SVC
+    VVE_CTRL --> UI: 2.2b: 200 OK
+    deactivate VVE_CTRL
+    UI --> : 2.3b: display completion confirmation (read-only)
+end
+deactivate UI
+
+@enduml

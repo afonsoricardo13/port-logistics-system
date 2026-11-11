@@ -1,0 +1,49 @@
+@startuml Mapeamento VF-VI – Nível 2 (Sprint C)
+top to bottom direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+skinparam node {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam component { 
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+rectangle "Physical View (Deployment)" as PV {
+  node "Browser" as BROWSER_N
+  node "CDN Server" as CDN_N
+  node "App Server 1" as APP1_N
+  node "App Server 2" as APP2_N
+  node "App Server 3" as APP3_N
+  node "IAM Provider" as IAM_N #F5F5DC
+}
+
+rectangle "Implementation View (Artifacts)" as IV {
+  component "@port-logistics/spa" as SPA_A
+  component "@port-logistics/backend" as PORT_A
+  component "@operations-execution/backend" as OEM_A
+  component "@scheduling-planning/backend" as SCHED_A
+  component "IAM Service" as IAM_A #F5F5DC
+  database "Port Logistics DB" as PORT_DB_A
+  database "OEM DB" as OEM_DB_A
+}
+
+BROWSER_N .down.> SPA_A : <<deploys>>
+CDN_N .down.> SPA_A : <<hosts>>
+APP1_N .down.> PORT_A : <<deploys>>
+APP2_N .down.> OEM_A : <<deploys>>
+APP3_N .down.> SCHED_A : <<deploys>>
+IAM_N .down.> IAM_A : <<hosts>>
+
+APP1_N .down.> PORT_DB_A : <<internal>>
+APP2_N .down.> OEM_DB_A : <<internal>>
+
+@enduml

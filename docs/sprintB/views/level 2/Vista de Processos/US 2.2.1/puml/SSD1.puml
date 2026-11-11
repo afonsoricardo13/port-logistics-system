@@ -1,0 +1,36 @@
+@startuml Vista de Processos – Level 2 (US 2.2.1 – Create Vessel Type)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Port Authority Officer" as Officer
+participant "<<container (C4)>>\nVisualization (UI)" as UI #87CEEB
+participant "<<container (C4)>>\nVisits & Manifests" as TYPES #87CEEB
+
+activate Officer
+Officer -> UI: 1: request to create a Vessel Type
+activate UI
+UI --> Officer: 1.1: request required data\n(name, description, capacity, constraints)
+deactivate UI
+
+Officer -> UI: 2: provide Vessel Type data
+activate UI
+UI -> TYPES: 2.1: create vessel type (data)
+activate TYPES
+TYPES --> UI: 2.1.1: creation confirmation
+UI --> Officer: 2.2: display confirmation
+
+deactivate TYPES
+deactivate UI
+deactivate Officer
+
+@enduml

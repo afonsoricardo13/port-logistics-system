@@ -1,0 +1,40 @@
+@startuml Vista de Processos – Level 2 (US 2.2.7 – Reject Vessel Visit Notification)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Port Authority Officer" as Officer
+participant "<<container (C4)>>\nVisualization (UI)" as UI #87CEEB
+participant "<<container (C4)>>\nVisits & Manifests" as VVN #87CEEB
+
+activate Officer
+Officer -> UI: 1: select notification to reject
+activate UI
+UI --> Officer: 1.1: show notification details
+deactivate UI
+
+Officer -> UI: 2: reject notification
+activate UI
+UI --> Officer: 2.1: request rejection reason
+deactivate UI
+
+Officer -> UI: 3: provide reason and confirm
+activate UI
+UI -> VVN: 3.1: reject notification (notificationId, reason, officerId)
+activate VVN
+VVN --> UI: 3.2: rejection confirmation
+deactivate VVN
+UI --> Officer: 3.3: notification rejected successfully
+deactivate UI
+deactivate Officer
+
+@enduml

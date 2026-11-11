@@ -1,0 +1,234 @@
+@startuml US2.2.11 - Sequence Diagram
+actor "Logistics Operator" as Operator
+participant "OperatingStaffController" as Controller
+participant "OperatingStaffService" as Service
+participant "OperatingStaffRepository" as Repository
+participant "QualificationService" as QualService
+participant "LogisticsOperatorService" as OpService
+participant "OperatingStaffMapper" as Mapper
+participant "List<OperatingStaffDTO>" as ListDto
+participant "OperatingStaffDTO" as Dto
+
+' Register new staff member
+activate Operator
+Operator -> Controller : POST /api/operating-staff
+activate Controller
+Controller -> OpService : getCurrentOperator()
+activate OpService
+OpService --> Controller : operator
+deactivate OpService
+
+Controller -> Service : createOperatingStaff(createStaffDto, operator)
+activate Service
+
+' Validate mecanographic number uniqueness
+Service -> Repository : existsByMecanographicNumber(createStaffDto.mecanographicNumber)
+activate Repository
+Repository --> Service : exists : boolean
+deactivate Repository
+
+alt mecanographic number already exists
+    Service --> Controller : throw BusinessRuleValidationException("Mecanographic number already exists")
+    Controller --> Operator : HTTP 409 Conflict
+else mecanographic number is unique
+    ' Validate qualifications exist
+    loop for each qualification in createStaffDto.qualifications
+        Service -> QualService : getQualificationById(qualificationId)
+        activate QualService
+        QualService --> Service : qualification
+        deactivate QualService
+    end
+
+    ' Create domain object
+    Service -> Service : staff = new OperatingStaff(createStaffDto)
+    Service -> Repository : save(staff)
+    activate Repository
+    Repository --> Service : savedStaff
+    deactivate Repository
+
+    ' Map to DTO
+    Service -> Mapper : toDTO(savedStaff)
+    activate Mapper
+    Mapper -> Dto ** : createOperatingStaffDTO(savedStaff)
+    Mapper --> Service : staffDto : OperatingStaffDTO
+    deactivate Mapper
+
+    Service --> Controller : staffDto
+    deactivate Service
+    Controller --> Operator : HTTP 201 Created with staffDto
+end
+deactivate Controller
+
+' Update existing staff member
+Operator -> Controller : PUT /api/operating-staff/{staffId}
+activate Controller
+Controller -> OpService : getCurrentOperator()
+activate OpService
+OpService --> Controller : operator
+deactivate OpService
+
+Controller -> Service : updateOperatingStaff(staffId, updateStaffDto, operator)
+activate Service
+
+' Retrieve existing staff
+Service -> Repository : findById(staffId)
+activate Repository
+Repository --> Service : existingStaff
+deactivate Repository
+
+alt staff not found
+    Service --> Controller : throw EntityNotFoundException("Staff member not found")
+    Controller --> Operator : HTTP 404 Not Found
+else staff found
+    ' Validate qualifications if updated
+    alt updateStaffDto has qualification changes
+        loop for each qualification in updateStaffDto.qualifications
+            Service -> QualService : getQualificationById(qualificationId)
+            activate QualService
+            QualService --> Service : qualification
+            deactivate QualService
+        end
+    end
+
+    ' Update domain object
+    Service -> Service : existingStaff.update(updateStaffDto)
+    Service -> Repository : save(existingStaff)
+    activate Repository
+    Repository --> Service : updatedStaff
+    deactivate Repository
+
+    ' Map to DTO
+    Service -> Mapper : toDTO(updatedStaff)
+    activate Mapper
+    Mapper -> Dto ** : createOperatingStaffDTO(updatedStaff)
+    Mapper --> Service : staffDto : OperatingStaffDTO
+    deactivate Mapper
+
+    Service --> Controller : staffDto
+    deactivate Service
+    Controller --> Operator : HTTP 200 OK with staffDto
+end
+deactivate Controller
+
+' Deactivate staff member
+Operator -> Controller : POST /api/operating-staff/{staffId}/deactivate
+activate Controller
+Controller -> OpService : getCurrentOperator()
+activate OpService
+OpService --> Controller : operator
+deactivate OpService
+
+Controller -> Service : deactivateOperatingStaff(staffId, operator)
+activate Service
+
+' Retrieve existing staff
+Service -> Repository : findById(staffId)
+activate Repository
+Repository --> Service : existingStaff
+deactivate Repository
+
+alt staff not found
+    Service --> Controller : throw EntityNotFoundException("Staff member not found")
+    Controller --> Operator : HTTP 404 Not Found
+else staff found and active
+    ' Deactivate (preserve data)
+    Service -> Service : existingStaff.deactivate(operator, timestamp)
+    Service -> Repository : save(existingStaff)
+    activate Repository
+    Repository --> Service : deactivatedStaff
+    deactivate Repository
+
+    Service --> Controller : success confirmation
+    deactivate Service
+    Controller --> Operator : HTTP 200 OK
+end
+deactivate Controller
+
+' Search and filter staff members
+Operator -> Controller : GET /api/operating-staff?filters
+activate Controller
+Controller -> OpService : getCurrentOperator()
+activate OpService
+OpService --> Controller : operator
+deactivate OpService
+
+Controller -> Service : getOperatingStaff(filters, operator)
+activate Service
+Service -> Repository : findByFilters(filters)
+activate Repository
+Repository --> Service : filteredStaff
+deactivate Repository
+
+' Enrich staff with qualification details (Domain layer)
+loop for each staff in filteredStaff
+    alt staff has qualifications
+        loop for each qualification in staff.qualifications
+            Service -> QualService : getQualificationDetails(qualificationId)
+            activate QualService
+            QualService --> Service : qualificationDetails
+            deactivate QualService
+        end
+    end
+end
+
+' Map domain objects to DTOs (Application layer)
+Service -> Mapper : toDTOList(enrichedStaff)
+activate Mapper
+Mapper -> ListDto ** : create()
+loop for each staff in enrichedStaff
+    Mapper -> Mapper : dto = toDTO(staff)
+    Mapper -> Dto ** : createOperatingStaffDTO(staff)
+    Mapper -> ListDto : add(dto)
+end
+Mapper --> Service : staffDtoList : List<OperatingStaffDTO>
+deactivate Mapper
+
+Service --> Controller : staffDtoList
+deactivate Service
+Controller --> Operator : HTTP 200 OK with staffDtoList
+deactivate Controller
+
+' View specific staff member details
+Operator -> Controller : GET /api/operating-staff/{staffId}
+activate Controller
+Controller -> OpService : getCurrentOperator()
+activate OpService
+OpService --> Controller : operator
+deactivate OpService
+
+Controller -> Service : getOperatingStaffById(staffId, operator)
+activate Service
+Service -> Repository : findById(staffId)
+activate Repository
+Repository --> Service : staff
+deactivate Repository
+
+alt staff not found
+    Service --> Controller : throw EntityNotFoundException("Staff member not found")
+    Controller --> Operator : HTTP 404 Not Found
+else staff found
+    ' Enrich staff with qualification details (Domain layer)
+    alt staff has qualifications
+        loop for each qualification in staff.qualifications
+            Service -> QualService : getQualificationDetails(qualificationId)
+            activate QualService
+            QualService --> Service : qualificationDetails
+            deactivate QualService
+        end
+    end
+
+    ' Map domain object to DTO (Application layer)
+    Service -> Mapper : toDTO(staff)
+    activate Mapper
+    Mapper -> Dto ** : createOperatingStaffDTO(staff)
+    Mapper --> Service : staffDto : OperatingStaffDTO
+    deactivate Mapper
+
+    Service --> Controller : staffDto
+    deactivate Service
+    Controller --> Operator : HTTP 200 OK with staffDto
+end
+deactivate Controller
+deactivate Operator
+
+@enduml

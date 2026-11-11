@@ -1,0 +1,40 @@
+{
+  "app": {
+    "title": "Port Logistics System",
+    "companyName": "3DB Group 01"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "userManagement": "User Management",
+    "privacyPolicyAdmin": "Privacy Policy",
+    "operatingStaff": "Operating Staff",
+    "docks": "Docks",
+    "storageAreas": "Storage Areas",
+    "vessels": "Vessels",
+    "vesselTypes": "Vessel Types",
+    "organizations": "Organizations",
+    "representatives": "Representatives",
+    "qualifications": "Qualifications",
+    "physicalResources": "Physical Resources",
+    "vesselVisits": "Vessel Visit Notifications",
+    "operations": "Operations",
+    "dailyScheduling": "Daily Scheduling",
+    "viewer3d": "3D Viewer",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "user": {
+    "welcome": "Welcome",
+    "role": {
+      "administrator": "Administrator",
+      "logisticsOperator": "Logistics Operator",
+      "portManager": "Port Manager",
+      "shippingCompany": "Shipping Company"
+    }
+  },
+  "language": {
+    "english": "English",
+    "portuguese": "Portuguese"
+  }
+}

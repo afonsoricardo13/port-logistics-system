@@ -1,0 +1,30 @@
+@startuml SSD US 2.2.12 - Manage Physical Resource (Create / Activate / Deactivate)
+skinparam shadowing true
+skinparam ArrowColor #000000
+skinparam sequence {
+    ArrowColor Black
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as Officer
+participant "«system (C4)»\nPort Operations System" as System
+
+activate Officer
+Officer -> System : 1: choose operation (create | update | deactivate)
+activate System
+System  --> Officer : 1.1: request necessary data
+deactivate System
+
+Officer -> System : 2: provide requested data / action
+activate System
+System  --> Officer : 2.1: action completed successfully 
+deactivate System
+deactivate Officer
+
+@enduml

@@ -1,0 +1,34 @@
+@startuml Vista de Processos – Level 2 (US 2.2.12 – Manage Physical Resource)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as PA
+participant "<<container (C4)>>\nVisualization (UI)" as UI #87CEEB
+participant "<<container (C4)>>\nPhysical Resources" as PR #87CEEB
+
+activate PA
+PA -> UI: 1: manage physical resource (create | update | deactivate)
+activate UI
+UI --> PA: 1.1: show current resource data
+deactivate UI
+PA -> UI: 2: submit data (code)
+activate UI
+UI --> PR: 2.1: request to update/deactivate resource
+activate PR
+PR -> UI: 2.2: resource updated/deactivated
+deactivate PR
+UI --> PA: 2.3: resource updated/deactivated
+deactivate UI
+deactivate PA
+
+@enduml

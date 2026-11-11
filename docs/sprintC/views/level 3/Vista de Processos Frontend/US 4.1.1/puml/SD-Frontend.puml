@@ -1,0 +1,68 @@
+@startuml Vista de Processos Frontend – US 4.1.1 (View Daily Plans - SPA)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as USER
+
+box "SPA (Angular)" #LightBlue
+    participant "OperationPlansListComponent" as COMP
+    participant "OperationPlanService" as SVC
+    participant "AuthService" as AUTH
+    participant "MatDatepicker" as PICKER
+end box
+
+participant "<<external>>\nIAM" as IAM #F5F5DC
+
+USER -> COMP: 1: navigate to /operation-plans
+activate COMP
+
+COMP -> AUTH: 1.1: getToken()
+activate AUTH
+AUTH -> IAM: 1.1.1: validateSession()
+activate IAM
+IAM --> AUTH: 1.1.2: valid JWT token
+deactivate IAM
+AUTH --> COMP: 1.1.3: token
+deactivate AUTH
+
+COMP -> COMP: 1.2: initializeDateToToday()
+
+COMP -> SVC: 1.3: getByDate(today)
+activate SVC
+SVC --> COMP: 1.3.1: daily operation plans
+deactivate SVC
+
+COMP --> USER: 1.4: display plans table with date picker
+deactivate COMP
+
+USER -> PICKER: 2: select different date
+activate PICKER
+PICKER --> COMP: 2.1: dateChanged(newDate)
+deactivate PICKER
+
+activate COMP
+COMP -> SVC: 2.2: getByDate(newDate)
+activate SVC
+SVC --> COMP: 2.2.1: plans for selected date
+deactivate SVC
+
+COMP --> USER: 2.3: display updated plans table
+deactivate COMP
+
+USER -> COMP: 3: click on plan row
+activate COMP
+COMP -> COMP: 3.1: router.navigate(['/operation-plans', planId])
+COMP --> USER: 3.2: navigate to plan details
+deactivate COMP
+
+@enduml

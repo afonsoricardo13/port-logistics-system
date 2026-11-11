@@ -1,0 +1,129 @@
+<div class="vve-create-container">
+  <div class="page-header">
+    <h1>🚢 Create Vessel Visit Execution</h1>
+    <p class="subtitle">US 4.1.7: Record vessel arrival and start execution tracking</p>
+  </div>
+
+  @if (loadingVvns) {
+    <div class="loading-message">
+      <p>Loading vessel visit notifications...</p>
+    </div>
+  }
+
+  @if (success) {
+    <div class="alert alert-success">
+      {{ success }}
+    </div>
+  }
+
+  @if (error) {
+    <div class="alert alert-error">
+      <strong>❌ Error!</strong> {{ error }}
+    </div>
+  }
+
+  <form [formGroup]="vveForm" (ngSubmit)="onSubmit()" class="vve-form">
+    <div class="form-section">
+      <h2>Vessel Information</h2>
+
+      <div class="form-group">
+        <label for="vvnId">
+          Vessel Visit Notification <span class="required">*</span>
+        </label>
+        <select 
+          id="vvnId"
+          formControlName="vvnId"
+          (change)="onVvnSelected($event)"
+          [class.invalid]="vveForm.get('vvnId')?.invalid && vveForm.get('vvnId')?.touched">
+          <option value="">-- Select a VVN --</option>
+          @for (vvn of vvnList; track vvn.id) {
+            <option [value]="vvn.id">
+              VVN-{{ vvn.id }} | IMO: {{ vvn.vesselImoNumber }} | ETA: {{ vvn.estimatedTimeOfArrival ? (vvn.estimatedTimeOfArrival | date:'short') : 'N/A' }}
+            </option>
+          }
+        </select>
+        @if (vveForm.get('vvnId')?.invalid && vveForm.get('vvnId')?.touched) {
+          <small class="error-text">Please select a Vessel Visit Notification</small>
+        }
+        @if (vvnList.length === 0 && !loadingVvns) {
+          <small class="info-text">⚠️ No approved VVNs available</small>
+        }
+      </div>
+
+      @if (selectedVvn) {
+        <div class="info-box">
+          <h4>📋 Selected VVN Details</h4>
+          <p>{{ getVvnDetails() }}</p>
+          @if (selectedVvn.containerIds && selectedVvn.containerIds.length > 0) {
+            <p><strong>Containers:</strong> {{ selectedVvn.containerIds.length }} container(s)</p>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="form-section">
+      <h2>Arrival Information</h2>
+
+      <div class="form-group">
+        <label for="actualArrivalTime">
+          Actual Arrival Time <span class="required">*</span>
+        </label>
+        <input 
+          type="datetime-local"
+          id="actualArrivalTime"
+          formControlName="actualArrivalTime"
+          [class.invalid]="vveForm.get('actualArrivalTime')?.invalid && vveForm.get('actualArrivalTime')?.touched"
+        />
+        @if (vveForm.get('actualArrivalTime')?.invalid && vveForm.get('actualArrivalTime')?.touched) {
+          <small class="error-text">Actual arrival time is required</small>
+        }
+        <small class="help-text">When did the vessel actually arrive at the port?</small>
+      </div>
+
+      <div class="form-group">
+        <label for="notes">Notes (Optional)</label>
+        <textarea 
+          id="notes"
+          formControlName="notes"
+          rows="4"
+          placeholder="Add any relevant notes about the arrival..."
+          [class.invalid]="vveForm.get('notes')?.invalid && vveForm.get('notes')?.touched"
+        ></textarea>
+        @if (vveForm.get('notes')?.invalid && vveForm.get('notes')?.touched) {
+          <small class="error-text">Notes must be less than 500 characters</small>
+        }
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button 
+        type="button" 
+        class="btn btn-secondary" 
+        (click)="onCancel()"
+        [disabled]="loading">
+        Cancel
+      </button>
+      <button 
+        type="submit" 
+        class="btn btn-primary" 
+        [disabled]="loading || vveForm.invalid">
+        @if (loading) {
+          <span>Creating...</span>
+        } @else {
+          <span>✅ Create VVE</span>
+        }
+      </button>
+    </div>
+  </form>
+
+  <div class="help-section">
+    <h3>ℹ️ How it works</h3>
+    <ol>
+      <li>Select an <strong>approved</strong> Vessel Visit Notification (VVN)</li>
+      <li>Record the <strong>actual arrival time</strong> when the vessel arrives</li>
+      <li>Add any relevant <strong>notes</strong></li>
+      <li>Click <strong>Create VVE</strong> to start tracking</li>
+      <li>The VVE will be marked as <strong>"In Progress"</strong></li>
+    </ol>
+  </div>
+</div>

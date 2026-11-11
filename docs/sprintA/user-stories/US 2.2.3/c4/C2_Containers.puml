@@ -1,0 +1,30 @@
+@startuml C4 Containers
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+LAYOUT_LEFT_RIGHT()
+
+Person(portOfficer, "Port Authority Officer", "Approves/rejects Vessel Visit notifications, assigns docks, enforces operational compliance, and manages shipping agent registrations and vessel authorizations.")
+Person(shipAgent, "Shipping Agent Representative", "Submits visit notifications and Cargo Manifests, updates/cancels notifications before approval, supplies documentation, and tracks approved visit status.")
+Person(logOperator, "Logistics Operator", "Defines/schedules operations, allocates resources, monitors and adjusts execution, ensuring efficient cargo flow through docks, yards, and warehouses.")
+Person(adminUser, "Administrator", "Manages accounts/permissions, configures system settings, and ensures data integrity.")
+
+System_Boundary(pls, "Port Logistics System") {
+  Container(spa, "SPA (Web UI)", "TypeScript/Three.js (SGRAI)", "Users interact with the system")
+  Container(api, "API (DDDNetCore)", "ASP.NET Core 9", "REST endpoints, domain logic, validation")
+  ContainerDb(db, "Database", "EF Core Provider (InMemory/SQL)", "Persist domain aggregates (Dock, Vessel, etc.)")
+}
+
+System_Ext(idp, "External Identity Provider", "OIDC/OAuth2")
+
+Rel(portOfficer, spa, "Uses", "HTTPS")
+Rel(shipAgent, spa, "Uses", "HTTPS")
+Rel(logOperator, spa, "Uses", "HTTPS")
+Rel(adminUser, spa, "Uses", "HTTPS")
+
+Rel(spa, api, "Calls REST APIs", "JSON/HTTPS")
+Rel(api, db, "CRUD", "EF Core")
+Rel_D(spa, idp, "Authenticate", "OIDC/OAuth2 (PKCE)")
+Rel_D(api, idp, "Validate tokens", "JWT")
+
+SHOW_LEGEND()
+@enduml

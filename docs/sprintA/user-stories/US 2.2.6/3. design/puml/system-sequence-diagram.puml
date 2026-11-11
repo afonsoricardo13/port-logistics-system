@@ -1,0 +1,13 @@
+@startuml
+actor Officer as "Port Authority Officer"
+participant "Port System" as System
+
+Officer -> System : Submit representative data (create/update/deactivate)
+System -> System : Validate data and organization association
+alt Valid data
+    System -> System : Perform action (create/update/deactivate)
+    System -> Officer : Return success and updated status
+else Invalid data
+    System -> Officer : Return error message
+end
+@enduml

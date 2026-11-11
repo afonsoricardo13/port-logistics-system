@@ -1,0 +1,168 @@
+@startuml Vista Logica - Level 4 (US 4.1.2 - Operation Plan Generation)
+
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor<<Controller>> LightBlue
+    BackgroundColor<<Service>> LightGreen
+    BackgroundColor<<Repository>> LightYellow
+    BackgroundColor<<Entity>> LightCoral
+    BackgroundColor<<DTO>> Wheat
+    BackgroundColor<<ValueObject>> LightGray
+}
+
+package "WebApi Layer" {
+    class OperationPlansController <<Controller>> {
+        - _repository: IOperationPlanRepository
+        - _operationPlanService: OperationPlanService
+        - _logger: ILogger<OperationPlansController>
+        + GetAll(vvnId?, date?, startDate?, endDate?, sortBy, sortOrder): Task<ActionResult<IEnumerable<OperationPlanDetailDTO>>>
+        + GetByVvnId(vvnId: string): Task<ActionResult<IEnumerable<OperationPlanDetailDTO>>>
+        + GetById(id: Guid): Task<ActionResult<OperationPlanDetailDTO>>
+        + Create(dto: CreateOperationPlanDTO): Task<ActionResult<OperationPlanDTO>>
+        + CreateBatch(dtos: List<CreateOperationPlanDTO>): Task<ActionResult<BatchCreateResponseDTO>>
+        + Update(id: Guid, dto: UpdateOperationPlanDTO): Task<ActionResult<OperationPlanDTO>>
+        + Delete(id: Guid): Task<ActionResult>
+    }
+}
+
+package "Application Layer" {
+    class OperationPlanService <<Service>> {
+        - _repository: IOperationPlanRepository
+        - _portLogisticsClient: PortLogisticsApiClient
+        - _schedulingClient: SchedulingApiClient
+        - _logger: ILogger<OperationPlanService>
+        + ConvertToDetailedDTOs(plans: IEnumerable<OperationPlan>): Task<IEnumerable<OperationPlanDetailDTO>>
+        + CreateBatchAsync(dtos: List<CreateOperationPlanDTO>, userEmail: string): Task<BatchCreateResponseDTO>
+        + GetVvnDetailsAsync(vvnId: string): Task<VvnDetailsDTO>
+        + GeneratePlansForDateAsync(date: DateTime, algorithm: string): Task<IEnumerable<OperationPlanDTO>>
+    }
+
+    class OperationPlanDTO <<DTO>> {
+        + Id: Guid
+        + VvnId: string
+        + Date: DateTime
+        + StartTime: DateTime
+        + EndTime: DateTime
+        + Operations: List<PlannedOperationDTO>
+        + AlgorithmUsed: string
+        + CreatedBy: string
+        + CreatedAt: DateTime
+        + UpdatedBy: string?
+        + UpdatedAt: DateTime?
+    }
+
+    class OperationPlanDetailDTO <<DTO>> {
+        + Id: Guid
+        + VvnId: string
+        + VesselName: string?
+        + VesselImo: string?
+        + DockCode: string?
+        + Date: DateTime
+        + StartTime: DateTime
+        + EndTime: DateTime
+        + Duration: TimeSpan
+        + Delay: TimeSpan?
+        + Operations: List<PlannedOperationDTO>
+        + AlgorithmUsed: string
+        + Metadata: PlanMetadataDTO
+    }
+
+    class PlannedOperationDTO <<DTO>> {
+        + Id: Guid
+        + OperationType: string
+        + ContainerId: string
+        + StartTime: DateTime
+        + EndTime: DateTime
+        + AssignedCrane: string
+        + AssignedStaff: List<string>
+    }
+
+    class CreateOperationPlanDTO <<DTO>> {
+        + VvnId: string
+        + Date: DateTime
+        + Operations: List<PlannedOperationDTO>
+        + AlgorithmUsed: string
+    }
+}
+
+package "Domain Layer" {
+    class OperationPlan <<Entity>> {
+        - _id: Guid
+        - _vvnId: string
+        - _operations: List<PlannedOperation>
+        + Id: Guid {get}
+        + VvnId: string {get}
+        + Date: DateTime {get; private set}
+        + StartTime: DateTime? {get; private set}
+        + EndTime: DateTime? {get; private set}
+        + Operations: IReadOnlyCollection<PlannedOperation> {get}
+        + AlgorithmUsed: string {get; private set}
+        + CreatedBy: string {get; private set}
+        + CreatedAt: DateTime {get; private set}
+        + UpdatedBy: string? {get; private set}
+        + UpdatedAt: DateTime? {get; private set}
+        + OperationPlan(vvnId, date, algorithm, createdBy)
+        + AddOperation(operation: PlannedOperation): void
+        + UpdateTimes(startTime, endTime): void
+        + UpdateMetadata(updatedBy: string): void
+    }
+
+    class PlannedOperation <<Entity>> {
+        + Id: Guid
+        + OperationType: OperationType {get; private set}
+        + ContainerId: string {get; private set}
+        + StartTime: DateTime {get; private set}
+        + EndTime: DateTime {get; private set}
+        + AssignedCrane: string? {get; private set}
+        + AssignedStaff: List<string> {get; private set}
+        + PlannedOperation(type, containerId, startTime, endTime)
+        + AssignResources(crane, staff): void
+    }
+
+    enum OperationType <<ValueObject>> {
+        Loading
+        Unloading
+    }
+
+    interface IOperationPlanRepository <<Repository>> {
+        + GetByIdAsync(id: Guid): Task<OperationPlan?>
+        + GetAllAsync(): Task<IEnumerable<OperationPlan>>
+        + GetByVvnIdAsync(vvnId: string): Task<IEnumerable<OperationPlan>>
+        + GetByDateAsync(date: DateTime): Task<IEnumerable<OperationPlan>>
+        + GetByDateRangeAsync(startDate, endDate): Task<IEnumerable<OperationPlan>>
+        + AddAsync(plan: OperationPlan): Task<OperationPlan>
+        + UpdateAsync(plan: OperationPlan): Task<OperationPlan>
+        + DeleteAsync(id: Guid): Task<bool>
+    }
+}
+
+package "DataModel Layer" {
+    class OperationPlanRepository <<Repository>> {
+        - _context: OEMDbContext
+        + GetByIdAsync(id: Guid): Task<OperationPlan?>
+        + GetAllAsync(): Task<IEnumerable<OperationPlan>>
+        + GetByVvnIdAsync(vvnId: string): Task<IEnumerable<OperationPlan>>
+        + GetByDateAsync(date: DateTime): Task<IEnumerable<OperationPlan>>
+        + GetByDateRangeAsync(startDate, endDate): Task<IEnumerable<OperationPlan>>
+        + AddAsync(plan: OperationPlan): Task<OperationPlan>
+        + UpdateAsync(plan: OperationPlan): Task<OperationPlan>
+        + DeleteAsync(id: Guid): Task<bool>
+    }
+
+    class OEMDbContext {
+        + OperationPlans: DbSet<OperationPlan>
+        + PlannedOperations: DbSet<PlannedOperation>
+    }
+}
+
+' Relationships
+OperationPlansController --> OperationPlanService
+OperationPlansController --> IOperationPlanRepository
+OperationPlanService --> IOperationPlanRepository
+OperationPlanService --> OperationPlanDTO
+OperationPlanService --> OperationPlanDetailDTO
+OperationPlan --> PlannedOperation : contains
+OperationPlanRepository ..|> IOperationPlanRepository
+OperationPlanRepository --> OEMDbContext
+
+@enduml

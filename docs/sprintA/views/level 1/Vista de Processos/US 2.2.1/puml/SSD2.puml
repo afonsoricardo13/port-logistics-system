@@ -1,0 +1,33 @@
+@startuml SSD US 2.2.1 - Update Vessel Type
+skinparam shadowing true
+skinparam ArrowColor #000000
+skinparam sequence {
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+  ParticipantBorderColor #000000
+  ParticipantBackgroundColor #87CEEB
+  LifeLineBorderColor #000000
+  LifeLineBackgroundColor #87CEEB
+}
+
+actor "Port Authority Officer" as Officer
+participant "«system (C4)»\nPort Operations System" as System
+
+activate Officer
+Officer -> System : 1: request to update a Vessel Type
+activate System
+System --> Officer : 1.1: search and filter by name/description\n(select Vessel Type to update)
+deactivate System
+
+Officer -> System : 2: select Vessel Type
+activate System
+System --> Officer : 2.1: show current data\n(name, description, capacity,\nconstraints: max rows, bays, tiers)
+deactivate System
+
+Officer -> System : 3: provide updated data
+activate System
+System --> Officer : 3.1: validate and save changes\nconfirmation shown; changes reflected in vessel registration\nand in search results
+deactivate System
+
+deactivate Officer
+@enduml

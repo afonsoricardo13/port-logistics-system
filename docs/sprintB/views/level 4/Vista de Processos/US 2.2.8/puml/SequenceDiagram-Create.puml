@@ -1,0 +1,244 @@
+@startuml Vista de Processos - Level 4 (US 2.2.8 - Create Vessel Visit Notification)
+
+participant ":VesselVisitNotificationController" as Controller
+participant ":VesselVisitNotificationService" as Service
+participant ":IVesselRepository" as VesselRepo
+participant ":IDockRepository" as DockRepo
+participant ":IOrganizationRepository" as OrgRepo
+participant ":VesselVisitNotificationFactory" as Factory
+participant ":VesselVisitNotification" as Entity
+participant ":NotificationId" as NotifId
+participant ":ArrivalTime" as Arrival
+participant ":DepartureTime" as Departure
+participant ":CargoManifest" as Manifest
+participant ":CargoItem" as Item
+participant ":ContainerId" as ContId
+participant ":CargoType" as CType
+participant ":Weight" as Weight
+participant ":NotificationStatus" as Status
+participant ":IVesselVisitNotificationRepository" as Repository
+participant ":ApplicationDbContext" as DbContext
+participant ":VesselVisitNotificationMapper" as Mapper
+
+-> Controller: POST /api/vesselvisitnotification\n(CreateVesselVisitNotificationDto)
+activate Controller
+
+Controller -> Controller: ValidateModelState()
+
+Controller -> Service: CreateNotificationAsync(dto)
+activate Service
+
+Service -> Service: ValidateVesselExists(dto.VesselId)
+Service -> VesselRepo: GetByIdAsync(vesselId)
+activate VesselRepo
+VesselRepo -> DbContext: Vessels.FindAsync(id)
+activate DbContext
+DbContext --> VesselRepo: vessel
+deactivate DbContext
+VesselRepo --> Service: vessel
+deactivate VesselRepo
+
+alt Vessel Not Found
+    Service --> Controller: throw NotFoundException("Vessel not found")
+    Controller --> : 404 NotFound
+end
+
+Service -> Service: ValidateDockExists(dto.RequestedDockId)
+Service -> DockRepo: GetByIdAsync(dockId)
+activate DockRepo
+DockRepo -> DbContext: Docks.FindAsync(id)
+activate DbContext
+DbContext --> DockRepo: dock
+deactivate DbContext
+DockRepo --> Service: dock
+deactivate DockRepo
+
+alt Dock Not Found
+    Service --> Controller: throw NotFoundException("Dock not found")
+    Controller --> : 404 NotFound
+end
+
+Service -> Service: ValidateOrganizationExists(dto.ShippingAgentId)
+Service -> OrgRepo: GetByIdAsync(organizationId)
+activate OrgRepo
+OrgRepo -> DbContext: Organizations.FindAsync(id)
+activate DbContext
+DbContext --> OrgRepo: organization
+deactivate DbContext
+OrgRepo --> Service: organization
+deactivate OrgRepo
+
+alt Organization Not Found
+    Service --> Controller: throw NotFoundException("Organization not found")
+    Controller --> : 404 NotFound
+end
+
+Service -> Factory: CreateNotification(vesselId, dockId, agentId, arrival, departure, manifest)
+activate Factory
+
+Factory -> Arrival: new ArrivalTime(dto.EstimatedArrival)
+activate Arrival
+Arrival -> Arrival: Validate(value)
+note right
+    Rules:
+    - Future date
+    - Not more than 1 year ahead
+end note
+Arrival --> Factory: arrivalTime
+deactivate Arrival
+
+Factory -> Departure: new DepartureTime(dto.EstimatedDeparture)
+activate Departure
+Departure -> Departure: Validate(value)
+note right
+    Rules:
+    - After arrival time
+    - Reasonable duration
+end note
+Departure --> Factory: departureTime
+deactivate Departure
+
+Factory -> Factory: ValidateSchedule(arrivalTime, departureTime)
+
+Factory -> Manifest: new CargoManifest()
+activate Manifest
+
+loop for each cargoItemDto in dto.CargoManifest
+    Factory -> ContId: new ContainerId(cargoItemDto.ContainerId)
+    activate ContId
+    ContId -> ContId: Validate(value)
+    note right
+        Rules:
+        - ISO 6346 format
+        - 11 characters
+    end note
+    ContId --> Factory: containerId
+    deactivate ContId
+    
+    Factory -> CType: new CargoType(cargoItemDto.CargoType)
+    activate CType
+    CType -> CType: Validate(value)
+    CType --> Factory: cargoType
+    deactivate CType
+    
+    Factory -> Weight: new Weight(cargoItemDto.Weight)
+    activate Weight
+    Weight -> Weight: Validate(value)
+    note right
+        Rules:
+        - Positive value
+        - Max 30 tons per container
+    end note
+    Weight --> Factory: weight
+    deactivate Weight
+    
+    Factory -> Item: new CargoItem(containerId, cargoType, weight, isHazardous, description)
+    activate Item
+    Item -> Item: Validate()
+    Item --> Factory: cargoItem
+    deactivate Item
+    
+    Factory -> Manifest: AddItem(cargoItem)
+    Manifest -> Manifest: items.Add(cargoItem)
+    Manifest --> Factory: void
+end
+
+Manifest -> Manifest: Validate(items)
+note right
+    Rules:
+    - At least 1 item
+    - Max 1000 items
+    - Total weight reasonable
+end note
+Manifest --> Factory: cargoManifest
+deactivate Manifest
+
+Factory -> Entity: new VesselVisitNotification(vesselId, dockId, agentId, ...)
+activate Entity
+Entity -> NotifId: new NotificationId(Guid.NewGuid())
+activate NotifId
+NotifId --> Entity: id
+deactivate NotifId
+
+Entity -> Entity: status = NotificationStatus.Draft
+Entity -> Entity: createdAt = DateTime.UtcNow
+Entity -> Entity: submittedAt = null
+Entity --> Factory: notification
+deactivate Entity
+
+Factory --> Service: notification
+deactivate Factory
+
+Service -> Repository: AddAsync(notification)
+activate Repository
+Repository -> DbContext: VesselVisitNotifications.Add(notification)
+activate DbContext
+DbContext --> Repository: EntityEntry<VesselVisitNotification>
+deactivate DbContext
+
+Repository -> DbContext: SaveChangesAsync()
+activate DbContext
+DbContext -> DbContext: GenerateSQL()
+DbContext -> DbContext: ExecuteInsert()
+note right
+    Inserts notification
+    and cargo items
+    (cascade)
+end note
+DbContext --> Repository: 1
+deactivate DbContext
+Repository --> Service: notification
+deactivate Repository
+
+Service -> Mapper: ToDto(notification)
+activate Mapper
+Mapper -> Entity: GetId()
+activate Entity
+Entity --> Mapper: id
+deactivate Entity
+
+Mapper -> Entity: GetVesselId()
+activate Entity
+Entity --> Mapper: vesselId
+deactivate Entity
+
+Mapper -> VesselRepo: GetByIdAsync(vesselId)
+activate VesselRepo
+VesselRepo --> Mapper: vessel
+deactivate VesselRepo
+
+Mapper -> Entity: GetCargoManifest()
+activate Entity
+Entity --> Mapper: cargoManifest
+deactivate Entity
+
+Mapper -> Manifest: GetItems()
+activate Manifest
+Manifest --> Mapper: cargoItems
+deactivate Manifest
+
+loop for each cargoItem
+    Mapper -> Item: GetContainerId()
+    activate Item
+    Item --> Mapper: containerId
+    deactivate Item
+    
+    Mapper -> Item: GetWeight()
+    activate Item
+    Item --> Mapper: weight
+    deactivate Item
+    
+    Mapper -> Mapper: Create CargoItemDto
+end
+
+Mapper -> Mapper: Create VesselVisitNotificationDto
+Mapper --> Service: notificationDto
+deactivate Mapper
+
+Service --> Controller: notificationDto
+deactivate Service
+
+Controller --> : 201 Created(notificationDto)
+deactivate Controller
+
+@enduml

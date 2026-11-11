@@ -1,0 +1,69 @@
+@startuml Vista Física - Nível 2 (Sprint C - Port Operations System)
+left to right direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+' ====== estilo ======
+skinparam node {
+	BackgroundColor #87CEEB
+	BorderColor #000000
+	RoundCorner 5
+}
+skinparam component {
+	BackgroundColor #87CEEB
+	BorderColor #000000
+	RoundCorner 5
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ====== nós físicos ======
+node "localhost" as LOCAL {
+	component "«component»\nBrowser" as BROWSER {
+		component "«component»\nUI" as UI_CLIENT
+	}
+}
+
+node "app-server-1" as S1 {
+	component "«component»\nPort Logistics API"     as PORT
+	database "«internal»\nPort Logistics DB" as PORT_DB
+}
+
+node "app-server-2" as S2 {
+	component "«component»\nOEM API"  as OEM
+	database "«internal»\nOEM DB" as OEM_DB
+}
+
+node "app-server-3" as S3 {
+	component "«component»\nScheduling & Planning"  as PLAN
+}
+
+node "cdn-server" as CDN {
+	component "«component»\nHTTP Server" as HTTPD
+	rectangle "\n SPA Static Files" as UI_STATIC #87CEEB
+}
+
+' ====== componente externo: IAM ======
+node "iam-server" as IAM_NODE #F5F5DC {
+	component "«external»\nIAM Provider" as IAM #F5F5DC
+}
+
+' ====== ligações de rede ======
+LOCAL --> CDN : HTTPS
+LOCAL --> S1 : HTTPS
+LOCAL --> S2 : HTTPS
+LOCAL --> S3 : HTTPS
+LOCAL --> IAM_NODE : HTTPS (OAuth)
+
+S1 --> S3 : HTTPS
+S2 --> S1 : HTTPS (REST)
+S2 --> S3 : HTTPS (REST)
+
+S1 --> IAM_NODE : JWT Validation
+S2 --> IAM_NODE : JWT Validation
+
+PORT --> PORT_DB : SQL
+OEM --> OEM_DB : SQL
+
+@enduml

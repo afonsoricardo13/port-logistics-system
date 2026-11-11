@@ -1,0 +1,27 @@
+@startuml SSD US 2.2.3 - Update Docks
+skinparam shadowing true
+skinparam ArrowColor #000000
+skinparam sequence {
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+  ParticipantBorderColor #000000
+  ParticipantBackgroundColor #87CEEB
+  LifeLineBorderColor #000000
+  LifeLineBackgroundColor #87CEEB
+}
+
+actor "Port Authority Officer" as Officer
+participant "«system (C4)»\nPort Operations System" as System
+
+activate Officer
+Officer -> System : 1: selects dock to update
+activate System
+System  --> Officer : 1.1: show current dock data
+deactivate System
+Officer -> System : 2: submit changes\n(name/number, location,\nlength, depth, max draft,\nallowed vessel types)
+activate System
+System  --> Officer : 2.1: dock updated successfully
+deactivate System
+deactivate Officer
+
+@enduml

@@ -1,0 +1,25 @@
+@startuml SSD US 2.2.7 - Review Pending Vessel Visit Notifications
+skinparam shadowing true
+skinparam ArrowColor #000000
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Port Authority Officer" as Officer
+participant "«system (C4)»\nPort Operations System" as System
+
+activate Officer
+Officer -> System : 1: request pending Vessel Visit Notifications
+activate System
+System --> Officer : 1.1: list of pending notifications\n(Vessel, IMO, ETA, ETD,\npurpose, cargo, submitted by)
+deactivate System
+deactivate Officer
+
+@enduml

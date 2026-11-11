@@ -1,0 +1,30 @@
+@startuml SSD US 2.2.12 - Register Physical Resource
+skinparam shadowing true
+skinparam ArrowColor #000000
+skinparam sequence {
+    ArrowColor Black
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as Officer
+participant "«system (C4)»\nPort Operations System" as System
+
+activate Officer
+Officer -> System : 1: starts physical resource registration
+activate System
+System  --> Officer : 1.1: request resource data\n(code, description, type, capacity, assignedArea, status, setupTimeMinutes, staffQualificationIds, operationalWindow)
+deactivate System
+
+Officer -> System : 2: provide requested data
+activate System
+System  --> Officer : 2.1: physical resource created successfully
+deactivate System
+deactivate Officer
+
+@enduml

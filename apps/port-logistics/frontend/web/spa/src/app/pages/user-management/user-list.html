@@ -1,0 +1,72 @@
+<div class="user-list-container">
+  <div class="header">
+    <h1>User Management</h1>
+    <button class="btn btn-primary" (click)="createNewUser()">
+      <i class="icon-plus"></i> Create New User
+    </button>
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading users...</p>
+  </div>
+
+  <div *ngIf="!loading && users.length === 0" class="empty-state">
+    <p>No users found. Create your first user!</p>
+  </div>
+
+  <div *ngIf="!loading && users.length > 0" class="users-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Name</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Created At</th>
+          <th>Created By</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users">
+          <td class="email-cell">{{ user.email }}</td>
+          <td>{{ user.name }}</td>
+          <td>
+            <span class="role-badge">{{ user.role }}</span>
+          </td>
+          <td>
+            <span [class]="'status-badge ' + getStatusClass(user)">
+              {{ getStatusText(user) }}
+            </span>
+          </td>
+          <td class="date-cell">{{ formatDate(user.createdAt) }}</td>
+          <td>{{ user.createdBy }}</td>
+          <td class="actions-cell">
+            <button 
+              class="btn btn-sm btn-secondary" 
+              (click)="editUser(user.email)"
+              title="Edit user">
+              Edit
+            </button>
+            <button 
+              *ngIf="user.hasPendingActivation"
+              class="btn btn-sm btn-info" 
+              (click)="resendActivation(user.email)"
+              title="Resend activation email">
+              Resend
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

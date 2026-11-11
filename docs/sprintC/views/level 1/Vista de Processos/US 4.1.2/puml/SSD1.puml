@@ -1,0 +1,36 @@
+@startuml Vista de Processos – Level 1 (US 4.1.2 – Generate Operation Plans)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as LO
+participant "«system (C4)»\nPort Operations System" as SYS #87CEEB
+participant "«external»\nIAM" as IAM #F5F5DC
+
+LO -> SYS: 1: request to generate Operation Plans for a date
+activate SYS
+SYS -> IAM: 1.1: validateToken()
+activate IAM
+IAM --> SYS: 1.2: tokenValid
+deactivate IAM
+SYS --> LO: 1.3: ask to select target date and scheduling algorithm
+deactivate SYS
+LO -> SYS: 2: provides target date and algorithm selection
+activate SYS
+SYS --> LO: 2.1: shows generated Operation Plans preview
+deactivate SYS
+LO -> SYS: 3: confirms to save Operation Plans
+activate SYS
+SYS --> LO: 3.1: confirmation of Operation Plans saved
+deactivate SYS
+
+@enduml

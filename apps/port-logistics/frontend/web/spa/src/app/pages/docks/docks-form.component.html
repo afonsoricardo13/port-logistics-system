@@ -1,0 +1,192 @@
+<div class="dock-form-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>{{ isEditMode ? 'Edit' : 'Register New' }} Dock</h1>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div *ngIf="success" class="alert alert-success">
+    {{ success }}
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading && isEditMode" class="loading">
+    <div class="spinner"></div>
+    <p>Loading dock...</p>
+  </div>
+
+  <!-- Form -->
+  <form [formGroup]="dockForm" *ngIf="!loading || !isEditMode" class="dock-form">
+    
+    <!-- Basic Information Section -->
+    <div class="form-section">
+      <h2>Basic Information</h2>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="code" class="required">Code</label>
+          <input 
+            id="code"
+            type="text" 
+            formControlName="code"
+            class="form-control"
+            placeholder="e.g., DOCK-A1"
+            [class.error]="dockForm.get('code')?.invalid && dockForm.get('code')?.touched" />
+          <span *ngIf="dockForm.get('code')?.invalid && dockForm.get('code')?.touched" class="error-message">
+            Code is required
+          </span>
+          <span class="help-text">Unique identifier (max 50 characters)</span>
+        </div>
+
+        <div class="form-group">
+          <label for="nameOrNumber" class="required">Name/Number</label>
+          <input 
+            id="nameOrNumber"
+            type="text" 
+            formControlName="nameOrNumber"
+            class="form-control"
+            placeholder="e.g., Dock A1 - Container Terminal"
+            [class.error]="dockForm.get('nameOrNumber')?.invalid && dockForm.get('nameOrNumber')?.touched" />
+          <span *ngIf="dockForm.get('nameOrNumber')?.invalid && dockForm.get('nameOrNumber')?.touched" class="error-message">
+            Name/Number is required
+          </span>
+          <span class="help-text">Dock name or number (max 100 characters)</span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="location" class="required">Location</label>
+          <input 
+            id="location"
+            type="text" 
+            formControlName="location"
+            class="form-control"
+            placeholder="e.g., North Terminal, Section 1"
+            [class.error]="dockForm.get('location')?.invalid && dockForm.get('location')?.touched" />
+          <span *ngIf="dockForm.get('location')?.invalid && dockForm.get('location')?.touched" class="error-message">
+            Location is required
+          </span>
+          <span class="help-text">Location within the port (max 200 characters)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Physical Characteristics Section -->
+    <div class="form-section">
+      <h2>Physical Characteristics</h2>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="length" class="required">Length (m)</label>
+          <input 
+            id="length"
+            type="number" 
+            formControlName="length"
+            class="form-control"
+            step="0.01"
+            min="0"
+            placeholder="e.g., 200"
+            [class.error]="dockForm.get('length')?.invalid && dockForm.get('length')?.touched" />
+          <span *ngIf="dockForm.get('length')?.invalid && dockForm.get('length')?.touched" class="error-message">
+            Length must be greater than 0
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="depth" class="required">Depth (m)</label>
+          <input 
+            id="depth"
+            type="number" 
+            formControlName="depth"
+            class="form-control"
+            step="0.01"
+            min="0"
+            placeholder="e.g., 35"
+            [class.error]="dockForm.get('depth')?.invalid && dockForm.get('depth')?.touched" />
+          <span *ngIf="dockForm.get('depth')?.invalid && dockForm.get('depth')?.touched" class="error-message">
+            Depth must be greater than 0
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="maxDraft" class="required">Max Draft (m)</label>
+          <input 
+            id="maxDraft"
+            type="number" 
+            formControlName="maxDraft"
+            class="form-control"
+            step="0.01"
+            min="0"
+            placeholder="e.g., 14.5"
+            [class.error]="dockForm.get('maxDraft')?.invalid && dockForm.get('maxDraft')?.touched" />
+          <span *ngIf="dockForm.get('maxDraft')?.invalid && dockForm.get('maxDraft')?.touched" class="error-message">
+            Max Draft must be greater than 0
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Allowed Vessel Types Section -->
+    <div class="form-section">
+      <h2>Allowed Vessel Types</h2>
+      <p class="section-description">
+        Specify which vessel types are allowed to berth at this dock
+      </p>
+      
+      <div formArrayName="allowedVesselTypes">
+        <div *ngFor="let control of vesselTypesArray.controls; let i = index" class="array-item">
+          <div class="form-group-inline">
+            <select 
+              [formControlName]="i"
+              class="form-control">
+              <option value="">Select vessel type...</option>
+              <option *ngFor="let type of availableVesselTypes" [value]="type.name">{{ type.name }}</option>
+            </select>
+            <button 
+              type="button" 
+              class="btn btn-danger btn-sm" 
+              (click)="removeVesselType(i)"
+              title="Remove vessel type">
+              ✕
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <button 
+        type="button" 
+        class="btn btn-secondary btn-sm" 
+        (click)="addVesselType()">
+        + Add Vessel Type
+      </button>
+
+      <div *ngIf="vesselTypesArray.length === 0 && dockForm.get('allowedVesselTypes')?.touched" class="alert alert-error">
+        At least one vessel type is required
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button 
+        type="button" 
+        class="btn btn-outline" 
+        (click)="cancel()"
+        [disabled]="loading">
+        Cancel
+      </button>
+
+      <button 
+        type="submit" 
+        class="btn btn-primary" 
+        (click)="onSubmit()"
+        [disabled]="loading">
+        {{ isEditMode ? 'Update' : 'Create' }} Dock
+      </button>
+    </div>
+  </form>
+</div>

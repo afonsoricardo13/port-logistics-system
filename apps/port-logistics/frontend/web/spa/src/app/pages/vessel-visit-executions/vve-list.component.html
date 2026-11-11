@@ -1,0 +1,119 @@
+<div class="vve-list-container">
+  <div class="page-header">
+    <div>
+      <h1>🚢 Vessel Visit Executions</h1>
+      <p class="subtitle">Track actual vessel operations and execution</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="navigateToSearch()">
+        🔍 Search with Metrics
+      </button>
+      <button class="btn btn-primary" (click)="createNew()">
+        + Create VVE
+      </button>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="loading-message">
+      <p>Loading vessel visit executions...</p>
+    </div>
+  }
+
+  @if (error) {
+    <div class="alert alert-error">
+      <strong>❌ Error!</strong> {{ error }}
+    </div>
+  }
+
+  @if (!loading && vveList.length === 0) {
+    <div class="empty-state">
+      <p>📋 No vessel visit executions found.</p>
+      <button class="btn btn-primary" (click)="createNew()">
+        Create First VVE
+      </button>
+    </div>
+  }
+
+  @if (!loading && vveList.length > 0) {
+    <div class="table-container">
+      <table class="vve-table">
+        <thead>
+          <tr>
+            <th>VVE ID</th>
+            <th>VVN ID</th>
+            <th>Dock (Planned)</th>
+            <th>Dock (Used)</th>
+            <th>Arrival Time</th>
+            <th>Status</th>
+            <th>Created By</th>
+            <th>Created At</th>
+            <th>Updated By</th>
+            <th>Updated At</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (vve of vveList; track vve.id) {
+            <tr>
+              <td><strong>{{ vve.id }}</strong></td>
+              <td>{{ vve.vvnId }}</td>
+              <td>{{ getPlannedDock(vve.vvnId) }}</td>
+              <td>
+                @if (vve.dockUsed) {
+                  @if (vve.dockUsed !== getPlannedDock(vve.vvnId)) {
+                    <div class="dock-warning">
+                      ⚠️ {{ vve.dockUsed }}
+                    </div>
+                  } @else {
+                    <div class="dock-success">
+                      ✅ {{ vve.dockUsed }}
+                    </div>
+                  }
+                } @else {
+                  -
+                }
+              </td>
+              <td>{{ formatDate(vve.actualArrivalTime) }}</td>
+              <td>
+                <span [class]="'status-badge ' + getStatusClass(vve.status)">
+                  {{ vve.status }}
+                </span>
+              </td>
+              <td>{{ vve.createdBy }}</td>
+              <td>{{ formatDate(vve.createdAt) }}</td>
+              <td>{{ vve.updatedBy || '-' }}</td>
+              <td>{{ formatDate(vve.updatedAt) }}</td>
+              <td>
+                <div class="action-buttons">
+                  @if (vve.status === 'InProgress') {
+                    <button class="btn-sm btn-secondary" (click)="updateBerthing(vve.id!)">
+                      ⚓ Berthing
+                    </button>
+                    @if (canComplete(vve)) {
+                      <button class="btn-sm btn-success" (click)="openCompleteModal(vve)">
+                        🏁 Complete
+                      </button>
+                    }
+                  }
+                  <button class="btn-sm btn-info" (click)="trackExecution(vve.id!)">
+                    🔧 Operations
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- US 4.1.11: Complete VVE Modal -->
+  @if (showCompleteModal && selectedVveForCompletion) {
+    <app-vve-complete-modal
+      [vve]="selectedVveForCompletion"
+      (completed)="onVveCompleted()"
+      (cancelled)="onCompleteCancelled()">
+    </app-vve-complete-modal>
+  }
+</div>

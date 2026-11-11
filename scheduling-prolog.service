@@ -1,0 +1,15 @@
+﻿[Unit]
+Description=Scheduling Planning Prolog Server
+After=network.target
+
+[Service]
+Type=simple
+User=azureuser
+WorkingDirectory=/opt/scheduling-prolog
+Environment="BACKEND_API_URL=https://portlogistics-api-3db01-f4b3b0hgc6dvdtax.swedencentral-01.azurewebsites.net/api"
+ExecStart=/usr/bin/swipl -s /opt/scheduling-prolog/scheduling_server.pl -g start_scheduling_server
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

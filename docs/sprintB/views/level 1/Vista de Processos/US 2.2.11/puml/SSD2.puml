@@ -1,0 +1,27 @@
+@startuml SSD US 2.2.11 - Update Operating Staff
+skinparam shadowing true
+skinparam ArrowColor #000000
+skinparam sequence {
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+  ParticipantBorderColor #000000
+  ParticipantBackgroundColor #87CEEB
+  LifeLineBorderColor #000000
+  LifeLineBackgroundColor #87CEEB
+}
+
+actor "Logistics Operator" as Operator
+participant "«system (C4)»\nPort Operations System" as System
+
+activate Operator
+Operator -> System : 1: selects staff member to update
+activate System
+System  --> Operator : 1.1: show current staff member data
+deactivate System
+Operator -> System : 2: submit changes\n(name, email, phone,\nqualifications,\noperational window, status)
+activate System
+System  --> Operator : 2.1: staff member updated successfully
+deactivate System
+deactivate Operator
+
+@enduml

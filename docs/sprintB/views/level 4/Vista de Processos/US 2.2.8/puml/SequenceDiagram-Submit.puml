@@ -1,0 +1,95 @@
+@startuml Vista de Processos - Level 4 (US 2.2.8 - Submit Vessel Visit Notification)
+
+participant ":VesselVisitNotificationsController" as Controller
+participant ":VesselVisitNotificationService" as Service
+participant ":IVesselVisitNotificationRepository" as Repository
+participant ":VesselVisitNotification" as Entity
+participant ":Iso6346" as Validator
+participant ":ApplicationDbContext" as DbContext
+
+-> Controller: POST /api/vesselvisitnotifications/{id}/submit
+activate Controller
+
+Controller -> Service: Submit(id, errors)
+activate Service
+
+Service -> Repository: GetById(id)
+activate Repository
+Repository -> DbContext: VesselVisitNotifications.FindAsync(id)
+activate DbContext
+DbContext --> Repository: dataModel
+deactivate DbContext
+Repository --> Service: notification
+deactivate Repository
+
+alt Notification Not Found
+    Service --> Controller: false (errors populated)
+    Controller --> : 404 NotFound
+end
+
+Service -> Entity: Submit(errors)
+activate Entity
+
+Entity -> Entity: Validate completeness
+note right
+    Checks:
+    - Vessel IMO number present
+    - ETA present
+    - ETD present
+end note
+
+alt Validation Fails
+    Entity --> Service: (errors populated)
+    Service --> Controller: false
+    Controller --> : 400 BadRequest(errors)
+end
+
+loop for each containerId in _containerIds
+    Entity -> Validator: IsValid(containerId)
+    activate Validator
+    
+    Validator -> Validator: Check format (4 letters + 7 digits)
+    Validator -> Validator: Calculate check digit
+    note right
+        ISO 6346 algorithm:
+        1. Convert letters to values (A=10, B=12, ...)
+        2. Multiply by position weight (2^i)
+        3. Sum and apply modulo 11 % 10
+        4. Compare with provided check digit
+    end note
+    
+    Validator --> Entity: isValid
+    deactivate Validator
+    
+    alt Container ID Invalid
+        Entity -> Entity: errors.Add("Invalid container ID (ISO 6346): {cid}")
+    end
+end
+
+alt Container Validation Fails
+    Entity --> Service: (errors populated)
+    Service --> Controller: false
+    Controller --> : 400 BadRequest(errors)
+end
+
+Entity -> Entity: Status = VvnStatus.Submitted
+Entity --> Service: void
+deactivate Entity
+
+Service -> Repository: Update(notification)
+activate Repository
+Repository -> DbContext: SaveChangesAsync()
+activate DbContext
+DbContext -> DbContext: UPDATE VesselVisitNotifications SET Status = 1
+DbContext --> Repository: 1
+deactivate DbContext
+Repository --> Service: notification
+deactivate Repository
+
+Service --> Controller: true
+deactivate Service
+
+Controller --> : 200 OK("Notification submitted successfully")
+deactivate Controller
+
+@enduml

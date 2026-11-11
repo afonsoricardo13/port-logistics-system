@@ -1,0 +1,94 @@
+@startuml Vista de Processos Frontend – US 4.1.11 (Close VVE - SPA)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as USER
+
+box "SPA (Angular)" #LightBlue
+    participant "VveDetailsComponent" as COMP
+    participant "VesselVisitExecutionService" as VVE_SVC
+    participant "ExecutedOperationService" as EO_SVC
+    participant "IncidentsService" as INC_SVC
+    participant "MatDialog" as DIALOG
+    participant "AuthService" as AUTH
+end box
+
+participant "<<external>>\nIAM" as IAM #F5F5DC
+
+USER -> COMP: 1: navigate to /vessel-visit-executions/{vveId}
+activate COMP
+
+COMP -> AUTH: 1.1: getToken()
+activate AUTH
+AUTH --> COMP: 1.1.1: token, userEmail
+deactivate AUTH
+
+COMP -> VVE_SVC: 1.2: getById(vveId)
+activate VVE_SVC
+VVE_SVC --> COMP: 1.2.1: VVE details (status: InProgress)
+deactivate VVE_SVC
+
+COMP -> EO_SVC: 1.3: getByVveId(vveId)
+activate EO_SVC
+EO_SVC --> COMP: 1.3.1: executed operations
+deactivate EO_SVC
+
+COMP -> INC_SVC: 1.4: getByVveId(vveId)
+activate INC_SVC
+INC_SVC --> COMP: 1.4.1: related incidents
+deactivate INC_SVC
+
+COMP --> USER: 1.5: display VVE details with "Close VVE" button
+deactivate COMP
+
+USER -> COMP: 2: click "Close VVE"
+activate COMP
+
+COMP -> COMP: 2.1: validateCloseConditions()
+note right
+    Pre-close validations:
+    - All operations completed?
+    - Departure time recorded?
+    - Active incidents resolved?
+end note
+
+alt All validations pass
+    COMP -> DIALOG: 2.2a: open(ConfirmCloseVveDialogComponent)
+    activate DIALOG
+    DIALOG --> USER: 2.2a.1: "Are you sure you want to close this VVE?"
+    deactivate DIALOG
+else Validations fail
+    COMP -> DIALOG: 2.2b: open(WarningDialogComponent)
+    activate DIALOG
+    DIALOG --> USER: 2.2b.1: display warnings, ask for confirmation
+    deactivate DIALOG
+end
+
+USER -> DIALOG: 3: click "Confirm Close"
+activate DIALOG
+DIALOG --> COMP: 3.1: confirmed = true
+deactivate DIALOG
+
+COMP -> VVE_SVC: 3.2: close(vveId)
+activate VVE_SVC
+VVE_SVC --> COMP: 3.2.1: VVE (status: Completed)
+deactivate VVE_SVC
+
+COMP -> COMP: 3.3: updateLocalState(status: Completed)
+COMP -> COMP: 3.4: disableEditControls()
+COMP -> COMP: 3.5: showSuccessNotification("VVE closed successfully")
+
+COMP --> USER: 3.6: display updated VVE with Completed status
+deactivate COMP
+
+@enduml

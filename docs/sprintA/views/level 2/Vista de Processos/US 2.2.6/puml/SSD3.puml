@@ -1,0 +1,37 @@
+﻿@startuml Vista de Processos – Level 2 (US 2.2.6 – Deactivate Representative)
+		    		   skinparam shadowing true
+		    		   skinparam linetype ortho
+		    		   skinparam sequence {
+		    		    ArrowColor Black
+		    		    ActorBorderColor #000000
+		    		    ActorBackgroundColor #87CEEB
+		    		    LifeLineBorderColor Black
+		    		    LifeLineBackgroundColor #87CEEB
+		    		    ParticipantBorderColor Black
+		    		    ParticipantBackgroundColor #87CEEB
+		    		    ParticipantFontStyle bold
+		    		   }
+		    		   
+		    		   actor "Port Authority Officer" as PA
+		    		   participant "<<container (C4)>>\nVisualization (UI)" as UI #87CEEB
+		    		   participant "<<container (C4)>>\nPlanning & Scheduling" as PLAN #87CEEB
+		    		   
+		    		   activate PA
+		    		   PA -> UI: 1: deactivate representative\n(org {identifier}, rep {representativeId})
+		    		   activate UI
+		    		   UI --> PA: 1.1: confirm deactivate action
+		    
+		    		   deactivate UI
+		    		   
+		    		   PA -> UI: 2: confirm deactivate
+		    		   activate UI
+		    		   UI --> PLAN: 2.1: request deactivate representative
+		    		   activate PLAN
+		    		   PLAN -> PLAN: 2.2: authorize action (PortAuthorityOfficer)\nfetch representative by id and org\nif found -> set active = false\nrecord audit (updatedBy, updatedAt, reason)\npreserve historical data
+		    		   PLAN --> UI: 2.3: 200 OK (deactivated) 
+		    		   deactivate PLAN
+		    		   UI --> PA: 2.4: deactivated
+		    		   deactivate UI
+		    		   deactivate PA
+		    		   
+		    		   @enduml

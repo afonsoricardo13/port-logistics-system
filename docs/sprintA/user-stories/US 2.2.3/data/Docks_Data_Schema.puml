@@ -1,0 +1,33 @@
+@startuml Data Schema - Docks
+left to right direction
+skinparam packageStyle rectangle
+
+package "Database" {
+  class Dock <<table>> {
+    + Id : uuid [PK]
+    + Name : nvarchar(50) [UQ]
+    + Location : nvarchar(100)
+    + MaxNumberStsCranes : int
+    + LengthMeters : decimal(10,2)
+    + DepthMeters : decimal(10,2)
+    + MaxDraftMeters : decimal(10,2)
+    + CreatedAt : datetime2
+    + UpdatedAt : datetime2
+  }
+
+  class VesselType <<table>> {
+    + Id : nvarchar(30) [PK]
+    + Description : nvarchar(100)
+  }
+
+  class Dock_VesselType <<table>> {
+    + DockId : uuid [FK->Dock.Id]
+    + VesselTypeId : nvarchar(30) [FK->VesselType.Id]
+    -- PK(DockId, VesselTypeId)
+  }
+}
+
+Dock "1" -- "*" Dock_VesselType
+VesselType "1" -- "*" Dock_VesselType
+
+@enduml

@@ -1,0 +1,66 @@
+﻿@startuml Vista de Processos – Level 3 (US 2.2.6 – Deactivate Representative)
+	skinparam shadowing true
+	skinparam linetype ortho
+	skinparam sequence {
+		ArrowColor Black
+		ActorBorderColor #000000
+		ActorBackgroundColor #87CEEB
+		LifeLineBorderColor Black
+		LifeLineBackgroundColor #87CEEB
+		ParticipantBorderColor Black
+		ParticipantBackgroundColor #87CEEB
+		ParticipantFontStyle bold
+	}
+	
+	actor "Port Authority Officer" as PA
+	participant "«container (C4)»\nVisualization (UI)" as UI_CTRL #87CEEB
+	participant "«container (C4)»\nPlanning & Scheduling\nController" as PLAN_CTRL #87CEEB
+	participant "«component»\nApplication Service" as PLAN_APP #87CEEB
+	participant "«component»\nDomain Model (Representative)" as PLAN_DOMAIN #87CEEB
+	participant "«component»\nRepository" as PLAN_REPO #87CEEB
+	participant "«component»\nData Model" as PLAN_DATA #87CEEB
+	participant "«component»\nPersistence" as PLAN_PERSIST #87CEEB
+	
+	activate PA
+	PA -> UI_CTRL: 1: deactivate representative\n(org {identifier}, rep {representativeId})
+	activate UI_CTRL
+	UI_CTRL --> PA: 1.1: confirm deactivate action
+	deactivate UI_CTRL
+	
+	PA -> UI_CTRL: 2: confirm deactivate
+	activate UI_CTRL
+	UI_CTRL -> PLAN_CTRL: 2.1: request deactivate representative
+	activate PLAN_CTRL
+	PLAN_CTRL -> PLAN_APP: 2.1.1: deactivateRepresentative(orgId, repId)
+	activate PLAN_APP
+	PLAN_APP -> PLAN_APP: 2.1.1.1: authorize action (PortAuthorityOfficer)
+	PLAN_APP -> PLAN_REPO: 2.1.1.2: fetch representative by id and org
+	activate PLAN_REPO
+	PLAN_REPO -> PLAN_PERSIST: 2.1.1.2.1: query persistence
+	activate PLAN_PERSIST
+	PLAN_PERSIST --> PLAN_REPO: 2.1.1.2.2: representative record / not found
+	deactivate PLAN_PERSIST
+	PLAN_REPO --> PLAN_APP: 2.1.1.3: representative record / not found
+	deactivate PLAN_REPO
+	PLAN_APP -> PLAN_APP: 2.1.1.4: if found -> set active = false\nrecord audit (updatedBy, updatedAt, reason)\npreserve historical data
+	PLAN_APP -> PLAN_REPO: 2.1.1.5: update(representative)
+	activate PLAN_REPO
+	PLAN_REPO -> PLAN_DATA: 2.1.1.5.1: map to data model
+	activate PLAN_DATA
+	PLAN_DATA --> PLAN_REPO: 2.1.1.5.2: updated record
+	deactivate PLAN_DATA
+	PLAN_REPO -> PLAN_PERSIST: 2.1.1.5.3: persist(updated record)
+	activate PLAN_PERSIST
+	PLAN_PERSIST --> PLAN_REPO: 2.1.1.5.4: ok
+	deactivate PLAN_PERSIST
+	PLAN_REPO --> PLAN_APP: 2.1.1.6: persisted(updated representative)
+	deactivate PLAN_REPO
+	PLAN_APP --> PLAN_CTRL: 2.1.2: 200 OK (deactivated) \nor 404 / 403
+	deactivate PLAN_APP
+	PLAN_CTRL --> UI_CTRL: 2.2: deactivated / error
+	deactivate PLAN_CTRL
+	UI_CTRL --> PA: 2.3: deactivated / error
+	deactivate UI_CTRL
+	deactivate PA
+	
+	@enduml

@@ -1,0 +1,82 @@
+@startuml Vista de Processos Frontend – US 4.1.5 (Edit Operation Plan - SPA)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as USER
+
+box "SPA (Angular)" #LightBlue
+    participant "OperationPlanEditComponent" as COMP
+    participant "OperationPlanService" as SVC
+    participant "FormBuilder" as FORM
+    participant "AuthService" as AUTH
+    participant "Router" as ROUTER
+end box
+
+participant "<<external>>\nIAM" as IAM #F5F5DC
+
+USER -> COMP: 1: navigate to /operation-plans/{planId}/edit
+activate COMP
+
+COMP -> AUTH: 1.1: getToken()
+activate AUTH
+AUTH --> COMP: 1.1.1: token
+deactivate AUTH
+
+COMP -> SVC: 1.2: getById(planId)
+activate SVC
+SVC --> COMP: 1.2.1: plan with operations
+deactivate SVC
+
+COMP -> FORM: 1.3: buildEditForm(plan)
+activate FORM
+FORM --> COMP: 1.3.1: FormGroup
+deactivate FORM
+
+COMP --> USER: 1.4: display editable form with operations
+deactivate COMP
+
+USER -> COMP: 2: modify operation times/resources
+activate COMP
+COMP -> COMP: 2.1: form.markAsDirty()
+COMP --> USER: 2.2: show unsaved changes indicator
+deactivate COMP
+
+USER -> COMP: 3: click "Save Changes"
+activate COMP
+
+COMP -> COMP: 3.1: validateForm()
+note right
+    Validations:
+    - No time overlaps
+    - Resources available
+    - Within VVN window
+end note
+
+alt Validation passes
+    COMP -> SVC: 3.2: update(planId, formValue)
+    activate SVC
+    SVC --> COMP: 3.2.1: updated plan
+    deactivate SVC
+    
+    COMP -> COMP: 3.3: showSuccessToast("Plan updated")
+    COMP -> ROUTER: 3.4: navigate(['/operation-plans', planId])
+    activate ROUTER
+    ROUTER --> USER: 3.5: redirect to plan details
+    deactivate ROUTER
+else Validation fails
+    COMP -> COMP: 3.2b: showValidationErrors()
+    COMP --> USER: 3.3b: highlight invalid fields
+end
+deactivate COMP
+
+@enduml

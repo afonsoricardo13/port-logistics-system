@@ -1,0 +1,33 @@
+@startuml SSD - US 4.1.5 - Edit Operation Plan
+skinparam shadowing true
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+title US 4.1.5 - Edit Operation Plan (SSD Level 1)
+
+actor "Logistics Operator" as LO
+
+participant "Port Operations\nSystem" as SYS
+
+participant "«external»\nIAM" as IAM #F5F5DC
+
+LO -> SYS: 1: editOperationPlan(planId, updates)
+activate SYS
+
+SYS -> IAM: 1.1: validateToken()
+activate IAM
+IAM --> SYS: 1.2: tokenValid
+deactivate IAM
+
+SYS --> LO: 2: updatedOperationPlan
+deactivate SYS
+
+@enduml

@@ -1,0 +1,123 @@
+<div class="form-container">
+  <div class="header">
+    <h2>{{ isEditMode ? 'Edit' : 'Create' }} Complementary Task</h2>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+  <div *ngIf="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>{{ isEditMode ? 'Loading task...' : 'Saving task...' }}</p>
+  </div>
+
+  <!-- Form -->
+  <form *ngIf="!isLoading" class="task-form" (ngSubmit)="save()">
+    <div class="form-grid">
+      <!-- Category -->
+      <div class="form-group">
+        <label for="categoryCode">Category *</label>
+        <select id="categoryCode" [(ngModel)]="categoryCode" name="categoryCode" required class="form-input">
+          <option value="">Select a category</option>
+          <option *ngFor="let cat of categories" [value]="cat.code">
+            {{ cat.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- VVE -->
+      <div class="form-group">
+        <label for="vveId">Vessel Visit Execution *</label>
+        <select id="vveId" [(ngModel)]="vveId" name="vveId" required class="form-input" [disabled]="isEditMode">
+          <option value="">Select a VVE</option>
+          <option *ngFor="let vve of vves" [value]="vve.id">
+            {{ vve.id }} (VVN: {{ vve.vvnId }})
+          </option>
+        </select>
+        <small *ngIf="isEditMode" class="help-text">Cannot change VVE in edit mode</small>
+      </div>
+
+      <!-- Responsible Team -->
+      <div class="form-group">
+        <label for="responsibleTeam">Responsible Team *</label>
+        <input 
+          type="text" 
+          id="responsibleTeam" 
+          [(ngModel)]="responsibleTeam" 
+          name="responsibleTeam" 
+          required 
+          placeholder="e.g., Maintenance Team A"
+          class="form-input" 
+        />
+      </div>
+
+      <!-- Impact Type -->
+      <div class="form-group">
+        <label for="impactType">Impact Type *</label>
+        <select id="impactType" [(ngModel)]="impactType" name="impactType" required class="form-input">
+          <option *ngFor="let type of impactTypes" [value]="type">{{ type }}</option>
+        </select>
+        <small class="help-text">
+          Parallel: runs alongside cargo ops | Blocking: suspends cargo ops
+        </small>
+      </div>
+
+      <!-- Start Time -->
+      <div class="form-group">
+        <label for="startTime">Start Time *</label>
+        <input 
+          type="datetime-local" 
+          id="startTime" 
+          [(ngModel)]="startTime" 
+          name="startTime" 
+          required 
+          class="form-input" 
+        />
+      </div>
+
+      <!-- End Time (optional / required if completed) -->
+      <div class="form-group" *ngIf="isEditMode">
+        <label for="endTime">End Time {{ status === 'Completed' ? '*' : '' }}</label>
+        <input 
+          type="datetime-local" 
+          id="endTime" 
+          [(ngModel)]="endTime" 
+          name="endTime" 
+          [required]="status === 'Completed'"
+          class="form-input" 
+        />
+      </div>
+
+      <!-- Status (only in edit mode) -->
+      <div class="form-group" *ngIf="isEditMode">
+        <label for="status">Status *</label>
+        <select id="status" [(ngModel)]="status" name="status" required class="form-input">
+          <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+        </select>
+      </div>
+
+      <!-- Notes -->
+      <div class="form-group full-width">
+        <label for="notes">Notes (optional)</label>
+        <textarea 
+          id="notes" 
+          [(ngModel)]="notes" 
+          name="notes" 
+          rows="4" 
+          placeholder="Additional information about this task..."
+          class="form-input"
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn btn-outline" (click)="cancel()">Cancel</button>
+      <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+        {{ isEditMode ? 'Update' : 'Create' }} Task
+      </button>
+    </div>
+  </form>
+</div>

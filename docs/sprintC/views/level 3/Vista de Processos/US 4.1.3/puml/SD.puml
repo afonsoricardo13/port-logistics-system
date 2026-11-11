@@ -1,0 +1,71 @@
+@startuml SD - US 4.1.3 - Generate Operation Plans (Level 3)
+skinparam shadowing true
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+title US 4.1.3 - Generate Single Operation Plan (SD Level 3 - OEM Backend)
+
+actor "Logistics Operator" as LO
+
+box "SPA (Angular)" #LightBlue
+    participant "OperationPlanGenerationComponent" as COMP
+end box
+
+box "OEM Backend" #LightGreen
+    participant "OperationPlansController" as CTRL
+    participant "OperationPlanService" as SVC
+    participant "PortLogisticsClient" as PL_CLIENT
+    participant "SchedulingClient" as SCHED_CLIENT
+    participant "IOperationPlanRepository" as REPO
+end box
+
+database "«internal»\nOEM DB" as DB #87CEEB
+
+LO -> COMP: 1: generatePlan(vvnId, algorithm)
+activate COMP
+
+COMP -> CTRL: 1.1: POST /api/operation-plans/generate
+activate CTRL
+
+CTRL -> SVC: 1.2: GenerateForVvnAsync(vvnId, algorithm)
+activate SVC
+
+SVC -> PL_CLIENT: 1.3: GetVvnDetailsAsync(vvnId)
+activate PL_CLIENT
+PL_CLIENT --> SVC: 1.4: VvnDTO
+deactivate PL_CLIENT
+
+SVC -> SCHED_CLIENT: 1.5: GeneratePlanAsync(vvnData, algorithm)
+activate SCHED_CLIENT
+SCHED_CLIENT --> SVC: 1.6: ScheduledOperations
+deactivate SCHED_CLIENT
+
+SVC -> SVC: 1.7: createOperationPlan(vvnId, operations)
+
+SVC -> REPO: 1.8: AddAsync(operationPlan)
+activate REPO
+REPO -> DB: 1.9: INSERT INTO OperationPlans
+activate DB
+DB --> REPO: 1.10: saved plan
+deactivate DB
+REPO --> SVC: 1.11: OperationPlan
+deactivate REPO
+
+SVC --> CTRL: 1.12: OperationPlanDTO
+deactivate SVC
+
+CTRL --> COMP: 1.13: 201 Created (plan)
+deactivate CTRL
+
+COMP --> LO: 1.14: display generated plan
+deactivate COMP
+
+@enduml

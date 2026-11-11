@@ -1,0 +1,55 @@
+<nav class="navbar">
+  <!-- Header bar com logo e nome (sempre visível - AC) -->
+  <div class="navbar-brand">
+    <img src="logo.svg" alt="Port Logistics Logo" class="logo" />
+    <span class="company-name">{{ 'app.companyName' | translate }}</span>
+  </div>
+
+  <!-- Primary navigation menu (sempre visível - AC) -->
+  <ul class="nav-menu">
+    @for (item of filteredMenuItems; track item.route) {
+      <li class="nav-item">
+        <a [routerLink]="item.route" routerLinkActive="active" class="nav-link">
+          {{ item.label | translate }}
+        </a>
+      </li>
+    }
+  </ul>
+
+  <!-- User actions e language switcher -->
+  <div class="navbar-actions">
+    <!-- Language switcher (multilingual support - AC) -->
+    <div class="language-switcher">
+      <button 
+        (click)="switchLanguage('en')" 
+        [class.active]="currentLang === 'en'"
+        class="lang-btn"
+        title="{{ 'language.english' | translate }}">
+        EN
+      </button>
+      <span class="separator">|</span>
+      <button 
+        (click)="switchLanguage('pt')" 
+        [class.active]="currentLang === 'pt'"
+        class="lang-btn"
+        title="{{ 'language.portuguese' | translate }}">
+        PT
+      </button>
+    </div>
+
+    <!-- User info -->
+    <div class="user-info">
+      <span class="user-name">{{ userName }}</span>
+      <span class="user-role">({{ 'user.role.' + userRole | translate }})</span>
+    </div>
+
+    <!-- Logout button -->
+    <button (click)="logout()" class="btn-logout" title="{{ 'nav.logout' | translate }}">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+        <polyline points="16 17 21 12 16 7"></polyline>
+        <line x1="21" y1="12" x2="9" y2="12"></line>
+      </svg>
+    </button>
+  </div>
+</nav>

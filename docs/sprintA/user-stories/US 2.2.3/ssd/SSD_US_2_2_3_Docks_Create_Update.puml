@@ -1,0 +1,19 @@
+@startuml SSD US 2.2.3 - Registar/Atualizar Cais
+left to right direction
+
+actor "Oficial da Autoridade Portuária" as Ator
+participant "<<system (C4)>> Sistema AIT" as Sistema
+
+== Registar Cais ==
+Ator -> Sistema: 1: criar cais
+Sistema -> Ator: 1.1: introduz dados
+Ator -> Sistema: 2: dados de cais
+Sistema -> Ator: 2.1: cais criado / erro nos dados
+
+== Atualizar Cais ==
+Ator -> Sistema: 1: atualizar cais
+Sistema -> Ator: 1.1: introduz dados
+Ator -> Sistema: 2: dados de cais (id + alterações)
+Sistema -> Ator: 2.1: cais atualizado / erro nos dados
+
+@enduml

@@ -1,0 +1,54 @@
+@startuml Vista de Processos – Level 2 (US 4.1.2 – Generate Operation Plans)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+participant "<<container (C4)>>\nSPA (Web UI)" as UI #87CEEB
+participant "<<container (C4)>>\nPort Logistics (Backend)" as PORT #87CEEB
+participant "<<container (C4)>>\nScheduling & Planning" as SCHED #87CEEB
+participant "<<container (C4)>>\nOEM (Backend)" as OEM #87CEEB
+participant "<<external>>\nIAM" as IAM #F5F5DC
+
+-> UI: 1: request to generate Operation Plans
+activate UI
+UI -> IAM: 1.1: validate token
+activate IAM
+IAM --> UI: 1.1.1: token valid
+deactivate IAM
+UI --> : 1.2: prompt for date and algorithm selection
+deactivate UI
+
+-> UI: 2: select date and scheduling algorithm
+activate UI
+UI -> PORT: 2.1: GET /api/vesselvisitnotifications (approved, for date)
+activate PORT
+PORT --> UI: 2.1.1: list of approved VVNs
+deactivate PORT
+
+UI -> SCHED: 2.2: POST /api/scheduling/daily (VVNs, algorithm)
+activate SCHED
+SCHED --> UI: 2.2.1: generated Operation Plans (preview)
+deactivate SCHED
+
+UI --> : 2.3: display Operation Plans preview
+deactivate UI
+
+-> UI: 3: confirm to save Operation Plans
+activate UI
+UI -> OEM: 3.1: POST /api/operationplans/batch (plans with metadata)
+activate OEM
+OEM --> UI: 3.1.1: plans saved confirmation
+deactivate OEM
+UI --> : 3.2: display success message
+deactivate UI
+
+@enduml

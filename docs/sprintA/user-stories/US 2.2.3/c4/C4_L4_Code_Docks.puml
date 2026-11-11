@@ -1,0 +1,82 @@
+@startuml C4 Level 4 - Code View (Docks)
+left to right direction
+skinparam packageStyle rectangle
+
+package "API Layer" {
+  class DocksController {
+    + IActionResult Post(CreateDockRequest)
+    + IActionResult Put(Guid id, UpdateDockRequest)
+    + IActionResult Get(string name, string vesselTypeId, string location, int page, int pageSize)
+    + IActionResult GetById(Guid id)
+  }
+}
+
+package "Application Layer" {
+  class DockAppService {
+    + DockResponse CreateDock(CreateDockRequest)
+    + DockResponse UpdateDock(Guid id, UpdateDockRequest)
+  }
+  class DockMapper {
+    + Dock ToDomain(CreateDockRequest)
+    + void UpdateDomain(Dock, UpdateDockRequest)
+    + DockResponse ToResponse(Dock)
+  }
+}
+
+package "Domain Layer" {
+  class Dock {
+    - DockId id
+    - DockName name
+    - DockLocation location
+    - int maxNumberStsCranes
+    - decimal lengthMeters
+    - decimal depthMeters
+    - decimal maxDraftMeters
+    - VesselTypeId[] allowedVesselTypeIds
+    + static Dock Create(...)
+    + void Update(...)
+  }
+  class DockId
+  class DockName
+  class DockLocation
+  class VesselTypeId
+}
+
+package "Infrastructure Layer" {
+  class DockRepository {
+    + bool ExistsByName(DockName)
+    + Dock GetById(DockId)
+    + void Add(Dock)
+    + void Update(Dock)
+  }
+  class UnitOfWork { + Task CommitAsync() }
+  class DDDNetCoreDbContext
+}
+
+class CreateDockRequest
+class UpdateDockRequest
+class DockResponse
+
+DocksController --> DockAppService
+DockAppService --> DockRepository
+DockAppService --> UnitOfWork
+DockAppService --> DockMapper
+DockMapper --> Dock
+DockRepository --> DDDNetCoreDbContext
+Dock --> DockId
+Dock --> DockName
+Dock --> DockLocation
+Dock --> VesselTypeId
+
+CreateDockRequest --> DockMapper
+UpdateDockRequest --> DockMapper
+DockAppService --> DockResponse
+
+note bottom of Dock
+Invariants:
+- name length 2..50
+- draft <= depth
+- unique name
+end note
+
+@enduml

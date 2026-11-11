@@ -1,0 +1,79 @@
+@startuml Mapping Logical ↔ Implementation – Level 2 (Port Logistics + Scheduling)
+left to right direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+skinparam rectangle {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam component {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ---- actors (blue balls) ----
+  () "UI Port Authority Officer"        as PA  #87CEEB
+  () "UI Logistics Operator"            as LO  #87CEEB
+  () "UI Shipping Agent Representative" as SA  #87CEEB
+  () "UI Administrator"                 as AD  #87CEEB
+  () "UI System Administrator"         as SYSADMIN  #87CEEB
+
+  ' ====== componente externo: base de dados ======
+component "«external»\nDatabase" as DB #F5F5DC
+
+' ================= LEFT: Logical View (L2) =================
+rectangle "Logical View (Level 2)" as LOG {
+
+  component "«component»\n«container (C4)»\nSPA (Web UI)" as UI_L
+
+  ' actors -> UI
+  PA --> UI_L
+  LO --> UI_L
+  SA --> UI_L
+  AD --> UI_L
+  SYSADMIN --> UI_L
+
+  ' APIs and containers (logical)
+  interface "Port Logistics API" as API_PORT_L
+  interface "Scheduling API"     as API_PLAN_L
+
+  component "«component»\n«container (C4)»\nPort Logistics (Backend)" as PORT_L
+  component "«component»\n«container (C4)»\nScheduling & Planning"    as PLAN_L
+
+  ' keep original logical wiring
+  UI_L --> API_PLAN_L
+  API_PLAN_L --> PLAN_L
+
+  UI_L --> API_PORT_L
+  API_PORT_L --> PORT_L
+  API_PORT_L --> PLAN_L
+  
+}
+
+' =============== RIGHT: Implementation View (L2) ===============
+rectangle "Implementation View (Level 2)" as IMP {
+
+  component "SPA (Web UI)"          as UI_I
+  component "Port Logistics (Backend)" as PORT_I
+  component "Scheduling & Planning" as PLAN_I
+
+  ' layout spacing
+  UI_I ..-> PORT_I
+  PORT_I ..-> PLAN_I
+  PORT_I ..> DB : SQL
+}
+
+' ======================= MAPPINGS ========================
+UI_L       ..> UI_I     : realizes
+API_PLAN_L ..> PLAN_I   : mapped to
+API_PORT_L ..> PORT_I   : mapped to
+PLAN_L     ..> PLAN_I   : mapped to
+PORT_L     ..> PORT_I   : mapped to
+
+@enduml

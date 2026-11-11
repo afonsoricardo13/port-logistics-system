@@ -1,0 +1,143 @@
+<!-- Vessels List -->
+<div class="vessels-list-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>Vessels Management</h1>
+    <button 
+      class="btn btn-primary" 
+      (click)="createNew()"
+      *ngIf="canManage()">
+      <i class="icon-plus"></i> Register New Vessel
+    </button>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-row">
+      <!-- Search by IMO -->
+      <div class="filter-group">
+        <label for="searchImo">IMO Number</label>
+        <input 
+          id="searchImo"
+          type="text" 
+          class="form-control" 
+          placeholder="Search by IMO..."
+          [(ngModel)]="searchImo"
+          (ngModelChange)="onSearchChange()" />
+      </div>
+
+      <!-- Search by Name -->
+      <div class="filter-group">
+        <label for="searchName">Vessel Name</label>
+        <input 
+          id="searchName"
+          type="text" 
+          class="form-control" 
+          placeholder="Search by name..."
+          [(ngModel)]="searchName"
+          (ngModelChange)="onSearchChange()" />
+      </div>
+
+      <!-- Search by Operator -->
+      <div class="filter-group">
+        <label for="searchOperator">Operator/Owner</label>
+        <input 
+          id="searchOperator"
+          type="text" 
+          class="form-control" 
+          placeholder="Search by operator..."
+          [(ngModel)]="searchOperator"
+          (ngModelChange)="onSearchChange()" />
+      </div>
+
+      <!-- Clear Filters Button -->
+      <div class="filter-group filter-actions">
+        <button 
+          class="btn btn-secondary btn-sm" 
+          (click)="clearFilters()"
+          title="Clear all filters">
+          Clear Filters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading vessels...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredVessels.length === 0" class="empty-state">
+    <p *ngIf="!searchImo && !searchName && !searchOperator">
+      No vessels found. Register your first vessel!
+    </p>
+    <p *ngIf="searchImo || searchName || searchOperator">
+      No vessels match your search criteria. Try adjusting your filters.
+    </p>
+  </div>
+
+  <!-- Vessels Table -->
+  <div *ngIf="!loading && filteredVessels.length > 0" class="vessels-table">
+    <table>
+      <thead>
+        <tr>
+          <th>IMO Number</th>
+          <th>Vessel Name</th>
+          <th>Vessel Type</th>
+          <th>Operator/Owner</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let vessel of filteredVessels">
+          <!-- IMO Number -->
+          <td class="imo-cell">
+            <strong>{{ formatIMO(vessel.imoNumber) }}</strong>
+          </td>
+
+          <!-- Vessel Name -->
+          <td class="name-cell">
+            {{ vessel.name }}
+          </td>
+
+          <!-- Vessel Type -->
+          <td class="type-cell">
+            <span class="type-badge">{{ vessel.vesselType }}</span>
+          </td>
+
+          <!-- Operator -->
+          <td class="operator-cell">
+            {{ vessel.operator }}
+          </td>
+
+          <!-- Actions -->
+          <td class="actions-cell">
+            <button 
+              *ngIf="canManage()"
+              class="btn btn-sm btn-secondary" 
+              (click)="editVessel(vessel)"
+              title="Edit vessel">
+              Edit
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Results Count -->
+  <div *ngIf="!loading && filteredVessels.length > 0" class="results-count">
+    Showing {{ filteredVessels.length }} of {{ vessels.length }} vessels
+  </div>
+</div>

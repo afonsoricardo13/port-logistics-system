@@ -1,0 +1,57 @@
+name: Deploy Operations Execution API
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'apps/operations-execution/backend/**'
+      - '.github/workflows/deploy-operations-execution.yml'
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: operations-execution-api-3db01
+  AZURE_WEBAPP_PACKAGE_PATH: './publish'
+  DOTNET_VERSION: '9.0.x'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: global.json
+
+      - name: Restore dependencies
+        run: dotnet restore apps/operations-execution/backend/OEM.sln
+
+      - name: Build
+        run: dotnet build apps/operations-execution/backend/OEM.sln --configuration Release --no-restore
+
+      - name: Publish
+        run: dotnet publish apps/operations-execution/backend/WebApi/WebApi.csproj --configuration Release --no-build --output ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Web App
+        run: |
+          cd ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+          zip -r deploy.zip .
+          az webapp deployment source config-zip \
+            --resource-group appsvc_windows_swedencentral \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --src deploy.zip
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Operations Execution API deployed successfully!"
+          echo "🌐 URL: https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
+          echo "📄 Swagger: https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/swagger"

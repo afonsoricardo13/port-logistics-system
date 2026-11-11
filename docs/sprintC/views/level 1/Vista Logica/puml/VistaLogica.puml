@@ -1,0 +1,39 @@
+@startuml Vista Lógica Nivel 1 - Port Operations System (Sprint C)
+top to bottom direction
+skinparam shadowing true
+skinparam defaultTextAlignment center
+
+skinparam interfaceFontStyle bold
+skinparam interfaceFontColor #000000
+skinparam interfaceFontSize 14
+
+skinparam component {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+() "UI Logistics Operator"            as LO #87CEEB
+() "UI Administrator"                 as AD #87CEEB
+() "UI Shipping Agent Representative" as SA #87CEEB
+() "UI Port Authority Officer"        as PA #87CEEB
+() "UI System Administrator"          as SYSADMIN #87CEEB
+() "UI Port Operations Supervisor"    as POS #87CEEB
+
+component "«component»\n«system (C4)»\nPort Operations\nSystem" as POS_SYS
+
+component "«external»\nIAM\n(Identity & Access Management)" as IAM #F5F5DC
+
+LO -- POS_SYS
+AD -- POS_SYS
+SA -- POS_SYS
+PA -- POS_SYS
+SYSADMIN -- POS_SYS
+POS -- POS_SYS
+
+POS_SYS ..> IAM : "OAuth/OIDC\nAuthentication"
+
+@enduml

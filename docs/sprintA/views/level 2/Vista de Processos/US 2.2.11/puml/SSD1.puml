@@ -1,0 +1,34 @@
+@startuml Vista de Processos – Level 2 (US 2.2.11 – Register Operating Staff)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as LO
+participant "<<container (C4)>>\nVisualization (UI)" as UI #87CEEB
+participant "<<container (C4)>>\nDocks & Resources" as RES #87CEEB
+
+activate LO
+LO -> UI: 1: register staff member
+activate UI
+UI --> LO: 1.1: ask for staff member data
+deactivate UI
+LO -> UI: 2: staff member data
+activate UI
+UI --> RES: 2.1: request to register staff member
+activate RES
+RES -> UI: 2.2: staff member registered
+deactivate RES
+UI --> LO: 2.3: staff member registered
+deactivate UI
+deactivate LO
+
+@enduml

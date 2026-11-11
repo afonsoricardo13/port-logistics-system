@@ -1,0 +1,106 @@
+@startuml Vista de Processos - Level 4 (US 2.2.7 - Reject Visit)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Port Authority Officer" as Officer
+participant "<<container (C4)>>\nVisualization (UI)\nController" as UI_CTRL #87CEEB
+participant "<<container (C4)>>\nVisits & Manifests\nController" as MDR_CTRL #87CEEB
+participant "<<component>>\nApplication Service" as MDR_APP #87CEEB
+participant "<<component>>\nDomain Model (VesselVisitNotification)" as MDR_DOMAIN #87CEEB
+participant "<<component>>\nRepository" as MDR_REPO #87CEEB
+participant "<<component>>\nData Model" as MDR_DATA #87CEEB
+participant "<<component>>\nPersistence" as MDR_PERSIST #87CEEB
+
+activate Officer
+Officer -> UI_CTRL: 1: PATCH /api/vessel-visits/notifications/{id}/decision?officerId={officer}\n{Status=Rejected, Reason}
+activate UI_CTRL
+UI_CTRL -> MDR_CTRL: 1.1: updateDecision(id, dto, officerId)
+activate MDR_CTRL
+MDR_CTRL -> MDR_APP: 1.1.1: reject(id, officerId, dto, errors)
+activate MDR_APP
+
+MDR_APP -> MDR_REPO: 1.1.1.1: getById(id)
+activate MDR_REPO
+MDR_REPO -> MDR_PERSIST: 1.1.1.1.1: fetch notification
+activate MDR_PERSIST
+MDR_PERSIST --> MDR_REPO: 1.1.1.1.2: record or null
+deactivate MDR_PERSIST
+MDR_REPO -> MDR_DATA: 1.1.1.1.3: map to domain
+activate MDR_DATA
+MDR_DATA --> MDR_REPO: 1.1.1.1.4: vvn aggregate or null
+deactivate MDR_DATA
+MDR_REPO --> MDR_APP: 1.1.1.1.5: vvn or null
+deactivate MDR_REPO
+
+alt notification not found
+  MDR_APP --> MDR_CTRL: 1.1.1.a: null, errors = ["Vessel Visit Notification not found"]
+  MDR_CTRL --> UI_CTRL: 1.1.a: HTTP 400 Bad Request
+  UI_CTRL --> Officer: 1.1.b: show error
+else notification found
+
+  MDR_APP -> MDR_DOMAIN: 1.1.1.2: reject(officerId, reason, errors)
+  activate MDR_DOMAIN
+  MDR_DOMAIN -> MDR_DOMAIN: validate status == Submitted\nvalidate officerId & reason
+  alt invalid status/args
+    MDR_DOMAIN --> MDR_APP: 1.1.1.2.a: errors
+  else ok
+    MDR_DOMAIN -> MDR_DOMAIN: add DecisionLog(Rejected); Status = Rejected
+    MDR_DOMAIN --> MDR_APP: 1.1.1.2.1: rejected vvn
+  end
+  deactivate MDR_DOMAIN
+
+  alt errors collected
+    MDR_APP --> MDR_CTRL: 1.1.1.c: null, errors
+    MDR_CTRL --> UI_CTRL: 1.1.d: HTTP 400 Bad Request
+    UI_CTRL --> Officer: 1.1.e: show error
+  else rejected
+
+    MDR_APP -> MDR_REPO: 1.1.1.3: update(vvn, errors)
+    activate MDR_REPO
+    MDR_REPO -> MDR_DATA: 1.1.1.3.1: map to data model
+    activate MDR_DATA
+    MDR_DATA --> MDR_REPO: 1.1.1.3.2: updated record
+    deactivate MDR_DATA
+    MDR_REPO -> MDR_PERSIST: 1.1.1.3.3: UPDATE vessel visit notification
+    activate MDR_PERSIST
+    MDR_PERSIST --> MDR_REPO: 1.1.1.3.4: ok
+    deactivate MDR_PERSIST
+    MDR_REPO --> MDR_APP: 1.1.1.3.5: persisted(rejected vvn)
+    deactivate MDR_REPO
+
+    MDR_APP --> MDR_CTRL: 1.1.2: VesselVisitNotificationDTO
+    deactivate MDR_APP
+    MDR_CTRL --> UI_CTRL: 1.2: HTTP 200 OK {id, status=Rejected, reason}
+    deactivate MDR_CTRL
+    UI_CTRL --> Officer: 1.3: show rejection
+  end
+end
+
+deactivate UI_CTRL
+deactivate Officer
+
+note right of MDR_DOMAIN
+  Rejection rules:
+  - Only Submitted -> Rejected
+  - OfficerId and Reason required
+  - DecisionLog appended (Rejected)
+end note
+
+note right of MDR_APP
+  Service coordination:
+  - Fetch VVN by Id
+  - Delegate rejection to domain
+  - Persist via repository; return DTO/errors
+end note
+
+@enduml

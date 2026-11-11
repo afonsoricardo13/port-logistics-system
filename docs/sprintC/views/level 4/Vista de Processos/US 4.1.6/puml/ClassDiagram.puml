@@ -1,0 +1,71 @@
+@startuml Class Diagram - US 4.1.6 - View Missing Operation Plans
+skinparam shadowing true
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+title US 4.1.6 - View Missing Operation Plans (Level 4 - Class Diagram)
+
+package "WebApi" #LightBlue {
+    class OperationPlansController {
+        - _operationPlanService: IOperationPlanService
+        + GetMissingPlans(date: DateOnly): ActionResult<List<VvnWithoutPlanDTO>>
+    }
+}
+
+package "Application" #LightGreen {
+    interface IOperationPlanService {
+        + GetMissingPlansAsync(date: DateOnly): Task<List<VvnWithoutPlanDTO>>
+    }
+    
+    class OperationPlanService {
+        - _repository: IOperationPlanRepository
+        - _portLogisticsClient: IPortLogisticsClient
+        + GetMissingPlansAsync(date: DateOnly): Task<List<VvnWithoutPlanDTO>>
+        - FilterVvnsWithoutPlans(vvns: List<VvnDTO>, existingVvnIds: List<Guid>): List<VvnWithoutPlanDTO>
+    }
+    
+    interface IPortLogisticsClient {
+        + GetApprovedVvnsAsync(date: DateOnly): Task<List<VvnDTO>>
+    }
+    
+    class VvnDTO {
+        + Id: Guid
+        + VesselName: string
+        + VesselImo: string
+        + ETA: DateTime
+        + ETD: DateTime
+        + RequestedOperations: List<string>
+    }
+    
+    class VvnWithoutPlanDTO {
+        + VvnId: Guid
+        + VesselName: string
+        + VesselImo: string
+        + ETA: DateTime
+        + ETD: DateTime
+        + RequestedOperationsCount: int
+    }
+}
+
+package "Domain" #LightYellow {
+    interface IOperationPlanRepository {
+        + GetVvnIdsWithPlansAsync(date: DateOnly): Task<List<Guid>>
+    }
+}
+
+package "DataModel" #LightCoral {
+    class OperationPlanRepository {
+        - _context: OEMDbContext
+        + GetVvnIdsWithPlansAsync(date: DateOnly): Task<List<Guid>>
+    }
+}
+
+OperationPlansController --> IOperationPlanService
+IOperationPlanService <|.. OperationPlanService
+OperationPlanService --> IOperationPlanRepository
+OperationPlanService --> IPortLogisticsClient
+IPortLogisticsClient ..> VvnDTO
+OperationPlanService ..> VvnWithoutPlanDTO
+IOperationPlanRepository <|.. OperationPlanRepository
+
+@enduml

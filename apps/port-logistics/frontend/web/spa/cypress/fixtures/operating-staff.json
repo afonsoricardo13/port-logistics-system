@@ -1,0 +1,52 @@
+{
+  "validStaff": {
+    "mecanographicNumber": "OS001",
+    "name": "John Doe",
+    "email": "john.doe@port.com",
+    "phoneNumber": "+351912345678",
+    "qualifications": ["Crane Operator", "Forklift Driver"],
+    "operationalWindow": "Mon-Fri 08:00-16:00",
+    "status": "Available"
+  },
+  "staffToUpdate": {
+    "mecanographicNumber": "OS002",
+    "name": "Jane Smith",
+    "email": "jane.smith@port.com",
+    "phoneNumber": "+351923456789",
+    "qualifications": ["Truck Driver"],
+    "operationalWindow": "Mon-Sat 09:00-17:00",
+    "status": "Available"
+  },
+  "staffList": [
+    {
+      "mecanographicNumber": "OS001",
+      "name": "John Doe",
+      "email": "john.doe@port.com",
+      "phoneNumber": "+351912345678",
+      "qualifications": ["Crane Operator", "Forklift Driver"],
+      "operationalWindow": "Mon-Fri 08:00-16:00",
+      "status": "Available",
+      "statusHistory": []
+    },
+    {
+      "mecanographicNumber": "OS002",
+      "name": "Jane Smith",
+      "email": "jane.smith@port.com",
+      "phoneNumber": "+351923456789",
+      "qualifications": ["Truck Driver"],
+      "operationalWindow": "Mon-Sat 09:00-17:00",
+      "status": "Available",
+      "statusHistory": []
+    },
+    {
+      "mecanographicNumber": "OS003",
+      "name": "Bob Johnson",
+      "email": "bob.johnson@port.com",
+      "phoneNumber": "+351934567890",
+      "qualifications": ["Warehouse Manager"],
+      "operationalWindow": "Mon-Fri 07:00-15:00",
+      "status": "Unavailable",
+      "statusHistory": []
+    }
+  ]
+}

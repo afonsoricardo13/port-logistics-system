@@ -1,0 +1,95 @@
+<div class="user-form-container">
+  <div class="header">
+    <h1>{{ isEditMode ? 'Edit User' : 'Create New User' }}</h1>
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>{{ isEditMode ? 'Loading user...' : 'Creating user...' }}</p>
+  </div>
+
+  <form *ngIf="!loading" (ngSubmit)="onSubmit()" class="user-form">
+    <div class="form-group">
+      <label for="email">
+        Email <span class="required">*</span>
+      </label>
+      <input
+        type="email"
+        id="email"
+        name="email"
+        [(ngModel)]="email"
+        [disabled]="isEditMode"
+        placeholder="user@example.com"
+        required
+        class="form-control"
+      />
+      <small *ngIf="isEditMode" class="form-text">Email cannot be changed</small>
+    </div>
+
+    <div class="form-group">
+      <label for="name">
+        Name <span class="required">*</span>
+      </label>
+      <input
+        type="text"
+        id="name"
+        name="name"
+        [(ngModel)]="name"
+        placeholder="Full Name"
+        required
+        class="form-control"
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="role">
+        Role <span class="required">*</span>
+      </label>
+      <select
+        id="role"
+        name="role"
+        [(ngModel)]="role"
+        required
+        class="form-control"
+      >
+        <option value="">-- Select Role --</option>
+        <option *ngFor="let r of availableRoles" [value]="r">
+          {{ r }}
+        </option>
+      </select>
+      <small class="form-text">Internal role determines system access level</small>
+    </div>
+
+    <div *ngIf="isEditMode" class="form-group checkbox-group">
+      <label>
+        <input
+          type="checkbox"
+          name="active"
+          [(ngModel)]="active"
+        />
+        <span>Active</span>
+      </label>
+      <small class="form-text">
+        Inactive users cannot access the system
+      </small>
+    </div>
+
+    <div *ngIf="!isEditMode" class="info-box">
+      <p><strong>Note:</strong> An activation link will be sent to the user's email address.</p>
+      <p>By default, the user will be set to "deactivated" status until they complete activation.</p>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancel()">
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="loading">
+        {{ isEditMode ? 'Update User' : 'Create User' }}
+      </button>
+    </div>
+  </form>
+</div>

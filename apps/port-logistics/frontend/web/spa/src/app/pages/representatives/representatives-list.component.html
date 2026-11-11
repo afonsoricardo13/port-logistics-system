@@ -1,0 +1,126 @@
+<!-- US 2.2.6: Representatives List -->
+<div class="representatives-container">
+  <div class="header">
+    <h1>Shipping Agent Representatives</h1>
+    <button 
+      *ngIf="canManageRepresentatives()"
+      class="btn btn-primary" 
+      (click)="createNew()">
+      <i class="icon-plus"></i> Register New Representative
+    </button>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <!-- Search & Filter Section -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label for="search">Search</label>
+      <input 
+        id="search"
+        type="text" 
+        class="form-control" 
+        placeholder="Search by name, email, or citizen ID..."
+        [(ngModel)]="searchText"
+        (ngModelChange)="onSearchChange()" />
+    </div>
+
+    <div class="filter-group">
+      <label for="organizationFilter">Filter by Organization</label>
+      <select 
+        id="organizationFilter"
+        class="form-control"
+        [(ngModel)]="selectedOrganizationId"
+        (ngModelChange)="onOrganizationFilterChange()">
+        <option [ngValue]="null">All Organizations</option>
+        <option *ngFor="let org of organizations" [ngValue]="org.id">
+          {{ org.legalName || org.identifier }}
+        </option>
+      </select>
+    </div>
+
+    <div class="filter-actions">
+      <button class="btn btn-secondary btn-sm" (click)="clearFilters()">
+        Clear Filters
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading representatives...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredRepresentatives.length === 0" class="empty-state">
+    <p *ngIf="!searchText && !selectedOrganizationId">No representatives registered yet.</p>
+    <p *ngIf="searchText || selectedOrganizationId">No representatives match your search criteria.</p>
+  </div>
+
+  <!-- Representatives Table -->
+  <div *ngIf="!loading && filteredRepresentatives.length > 0" class="representatives-table">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Citizen ID</th>
+          <th>Organization</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let rep of filteredRepresentatives">
+          <td class="id-cell">#{{ rep.id }}</td>
+          <td class="name-cell"><strong>{{ rep.name }}</strong></td>
+          <td>{{ rep.email }}</td>
+          <td>{{ rep.citizenId }}</td>
+          <td>{{ getOrganizationName(rep.organizationId) }}</td>
+          <td>
+            <span class="status-badge" [class.active]="rep.isActive">
+              {{ rep.isActive ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+          <td class="actions-cell">
+            <button 
+              *ngIf="canManageRepresentatives()"
+              class="btn btn-sm btn-secondary" 
+              (click)="editRepresentative(rep)"
+              title="Edit representative">
+              Edit
+            </button>
+            <button 
+              *ngIf="canManageRepresentatives() && rep.isActive"
+              class="btn btn-sm btn-danger" 
+              (click)="deactivateRepresentative(rep)"
+              title="Deactivate representative">
+              Deactivate
+            </button>
+            <button 
+              *ngIf="canManageRepresentatives() && !rep.isActive"
+              class="btn btn-sm btn-success" 
+              (click)="reactivateRepresentative(rep)"
+              title="Reactivate representative">
+              Reactivate
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Results Count -->
+  <div *ngIf="!loading && filteredRepresentatives.length > 0" class="results-count">
+    Showing {{ filteredRepresentatives.length }} of {{ representatives.length }} representatives
+  </div>
+</div>

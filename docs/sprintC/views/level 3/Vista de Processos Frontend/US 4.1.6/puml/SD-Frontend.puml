@@ -1,0 +1,70 @@
+@startuml Vista de Processos Frontend – US 4.1.6 (View Missing Plans - SPA)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as USER
+
+box "SPA (Angular)" #LightBlue
+    participant "MissingPlansComponent" as COMP
+    participant "OperationPlanService" as SVC
+    participant "MatDatepicker" as PICKER
+    participant "AuthService" as AUTH
+end box
+
+participant "<<external>>\nIAM" as IAM #F5F5DC
+
+USER -> COMP: 1: navigate to /operation-plans/missing
+activate COMP
+
+COMP -> AUTH: 1.1: getToken()
+activate AUTH
+AUTH -> IAM: 1.1.1: validateSession()
+activate IAM
+IAM --> AUTH: 1.1.2: valid JWT token
+deactivate IAM
+AUTH --> COMP: 1.1.3: token
+deactivate AUTH
+
+COMP -> COMP: 1.2: initializeDateToToday()
+
+COMP -> SVC: 1.3: getMissingPlans(today)
+activate SVC
+SVC --> COMP: 1.3.1: VVNs without plans
+deactivate SVC
+
+COMP --> USER: 1.4: display VVNs list with "Generate" buttons
+deactivate COMP
+
+USER -> PICKER: 2: select different date
+activate PICKER
+PICKER --> COMP: 2.1: dateChanged(newDate)
+deactivate PICKER
+
+activate COMP
+COMP -> SVC: 2.2: getMissingPlans(newDate)
+activate SVC
+SVC --> COMP: 2.2.1: VVNs for selected date
+deactivate SVC
+
+COMP --> USER: 2.3: display updated list
+deactivate COMP
+
+note right of USER
+    Each VVN row shows:
+    - Vessel name/IMO
+    - ETA/ETD
+    - Requested operations
+    - "Generate Plan" button
+end note
+
+@enduml

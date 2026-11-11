@@ -1,0 +1,72 @@
+@startuml Vista de Processos – Level 3 (US 4.1.10 – Search VVEs with Metrics)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+participant "«container (C4)»\nSPA (Web UI)" as UI #87CEEB
+participant "«component»\nVesselVisitExecutionsController" as VVE_CTRL #87CEEB
+participant "«component»\nVesselVisitExecutionService" as VVE_SVC #87CEEB
+participant "«component»\nIVesselVisitExecutionRepository" as VVE_REPO #87CEEB
+participant "«component»\nPort Logistics API Client" as PL_CLIENT #87CEEB
+participant "«external»\nIAM" as IAM #F5F5DC
+
+-> UI: 1: request to search VVEs
+activate UI
+UI -> IAM: 1.1: validate token
+activate IAM
+IAM --> UI: 1.1.1: token valid
+deactivate IAM
+UI --> : 1.2: display search form
+deactivate UI
+
+-> UI: 2: provide search criteria (date range, vessel, status)
+activate UI
+
+UI -> VVE_CTRL: 2.1: GET /api/vesselvisitexecutions/search?startDate=X&endDate=Y&vesselImo=Z&status=S
+activate VVE_CTRL
+
+VVE_CTRL -> VVE_SVC: 2.1.1: SearchWithMetricsAsync(startDate, endDate, vesselImo, status)
+activate VVE_SVC
+
+VVE_SVC -> VVE_REPO: 2.1.1.1: GetFilteredAsync(filters)
+activate VVE_REPO
+VVE_REPO --> VVE_SVC: 2.1.1.2: list of VVEs
+deactivate VVE_REPO
+
+loop for each VVE
+    VVE_SVC -> PL_CLIENT: 2.1.1.3: GET /api/vesselvisitnotifications/{vvnId}
+    activate PL_CLIENT
+    PL_CLIENT --> VVE_SVC: 2.1.1.4: VVN details (expected times, vessel info)
+    deactivate PL_CLIENT
+    
+    VVE_SVC -> VVE_SVC: 2.1.1.5: CalculateMetrics()
+    note right
+        Calculate:
+        - Turnaround Time (TAT)
+        - Berth Occupancy Time
+        - Waiting Time for Berthing
+        - Arrival Delay
+        - Departure Delay
+        - Executed Operations Count
+    end note
+end
+
+VVE_SVC --> VVE_CTRL: 2.1.2: List<VesselVisitExecutionSearchResultDTO>
+deactivate VVE_SVC
+
+VVE_CTRL --> UI: 2.2: 200 OK (VVEs with metrics)
+deactivate VVE_CTRL
+
+UI --> : 2.3: display tabular/timeline view with metrics
+deactivate UI
+
+@enduml

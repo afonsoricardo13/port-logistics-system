@@ -1,0 +1,46 @@
+@startuml Vista Fisica - Nível 2 (Port Operations System)
+left to right direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+' ====== estilo para manter igual aos exemplos ======
+skinparam node {
+	BackgroundColor #87CEEB
+	BorderColor #000000
+	RoundCorner 5
+}
+skinparam component {
+	BackgroundColor #87CEEB
+	BorderColor #000000
+	RoundCorner 5
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ====== nós físicos ======
+node "localhost" as LOCAL {
+	component "«component»\nBrowser" as BROWSER
+	component "«component»\nUI" as UI_CLIENT
+}
+
+node "server1" as S1 {
+	component "«component»\nPlanning & Scheduling" as PLAN
+	component "«component»\nDocks & Resources"     as RES
+	component "«component»\nVisits & Manifests"    as VIS
+}
+
+node "server2" as S2 {
+	component "«component»\nHTTP Server" as HTTPD
+	rectangle "\n UI" as UI_STATIC #87CEEB
+}
+
+' ====== posicionamento (ligações ocultas para disposição semelhante ao exemplo) ======
+LOCAL -[hidden]-> S1
+LOCAL -[hidden]down-> S2
+
+' ====== ligações de rede ======
+LOCAL -down-> S1 : http/s
+LOCAL -down-> S2 : http/s
+
+@enduml

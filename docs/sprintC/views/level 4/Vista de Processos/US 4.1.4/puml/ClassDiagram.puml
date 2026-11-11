@@ -1,0 +1,79 @@
+@startuml Class Diagram - US 4.1.4 - View Operation Plan Details
+skinparam shadowing true
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+title US 4.1.4 - View Operation Plan Details (Level 4 - Class Diagram)
+
+package "WebApi" #LightBlue {
+    class OperationPlansController {
+        - _operationPlanService: IOperationPlanService
+        + GetById(id: Guid): ActionResult<OperationPlanDetailsDTO>
+    }
+}
+
+package "Application" #LightGreen {
+    interface IOperationPlanService {
+        + GetByIdWithDetailsAsync(id: Guid): Task<OperationPlanDetailsDTO>
+    }
+    
+    class OperationPlanService {
+        - _repository: IOperationPlanRepository
+        - _portLogisticsClient: IPortLogisticsClient
+        + GetByIdWithDetailsAsync(id: Guid): Task<OperationPlanDetailsDTO>
+    }
+    
+    class OperationPlanDetailsDTO {
+        + Id: Guid
+        + VvnId: Guid
+        + VesselName: string
+        + VesselImo: string
+        + DockName: string
+        + Date: DateOnly
+        + ETA: DateTime
+        + ETD: DateTime
+        + Operations: List<PlannedOperationDTO>
+    }
+    
+    class PlannedOperationDTO {
+        + Id: Guid
+        + OperationType: string
+        + StartTime: DateTime
+        + EndTime: DateTime
+        + Duration: TimeSpan
+        + ResourceNames: List<string>
+    }
+}
+
+package "Domain" #LightYellow {
+    interface IOperationPlanRepository {
+        + GetByIdWithOperationsAsync(id: Guid): Task<OperationPlan?>
+    }
+    
+    class OperationPlan <<aggregate root>> {
+        + Id: Guid
+        + VvnId: Guid
+        + Date: DateOnly
+        + PlannedOperations: List<PlannedOperation>
+    }
+    
+    class PlannedOperation <<entity>> {
+        + Id: Guid
+        + OperationType: string
+        + StartTime: DateTime
+        + EndTime: DateTime
+        + DockId: Guid
+        + AssignedResources: List<Guid>
+        + GetDuration(): TimeSpan
+    }
+}
+
+OperationPlansController --> IOperationPlanService
+IOperationPlanService <|.. OperationPlanService
+OperationPlanService --> IOperationPlanRepository
+OperationPlanService ..> OperationPlanDetailsDTO
+OperationPlanDetailsDTO *-- PlannedOperationDTO
+IOperationPlanRepository ..> OperationPlan
+OperationPlan *-- PlannedOperation
+
+@enduml

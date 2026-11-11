@@ -1,0 +1,134 @@
+<div class="operation-plans-list-container">
+  <div class="header">
+    <h1>Search Operation Plans</h1>
+    <p>Search and filter operation plans by date, vessel, and other criteria</p>
+  </div>
+
+  <div class="search-panel">
+    <div class="search-filters">
+      <div class="filter-group">
+        <label>VVN ID</label>
+        <input type="text" [(ngModel)]="vvnId" placeholder="Enter VVN ID" class="form-input">
+      </div>
+
+      <div class="filter-group">
+        <label>Search Mode</label>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" [(ngModel)]="searchMode" value="single" name="searchMode">
+            Single Date
+          </label>
+          <label class="radio-label">
+            <input type="radio" [(ngModel)]="searchMode" value="range" name="searchMode">
+            Date Range
+          </label>
+        </div>
+      </div>
+
+      <div class="filter-group" *ngIf="searchMode === 'single'">
+        <label>Date</label>
+        <input type="date" [(ngModel)]="singleDate" class="form-input">
+      </div>
+
+      <div class="filter-group" *ngIf="searchMode === 'range'">
+        <label>Start Date</label>
+        <input type="date" [(ngModel)]="startDate" class="form-input">
+      </div>
+
+      <div class="filter-group" *ngIf="searchMode === 'range'">
+        <label>End Date</label>
+        <input type="date" [(ngModel)]="endDate" class="form-input">
+      </div>
+    </div>
+
+    <div class="search-actions">
+      <button (click)="search()" class="btn btn-primary" [disabled]="isLoading">
+        <span *ngIf="!isLoading">🔍 Search</span>
+        <span *ngIf="isLoading">⏳ Searching...</span>
+      </button>
+      <button (click)="reset()" class="btn btn-secondary">Reset</button>
+    </div>
+  </div>
+
+  <div class="error-message" *ngIf="errorMessage">
+    ❌ {{ errorMessage }}
+  </div>
+
+  <div class="results-panel" *ngIf="!isLoading && plans.length > 0">
+    <div class="results-header">
+      <h2>Results ({{ plans.length }} plan(s))</h2>
+    </div>
+
+    <div class="table-container">
+      <table class="plans-table">
+        <thead>
+          <tr>
+            <th (click)="sort('vesselId')" class="sortable">
+              VVN ID
+              <span *ngIf="sortBy === 'vesselId'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            <th>Vessel IMO</th>
+            <th>Date</th>
+            <th (click)="sort('startTime')" class="sortable">
+              Start (HH:MM)
+              <span *ngIf="sortBy === 'startTime'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            <th (click)="sort('endTime')" class="sortable">
+              End (HH:MM)
+              <span *ngIf="sortBy === 'endTime'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            <th (click)="sort('duration')" class="sortable">
+              Duration (HH:MM)
+              <span *ngIf="sortBy === 'duration'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            <th>Dock</th>
+            <th>Crane</th>
+            <th>Staff</th>
+            <th>Storage</th>
+            <th (click)="sort('delay')" class="sortable">
+              Delay (hours)
+              <span *ngIf="sortBy === 'delay'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            <th>Algorithm</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let plan of paginatedPlans">
+            <td><strong>{{ plan.vvnId }}</strong></td>
+            <td>{{ plan.vesselImo || '-' }}</td>
+            <td>{{ formatDate(plan.date) }}</td>
+            <td>{{ formatTime(plan.startTime) }}</td>
+            <td>{{ formatTime(plan.endTime) }}</td>
+            <td>{{ formatDuration(plan.duration) }}</td>
+            <td>{{ plan.assignedDock || '-' }}</td>
+            <td>{{ getCrane(plan.resources) }}</td>
+            <td>{{ getStaff(plan.resources) }}</td>
+            <td>{{ getStorage(plan.resources) }}</td>
+            <td>
+              <span class="delay-badge" [class.high-delay]="plan.delay > 0" [class.no-delay]="plan.delay === 0">
+                {{ formatDelayHours(plan.delay) }}
+              </span>
+            </td>
+            <td>{{ plan.algorithmUsed }}</td>
+            <td>
+              <button (click)="editPlan(plan.id)" class="btn btn-warning btn-sm" title="Edit Operation Plan">
+                ✏️ Edit
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button (click)="prevPage()" [disabled]="currentPage === 1" class="btn btn-sm">Previous</button>
+      <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+      <button (click)="nextPage()" [disabled]="currentPage === totalPages" class="btn btn-sm">Next</button>
+    </div>
+  </div>
+
+  <div class="no-results" *ngIf="!isLoading && plans.length === 0 && !errorMessage">
+    <p>No operation plans found for the selected criteria.</p>
+  </div>
+</div>

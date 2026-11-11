@@ -1,0 +1,143 @@
+<!-- Vessel Visit Notification Detail View -->
+<div class="vessel-visit-detail-container">
+  <!-- Back Button -->
+  <div class="header-actions">
+    <button class="btn btn-secondary" (click)="goBack()">
+      ← Back to List
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading notification details...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <!-- Notification Details -->
+  <div *ngIf="!loading && notification" class="detail-card">
+    <!-- Header -->
+    <div class="detail-header">
+      <h1>Vessel Visit Notification #{{ notification.id }}</h1>
+      <span [class]="'status-badge ' + getStatusClass(notification.status)">
+        {{ getStatusText(notification.status) }}
+      </span>
+    </div>
+
+    <!-- Basic Information -->
+    <div class="detail-section">
+      <h2>Basic Information</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Vessel IMO Number</label>
+          <div class="value">{{ notification.vesselImoNumber }}</div>
+        </div>
+        <div class="info-item">
+          <label>Organization</label>
+          <div class="value">{{ notification.organizationIdentifier || 'N/A' }}</div>
+        </div>
+        <div class="info-item">
+          <label>Representative ID</label>
+          <div class="value">{{ notification.submittedByRepresentativeId || 'N/A' }}</div>
+        </div>
+        <div class="info-item">
+          <label>Assigned Dock</label>
+          <div class="value">
+            <span *ngIf="notification.assignedDockCode" class="dock-badge">
+              {{ notification.assignedDockCode }}
+            </span>
+            <span *ngIf="!notification.assignedDockCode" class="text-muted">Not assigned</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schedule Information -->
+    <div class="detail-section">
+      <h2>Schedule</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Estimated Time of Arrival (ETA)</label>
+          <div class="value">{{ formatDate(notification.estimatedTimeOfArrival) }}</div>
+        </div>
+        <div class="info-item">
+          <label>Estimated Time of Departure (ETD)</label>
+          <div class="value">{{ formatDate(notification.estimatedTimeOfDeparture) }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cargo Information -->
+    <div class="detail-section">
+      <h2>Cargo Manifest</h2>
+      <div class="cargo-info">
+        <p><strong>Total Containers:</strong> {{ notification.containerIds.length }} TEU</p>
+        <div *ngIf="notification.containerIds.length > 0" class="container-list">
+          <h3>Container IDs:</h3>
+          <ul>
+            <li *ngFor="let containerId of notification.containerIds">
+              {{ containerId }}
+            </li>
+          </ul>
+        </div>
+        <p *ngIf="notification.containerIds.length === 0" class="text-muted">
+          No containers registered
+        </p>
+      </div>
+    </div>
+
+    <!-- Crew Information -->
+    <div class="detail-section" *ngIf="notification.crew && notification.crew.length > 0">
+      <h2>Crew Information</h2>
+      <div class="crew-list">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Citizen ID</th>
+              <th>Nationality</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let member of notification.crew">
+              <td>{{ member.name }}</td>
+              <td>{{ member.citizenId }}</td>
+              <td>{{ member.nationality }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Rejection Reason -->
+    <div class="detail-section alert alert-error" *ngIf="notification.status === 'Rejected' && notification.rejectionReason">
+      <h2>Rejection Reason</h2>
+      <p>{{ notification.rejectionReason }}</p>
+    </div>
+
+    <!-- Audit Trail -->
+    <div class="detail-section" *ngIf="auditTrail && auditTrail.length > 0">
+      <h2>Audit Trail</h2>
+      <div class="audit-list">
+        <div *ngFor="let log of auditTrail" class="audit-item">
+          <div class="audit-header">
+            <span class="audit-outcome" [class.outcome-approved]="log.outcome === 'Approved'" 
+                  [class.outcome-rejected]="log.outcome === 'Rejected'">
+              {{ log.outcome }}
+            </span>
+            <span class="audit-date">{{ formatDate(log.timestamp) }}</span>
+          </div>
+          <div class="audit-details">
+            <p><strong>Officer:</strong> {{ log.officerId }}</p>
+            <p *ngIf="log.assignedDockCode"><strong>Assigned Dock:</strong> {{ log.assignedDockCode }}</p>
+            <p *ngIf="log.reason"><strong>Reason:</strong> {{ log.reason }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

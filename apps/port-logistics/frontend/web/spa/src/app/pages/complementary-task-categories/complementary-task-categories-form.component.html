@@ -1,0 +1,98 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>{{ isEditMode ? 'Edit' : 'Create' }} Complementary Task Category</h1>
+  </div>
+
+  @if (loading && isEditMode) {
+    <div class="loading">Loading...</div>
+  }
+
+  @if (error) {
+    <div class="alert alert-error">{{ error }}</div>
+  }
+
+  @if (success) {
+    <div class="alert alert-success">{{ success }}</div>
+  }
+
+  @if (!loading || !isEditMode) {
+    <form (ngSubmit)="onSubmit()" class="form-container">
+      <div class="form-group">
+        <label for="code">Code *</label>
+        <input
+          type="text"
+          id="code"
+          [(ngModel)]="code"
+          name="code"
+          [disabled]="isEditMode"
+          placeholder="CTC001"
+          required
+          class="form-control"
+        />
+        <small class="form-text">Unique code for the category (e.g., CTC001)</small>
+      </div>
+
+      <div class="form-group">
+        <label for="name">Name *</label>
+        <input
+          type="text"
+          id="name"
+          [(ngModel)]="name"
+          name="name"
+          placeholder="Security Check"
+          required
+          class="form-control"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description *</label>
+        <textarea
+          id="description"
+          [(ngModel)]="description"
+          name="description"
+          rows="4"
+          placeholder="Detailed description of the task category..."
+          required
+          class="form-control"
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="defaultDuration">Default Duration (minutes)</label>
+        <input
+          type="number"
+          id="defaultDuration"
+          [(ngModel)]="defaultDuration"
+          name="defaultDuration"
+          placeholder="60"
+          min="0"
+          class="form-control"
+        />
+        <small class="form-text">Optional: Expected duration in minutes</small>
+      </div>
+
+      <div class="form-group">
+        <label for="expectedImpact">Expected Impact</label>
+        <input
+          type="text"
+          id="expectedImpact"
+          [(ngModel)]="expectedImpact"
+          name="expectedImpact"
+          placeholder="Typically causes 1h delay"
+          class="form-control"
+        />
+        <small class="form-text">Optional: Description of expected impact on operations</small>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" (click)="cancel()" class="btn btn-secondary">
+          Cancel
+        </button>
+        <button type="submit" [disabled]="loading" class="btn btn-primary">
+          {{ loading ? 'Saving...' : 'Save' }}
+        </button>
+      </div>
+    </form>
+  }
+</div>

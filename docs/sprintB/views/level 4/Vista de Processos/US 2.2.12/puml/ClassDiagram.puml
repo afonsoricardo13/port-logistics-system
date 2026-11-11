@@ -1,0 +1,191 @@
+@startuml Class Diagram - Level 4 (US 2.2.12 - Physical Resource Management)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+' ===== Presentation Layer (Controllers) =====
+package "<<layer>> Presentation" #87CEEB {
+  class PhysicalResourceController <<Controller>> {
+    - _service: IPhysicalResourceService
+    + CreatePhysicalResource(dto: CreatePhysicalResourceDTO): IActionResult
+    + UpdatePhysicalResource(code: string, dto: UpdatePhysicalResourceDTO): IActionResult
+    + DeactivatePhysicalResource(code: string): IActionResult
+    + ReactivatePhysicalResource(code: string): IActionResult
+    + GetPhysicalResource(code: string): IActionResult
+    + ListPhysicalResources(filters: ResourceFilters): IActionResult
+  }
+}
+
+' ===== Application Layer (Services & DTOs) =====
+package "<<layer>> Application" #87CEEB {
+  class PhysicalResourceService <<Service>> {
+    - _repository: IPhysicalResourceRepository
+    + CreatePhysicalResource(dto: CreatePhysicalResourceDTO): PhysicalResourceDTO
+    + UpdatePhysicalResource(code: string, dto: UpdatePhysicalResourceDTO): PhysicalResourceDTO
+    + DeactivatePhysicalResource(code: string): bool
+    + ReactivatePhysicalResource(code: string): bool
+    + GetPhysicalResource(code: string): PhysicalResourceDTO
+    + ListPhysicalResources(filters: ResourceFilters): List<PhysicalResourceDTO>
+  }
+
+  interface IPhysicalResourceService {
+    + CreatePhysicalResource(dto: CreatePhysicalResourceDTO): PhysicalResourceDTO
+    + UpdatePhysicalResource(code: string, dto: UpdatePhysicalResourceDTO): PhysicalResourceDTO
+    + DeactivatePhysicalResource(code: string): bool
+  }
+
+  class CreatePhysicalResourceDTO <<DTO>> {
+    + Code: string
+    + Description: string
+    + Type: string
+    + Capacity: int
+    + AssignedArea: string
+    + SetupTimeMinutes: int
+    + QualificationRequirementIds: List<string>
+  }
+
+  class UpdatePhysicalResourceDTO <<DTO>> {
+    + Description: string
+    + Type: string
+    + Capacity: int
+    + AssignedArea: string
+    + SetupTimeMinutes: int
+    + QualificationRequirementIds: List<string>
+  }
+
+  class PhysicalResourceDTO <<DTO>> {
+    + Code: string
+    + Description: string
+    + Type: string
+    + Capacity: int
+    + AssignedArea: string
+    + Status: string
+    + SetupTimeMinutes: int
+    + QualificationRequirementIds: List<string>
+    + ChangedAt: DateTime?
+    + ChangedBy: string
+    + OperationType: string
+  }
+}
+
+' ===== Domain Layer (Aggregates, Entities, Value Objects) =====
+package "<<layer>> Domain" #87CEEB {
+  class PhysicalResource <<Aggregate Root>> {
+    - _id: long
+    - _code: string
+    - _description: string
+    - _type: string
+    - _capacity: int
+    - _assignedArea: string
+    - _status: PhysicalResourceStatus
+    - _setupTimeMinutes: int
+    - _qualificationRequirementIds: List<string>
+    - _changedAt: DateTime?
+    - _changedBy: string
+    - _operationType: string
+    + PhysicalResource(code, description, type, capacity)
+    + Update(description, type, capacity, ...): void
+    + Deactivate(changedBy: string): void
+    + Reactivate(changedBy: string): void
+    + SetAssignedArea(area: string): void
+    + SetQualifications(qualifications: List<string>): void
+    + ValidateCode(): void
+    + ValidateCapacity(): void
+  }
+
+  enum PhysicalResourceStatus {
+    Active
+    Inactive
+    UnderMaintenance
+  }
+
+  interface IPhysicalResourceRepository <<Repository Interface>> {
+    + GetAllAsync(): Task<List<PhysicalResource>>
+    + GetByCodeAsync(code: string): Task<PhysicalResource>
+    + ExistsByCode(code: string): Task<bool>
+    + Add(resource: PhysicalResource): Task<PhysicalResource>
+    + Update(resource: PhysicalResource, errors: List<string>): Task<PhysicalResource>
+  }
+}
+
+' ===== Infrastructure Layer (Repositories & Persistence) =====
+package "<<layer>> Infrastructure" #87CEEB {
+  class PhysicalResourceRepository <<Repository>> {
+    - _context: PortLogisticsContext
+    + GetAllAsync(): Task<List<PhysicalResource>>
+    + GetByCodeAsync(code: string): Task<PhysicalResource>
+    + ExistsByCode(code: string): Task<bool>
+    + Add(resource: PhysicalResource): Task<PhysicalResource>
+    + Update(resource: PhysicalResource, errors: List<string>): Task<PhysicalResource>
+    - MapToDomain(dataModel: PhysicalResourceDataModel): PhysicalResource
+    - MapToDataModel(resource: PhysicalResource): PhysicalResourceDataModel
+  }
+
+  class PhysicalResourceDataModel <<Entity>> {
+    + Id: long
+    + Code: string
+    + Description: string
+    + Type: string
+    + Capacity: int
+    + AssignedArea: string
+    + Status: string
+    + SetupTimeMinutes: int
+    + QualificationRequirementIds: string
+    + ChangedAt: DateTime?
+    + ChangedBy: string
+    + OperationType: string
+  }
+
+  class PortLogisticsContext <<Context>> {
+    + PhysicalResources: DbSet<PhysicalResourceDataModel>
+    + SaveChangesAsync(): Task<int>
+  }
+}
+
+' ===== Relationships =====
+PhysicalResourceController --> IPhysicalResourceService : uses
+PhysicalResourceController ..> CreatePhysicalResourceDTO : receives
+PhysicalResourceController ..> UpdatePhysicalResourceDTO : receives
+PhysicalResourceController ..> PhysicalResourceDTO : returns
+
+PhysicalResourceService ..|> IPhysicalResourceService : implements
+PhysicalResourceService --> IPhysicalResourceRepository : uses
+PhysicalResourceService ..> PhysicalResource : manipulates
+PhysicalResourceService ..> CreatePhysicalResourceDTO : receives
+PhysicalResourceService ..> UpdatePhysicalResourceDTO : receives
+PhysicalResourceService ..> PhysicalResourceDTO : returns
+
+PhysicalResource --> PhysicalResourceStatus : has
+
+PhysicalResourceRepository ..|> IPhysicalResourceRepository : implements
+PhysicalResourceRepository --> PortLogisticsContext : uses
+PhysicalResourceRepository ..> PhysicalResource : returns
+PhysicalResourceRepository ..> PhysicalResourceDataModel : maps
+
+PortLogisticsContext *-- PhysicalResourceDataModel : manages
+
+note right of PhysicalResource
+  **Aggregate Root**
+  Enforces business rules:
+  - Code unique & alphanumeric (BR1)
+  - Description required
+  - Type: Crane, Truck, Forklift
+  - Capacity > 0 (BR4)
+  - SetupTime >= 0 (BR5)
+  - Status transitions (BR3)
+  - Soft delete (Inactive status)
+  - Audit trail (BR7)
+end note
+
+note right of PhysicalResourceService
+  **Application Service**
+  Orchestrates:
+  - Code uniqueness check
+  - Status transition validation
+  - Domain validation
+  - Audit logging (changedBy, operationType)
+  - Persistence operations
+  - DTO mapping
+end note
+
+@enduml

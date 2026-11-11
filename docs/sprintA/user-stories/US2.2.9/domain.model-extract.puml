@@ -1,0 +1,47 @@
+@startuml Domain Model
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam monochrome true
+
+package "Vessel Visit Management" {
+    enum VesselVisitNotification <<Entity root>>
+    class VesselVisitID <<ValueObject>> {
+        +ID
+    }
+    class VesselVisitStatus <<ValueObject>>
+    class VesselVisitETA <<ValueObject>>
+    class VesselVisitETD <<ValueObject>>
+    class VesselVisitReason <<ValueObject>>
+    class VesselVisitCrewInfo <<ValueObject>>
+    class VesselVisitSafetyOfficer <<ValueObject>>
+    class VesselVisitRejectionReason <<ValueObject>>
+    class VesselVisitDescription <<ValueObject>>
+
+    VesselVisitNotification "1"--"1" VesselVisitID
+    VesselVisitNotification "1"--"1" VesselVisitStatus
+    VesselVisitNotification "1"--"1" VesselVisitETA
+    VesselVisitNotification "1"--"1" VesselVisitETD
+    VesselVisitNotification "1"--"1" VesselVisitReason
+    VesselVisitNotification "1"--"1" VesselVisitCrewInfo
+    VesselVisitNotification "1"--"1" CargoManifest : submittedWith
+    VesselVisitNotification "1"--"1" Vessel : for
+    VesselVisitNotification "1"--"*" VesselVisitSafetyOfficer
+    VesselVisitNotification "1"--"1" LogisticsOperator : plannedBy
+    VesselVisitNotification "1"--"1" VesselVisitRejectionReason : rejectedWith
+    VesselVisitNotification "1"--"1" VesselVisitDescription
+
+}
+package "Shipping Agent Representative Management" {
+    enum ShippingAgentRepresentative <<Entity root>>
+    class ShippingAgentRepID <<ValueObject>> {
+        +ID
+    }
+    class ShippingAgentRepName <<ValueObject>>
+    class ShippingAgentRepEmail <<ValueObject>>
+    
+    ShippingAgentRepresentative "1"--"1" ShippingAgentRepID
+    ShippingAgentRepresentative "1"--"1" ShippingAgentRepName
+    ShippingAgentRepresentative "1"--"1" ShippingAgentRepEmail 
+}
+VesselVisitNotification "1"--"1" ShippingAgentRepresentative : submittedBy
+@enduml

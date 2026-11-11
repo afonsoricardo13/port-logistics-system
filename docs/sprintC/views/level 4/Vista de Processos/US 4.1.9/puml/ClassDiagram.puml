@@ -1,0 +1,153 @@
+@startuml Vista Logica - Level 4 (US 4.1.9 - Executed Operations)
+
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor<<Controller>> LightBlue
+    BackgroundColor<<Service>> LightGreen
+    BackgroundColor<<Repository>> LightYellow
+    BackgroundColor<<Entity>> LightCoral
+    BackgroundColor<<DTO>> Wheat
+    BackgroundColor<<ValueObject>> LightGray
+}
+
+package "WebApi Layer" {
+    class ExecutedOperationsController <<Controller>> {
+        - _service: ExecutedOperationService
+        - _logger: ILogger<ExecutedOperationsController>
+        + GetByVveId(vveId: string): Task<ActionResult<IEnumerable<ExecutedOperationDTO>>>
+        + GetById(id: Guid): Task<ActionResult<ExecutedOperationDTO>>
+        + InitializeFromPlan(request: InitializeFromPlanRequest): Task<ActionResult<InitializeOperationsFromPlanResponseDTO>>
+        + Create(dto: CreateExecutedOperationDTO): Task<ActionResult<ExecutedOperationDTO>>
+        + Update(id: Guid, dto: UpdateExecutedOperationDTO): Task<ActionResult<ExecutedOperationDTO>>
+    }
+}
+
+package "Application Layer" {
+    class ExecutedOperationService <<Service>> {
+        - _repository: IExecutedOperationRepository
+        - _operationPlanRepository: IOperationPlanRepository
+        - _vveRepository: IVesselVisitExecutionRepository
+        - _logger: ILogger<ExecutedOperationService>
+        + GetOperationsByVveIdAsync(vveId: string): Task<IEnumerable<ExecutedOperationDTO>>
+        + GetByIdAsync(id: Guid): Task<ExecutedOperationDTO?>
+        + InitializeOperationsFromPlanAsync(vveId, planId, userEmail): Task<InitializeOperationsFromPlanResponseDTO>
+        + CreateAsync(dto: CreateExecutedOperationDTO, userEmail: string): Task<ExecutedOperationDTO>
+        + UpdateAsync(id: Guid, dto: UpdateExecutedOperationDTO, userEmail: string): Task<ExecutedOperationDTO>
+    }
+
+    class ExecutedOperationDTO <<DTO>> {
+        + Id: Guid
+        + VveId: string
+        + PlannedOperationId: Guid?
+        + OperationType: string
+        + ContainerId: string
+        + PlannedStartTime: DateTime?
+        + PlannedEndTime: DateTime?
+        + ActualStartTime: DateTime?
+        + ActualEndTime: DateTime?
+        + Status: string
+        + UsedCrane: string?
+        + UsedStaff: List<string>
+        + Notes: string?
+        + CreatedBy: string
+        + CreatedAt: DateTime
+        + UpdatedBy: string?
+        + UpdatedAt: DateTime?
+    }
+
+    class CreateExecutedOperationDTO <<DTO>> {
+        + VveId: string
+        + PlannedOperationId: Guid?
+        + OperationType: string
+        + ContainerId: string
+        + ActualStartTime: DateTime?
+        + ActualEndTime: DateTime?
+        + UsedCrane: string?
+        + UsedStaff: List<string>?
+        + Notes: string?
+    }
+
+    class UpdateExecutedOperationDTO <<DTO>> {
+        + ActualStartTime: DateTime?
+        + ActualEndTime: DateTime?
+        + Status: string?
+        + UsedCrane: string?
+        + UsedStaff: List<string>?
+        + Notes: string?
+    }
+
+    class InitializeFromPlanRequest <<DTO>> {
+        + VveId: string
+        + OperationPlanId: Guid
+    }
+
+    class InitializeOperationsFromPlanResponseDTO <<DTO>> {
+        + Success: bool
+        + Message: string
+        + InitializedOperations: List<ExecutedOperationDTO>
+        + ErrorMessages: List<string>
+    }
+}
+
+package "Domain Layer" {
+    class ExecutedOperation <<Entity>> {
+        - _id: Guid
+        + Id: Guid {get}
+        + VveId: string {get; private set}
+        + PlannedOperationId: Guid? {get; private set}
+        + OperationType: OperationType {get; private set}
+        + ContainerId: string {get; private set}
+        + PlannedStartTime: DateTime? {get; private set}
+        + PlannedEndTime: DateTime? {get; private set}
+        + ActualStartTime: DateTime? {get; private set}
+        + ActualEndTime: DateTime? {get; private set}
+        + Status: ExecutionStatus {get; private set}
+        + UsedCrane: string? {get; private set}
+        + UsedStaff: List<string> {get; private set}
+        + Notes: string? {get; private set}
+        + CreatedBy: string {get; private set}
+        + CreatedAt: DateTime {get; private set}
+        + UpdatedBy: string? {get; private set}
+        + UpdatedAt: DateTime? {get; private set}
+        + ExecutedOperation(vveId, type, containerId, createdBy)
+        + CreateFromPlan(plannedOp: PlannedOperation, vveId: string, createdBy: string): ExecutedOperation
+        + Start(startTime: DateTime, updatedBy: string): void
+        + Complete(endTime: DateTime, updatedBy: string): void
+        + MarkDelayed(updatedBy: string): void
+        + UpdateResources(crane, staff, updatedBy): void
+    }
+
+    enum ExecutionStatus <<ValueObject>> {
+        NotStarted
+        Started
+        Completed
+        Delayed
+    }
+
+    interface IExecutedOperationRepository <<Repository>> {
+        + GetByIdAsync(id: Guid): Task<ExecutedOperation?>
+        + GetByVveIdAsync(vveId: string): Task<IEnumerable<ExecutedOperation>>
+        + AddAsync(op: ExecutedOperation): Task<ExecutedOperation>
+        + AddRangeAsync(ops: IEnumerable<ExecutedOperation>): Task
+        + UpdateAsync(op: ExecutedOperation): Task<ExecutedOperation>
+    }
+}
+
+package "DataModel Layer" {
+    class ExecutedOperationRepository <<Repository>> {
+        - _context: OEMDbContext
+        + GetByIdAsync(id: Guid): Task<ExecutedOperation?>
+        + GetByVveIdAsync(vveId: string): Task<IEnumerable<ExecutedOperation>>
+        + AddAsync(op: ExecutedOperation): Task<ExecutedOperation>
+        + AddRangeAsync(ops: IEnumerable<ExecutedOperation>): Task
+        + UpdateAsync(op: ExecutedOperation): Task<ExecutedOperation>
+    }
+}
+
+' Relationships
+ExecutedOperationsController --> ExecutedOperationService
+ExecutedOperationService --> IExecutedOperationRepository
+ExecutedOperationService --> ExecutedOperationDTO
+ExecutedOperationRepository ..|> IExecutedOperationRepository
+
+@enduml

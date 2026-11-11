@@ -1,0 +1,34 @@
+@startuml Vista de Processos – Level 2 (US 2.2.12 – Register Physical Resource)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as PA
+participant "<<container (C4)>>\nVisualization (UI)" as UI #87CEEB
+participant "<<container (C4)>>\nPhysical Resources" as PR #87CEEB
+
+activate PA
+PA -> UI: 1: register physical resource
+activate UI
+UI --> PA: 1.1: ask for resource data (code, description, type, capacity, assignedArea, status, setupTimeMinutes, staffQualificationIds, operationalWindow)
+deactivate UI
+PA -> UI: 2: resource data
+activate UI
+UI --> PR: 2.1: request to register resource
+activate PR
+PR -> UI: 2.2: resource registered
+deactivate PR
+UI --> PA: 2.3: resource registered
+deactivate UI
+deactivate PA
+
+@enduml

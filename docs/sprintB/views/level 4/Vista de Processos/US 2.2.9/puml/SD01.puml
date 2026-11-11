@@ -1,0 +1,107 @@
+@startuml Vista de Processos - Level 4 (US 2.2.9 - Register Storage Area)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Port Authority Officer" as PAO
+participant "<<container (C4)>>\nSPA (Web UI)" as UI_CTRL #87CEEB
+participant "<<container (C4)>>\nPort Logistics (Backend)\nController" as MDR_CTRL #87CEEB
+participant "<<component>>\nApplication Service" as MDR_APP #87CEEB
+participant "<<component>>\nDomain Model (StorageArea)" as MDR_DOMAIN #87CEEB
+participant "<<component>>\nRepository" as MDR_REPO #87CEEB
+participant "<<component>>\nData Model" as MDR_DATA #87CEEB
+participant "<<component>>\nPersistence" as MDR_PERSIST #87CEEB
+
+activate PAO
+PAO -> UI_CTRL: 1: POST /api/storage-areas\n{identifier, type, location, maxCapacityTeu, currentOccupancyTeu, servedDocks[]}
+activate UI_CTRL
+UI_CTRL -> MDR_CTRL: 1.1: createStorageArea(dto)
+activate MDR_CTRL
+MDR_CTRL -> MDR_APP: 1.1.1: createStorageArea(dto)
+activate MDR_APP
+
+MDR_APP -> MDR_REPO: 1.1.1.1: exists(dto.identifier)
+activate MDR_REPO
+MDR_REPO -> MDR_PERSIST: 1.1.1.1.1: query identifier uniqueness
+activate MDR_PERSIST
+MDR_PERSIST --> MDR_REPO: 1.1.1.1.2: exists? (true/false)
+deactivate MDR_PERSIST
+MDR_REPO --> MDR_APP: 1.1.1.1.3: exists
+deactivate MDR_REPO
+
+alt identifier already exists
+  MDR_APP --> MDR_CTRL: 1.1.1.a: BusinessRuleValidationException\n"Identifier already exists"
+  MDR_CTRL --> UI_CTRL: 1.1.a: HTTP 400 Bad Request
+  UI_CTRL --> PAO: 1.1.b: show error "Identifier already in use"
+else new identifier
+
+  MDR_APP -> MDR_DOMAIN: 1.1.1.2: build StorageArea aggregate (dto)
+  activate MDR_DOMAIN
+  MDR_DOMAIN -> MDR_DOMAIN: validate identifier not empty\nvalidate type (Yard/Warehouse)\nvalidate location not empty\nvalidate maxCapacityTeu >= 0\nvalidate currentOccupancyTeu >= 0\nvalidate currentOccupancy <= maxCapacity
+  
+  alt invalid data
+    MDR_DOMAIN --> MDR_APP: 1.1.1.2.a: ArgumentException\n"Invalid storage area data"
+    MDR_APP --> MDR_CTRL: 1.1.1.b: validation error
+    MDR_CTRL --> UI_CTRL: 1.1.c: HTTP 400 Bad Request
+    UI_CTRL --> PAO: 1.1.d: show validation errors
+  else valid aggregate
+    
+    loop for each served dock
+      MDR_DOMAIN -> MDR_DOMAIN: validate DockCode not empty\nvalidate DistanceMeters > 0
+      MDR_DOMAIN -> MDR_DOMAIN: add ServedDock(dockCode, distance)
+    end
+    
+    MDR_DOMAIN --> MDR_APP: 1.1.1.2.1: StorageArea aggregate
+    deactivate MDR_DOMAIN
+
+    MDR_APP -> MDR_REPO: 1.1.1.3: add(area)
+    activate MDR_REPO
+    MDR_REPO -> MDR_DATA: 1.1.1.3.1: map to data model
+    activate MDR_DATA
+    MDR_DATA --> MDR_REPO: 1.1.1.3.2: area record + served_docks records
+    deactivate MDR_DATA
+    MDR_REPO -> MDR_PERSIST: 1.1.1.3.3: INSERT storage_areas\nINSERT served_docks (if any)
+    activate MDR_PERSIST
+    MDR_PERSIST --> MDR_REPO: 1.1.1.3.4: persisted record
+    deactivate MDR_PERSIST
+    MDR_REPO --> MDR_APP: 1.1.1.3.5: persisted(area)
+    deactivate MDR_REPO
+
+    MDR_APP --> MDR_CTRL: 1.1.2: created StorageAreaDTO
+    deactivate MDR_APP
+    MDR_CTRL --> UI_CTRL: 1.2: HTTP 201 Created\n(Location: /api/storage-areas/{id} + body)
+    deactivate MDR_CTRL
+    UI_CTRL --> PAO: 1.3: show confirmation\n"Storage area registered successfully"
+  end
+end
+
+deactivate UI_CTRL
+deactivate PAO
+
+note right of MDR_DOMAIN
+  Business Rules enforced:
+  - Identifier unique (BR1)
+  - Type: Yard or Warehouse
+  - MaxCapacity >= CurrentOccupancy (BR2)
+  - Empty servedDocks = serves all docks (BR3)
+  - DistanceMeters > 0 (BR4)
+end note
+
+note right of MDR_APP
+  Service coordination:
+  - Check identifier uniqueness
+  - Delegate validation to domain
+  - Persist via repository
+  - Return DTO or errors
+end note
+
+@enduml

@@ -1,0 +1,70 @@
+﻿@startuml Vista de Processos – Level 3 (US 2.2.6 – Update Representative)
+	skinparam shadowing true
+	skinparam linetype ortho
+	skinparam sequence {
+		ArrowColor Black
+		ActorBorderColor #000000
+		ActorBackgroundColor #87CEEB
+		LifeLineBorderColor Black
+		LifeLineBackgroundColor #87CEEB
+		ParticipantBorderColor Black
+		ParticipantBackgroundColor #87CEEB
+		ParticipantFontStyle bold
+	}
+	
+	actor "Port Authority Officer" as PA
+	participant "«container (C4)»\nVisualization (UI)" as UI_CTRL #87CEEB
+	participant "«container (C4)»\nPlanning & Scheduling\nController" as PLAN_CTRL #87CEEB
+	participant "«component»\nApplication Service" as PLAN_APP #87CEEB
+	participant "«component»\nDomain Model (Representative)" as PLAN_DOMAIN #87CEEB
+	participant "«component»\nRepository" as PLAN_REPO #87CEEB
+	participant "«component»\nData Model" as PLAN_DATA #87CEEB
+	participant "«component»\nPersistence" as PLAN_PERSIST #87CEEB
+	
+	activate PA
+	PA -> UI_CTRL: 1: update representative\n(org {identifier}, rep {representativeId})
+	activate UI_CTRL
+	UI_CTRL --> PA: 1.1: request updated representative data
+	deactivate UI_CTRL
+	
+	PA -> UI_CTRL: 2: provide update payload (RepresentativeUpdateDTO)
+	activate UI_CTRL
+	UI_CTRL -> PLAN_CTRL: 2.1: request to update representative
+	activate PLAN_CTRL
+	PLAN_CTRL -> PLAN_APP: 2.1.1: updateRepresentative(orgId, repId, RepresentativeUpdateDTO)
+	activate PLAN_APP
+	PLAN_APP -> PLAN_REPO: 2.1.1.1: fetch organization and representative
+	activate PLAN_REPO
+	PLAN_REPO -> PLAN_PERSIST: 2.1.1.1.1: query persistence
+	activate PLAN_PERSIST
+	PLAN_PERSIST --> PLAN_REPO: 2.1.1.1.2: org/representative record / not found
+	deactivate PLAN_PERSIST
+	PLAN_REPO --> PLAN_APP: 2.1.1.2: org/representative record / not found
+	deactivate PLAN_REPO
+	PLAN_APP -> PLAN_APP: 2.1.1.3: if not found -> prepare 404\nvalidate payload (name, citizenId, email, phone)
+	PLAN_APP -> PLAN_DOMAIN: 2.1.1.4: apply updates to Representative aggregate
+	activate PLAN_DOMAIN
+	PLAN_DOMAIN --> PLAN_APP: 2.1.1.5: updated aggregate
+	deactivate PLAN_DOMAIN
+	PLAN_APP -> PLAN_REPO: 2.1.1.6: update(representative)
+	activate PLAN_REPO
+	PLAN_REPO -> PLAN_DATA: 2.1.1.6.1: map to data model
+	activate PLAN_DATA
+	PLAN_DATA --> PLAN_REPO: 2.1.1.6.2: updated record
+	deactivate PLAN_DATA
+	PLAN_REPO -> PLAN_PERSIST: 2.1.1.6.3: persist(updated record)
+	activate PLAN_PERSIST
+	PLAN_PERSIST --> PLAN_REPO: 2.1.1.6.4: ok
+	deactivate PLAN_PERSIST
+	PLAN_REPO --> PLAN_APP: 2.1.1.7: persisted(updated representative)
+	deactivate PLAN_REPO
+	PLAN_APP -> PLAN_APP: 2.1.1.8: record audit (updatedBy, updatedAt)
+	PLAN_APP --> PLAN_CTRL: 2.1.2: 200 OK (RepresentativeResponse) \nor 404 Not Found
+	deactivate PLAN_APP
+	PLAN_CTRL --> UI_CTRL: 2.2: representative updated / error
+	deactivate PLAN_CTRL
+	UI_CTRL --> PA: 2.3: representative updated / error
+	deactivate UI_CTRL
+	deactivate PA
+	
+	@enduml

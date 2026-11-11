@@ -1,0 +1,164 @@
+@startuml Mapping Physical ↔ Implementation – Level 3 (Port Operations System)
+left to right direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+skinparam rectangle {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam node {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam component {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ================= LEFT: Implementation View (Level 3 – full) =================
+rectangle "Implementation View (Level 3)" as IMP {
+
+  ' ---- MDR: Docks & Resources (implementation) ----
+  rectangle "Docks & Resources — Implementation" as DR_I {
+    rectangle "Infrastructure" as DR_I_INF {
+      component "Routes"      as DR_I_ROUTES
+      component "Persistence" as DR_I_PERS
+    }
+    rectangle "Interface Adapters" as DR_I_ADP {
+      component "IControllers"    as DR_I_ICTRL
+      component "ImplControllers" as DR_I_CTRL
+      component "Repositories"    as DR_I_REPO
+    }
+    rectangle "Application Services / Use Case Services" as DR_I_APP {
+      component "IAppServices"     as DR_I_IAPP
+      component "ImplAppServices"  as DR_I_APPSVC
+      component "IRepositories"    as DR_I_IREPO
+    }
+    rectangle "Entities / Core / Domain" as DR_I_DOM {
+      component "Aggregates"    as DR_I_AGG
+      component "Value Objects" as DR_I_VO
+      component "Services"      as DR_I_SVC
+    }
+
+    ' --- internal dependencies (dashed) ---
+    DR_I_ROUTES ..down..> DR_I_ICTRL
+    DR_I_PERS   ..up..>   DR_I_REPO
+    DR_I_CTRL   ..down..> DR_I_IAPP
+    DR_I_CTRL   ..down..> DR_I_APPSVC
+    DR_I_ICTRL  <..       DR_I_CTRL
+    DR_I_APPSVC ..right..> DR_I_IREPO
+    DR_I_IAPP   <..       DR_I_APPSVC
+    DR_I_APPSVC ..down..> DR_I_AGG
+    DR_I_APPSVC ..down..> DR_I_VO
+    DR_I_APPSVC ..down..> DR_I_SVC
+    DR_I_IREPO  <..       DR_I_REPO
+  }
+
+  ' ---- MDV: Visits & Manifests (implementation) ----
+  rectangle "Visits & Manifests — Implementation" as VM_I {
+    rectangle "Infrastructure" as VM_I_INF {
+      component "Routes"      as VM_I_ROUTES
+      component "Persistence" as VM_I_PERS
+    }
+    rectangle "Interface Adapters" as VM_I_ADP {
+      component "IControllers"    as VM_I_ICTRL
+      component "ImplControllers" as VM_I_CTRL
+      component "Repositories"    as VM_I_REPO
+    }
+    rectangle "Application Services / Use Case Services" as VM_I_APP {
+      component "IAppServices"     as VM_I_IAPP
+      component "ImplAppServices"  as VM_I_APPSVC
+      component "IRepositories"    as VM_I_IREPO
+    }
+    rectangle "Entities / Core / Domain" as VM_I_DOM {
+      component "Aggregates"    as VM_I_AGG
+      component "Value Objects" as VM_I_VO
+      component "Services"      as VM_I_SVC
+    }
+
+    VM_I_ROUTES ..down..> VM_I_ICTRL
+    VM_I_PERS   ..up..>   VM_I_REPO
+    VM_I_CTRL   ..down..> VM_I_IAPP
+    VM_I_CTRL   ..down..> VM_I_APPSVC
+    VM_I_ICTRL  <..       VM_I_CTRL
+    VM_I_APPSVC ..right..> VM_I_IREPO
+    VM_I_IAPP   <..       VM_I_APPSVC
+    VM_I_APPSVC ..down..> VM_I_AGG
+    VM_I_APPSVC ..down..> VM_I_VO
+    VM_I_APPSVC ..down..> VM_I_SVC
+    VM_I_IREPO  <..       VM_I_REPO
+  }
+
+  ' ---- Planning & Scheduling (implementation) ----
+  rectangle "Planning & Scheduling — Implementation" as PL_I {
+    rectangle "Infrastructure" as PL_I_INF {
+      component "Routes"      as PL_I_ROUTES
+    }
+    rectangle "Interface Adapters" as PL_I_ADP {
+      component "IControllers"    as PL_I_ICTRL
+      component "ImplControllers" as PL_I_CTRL
+      component "Repositories (Clients/Adapters)" as PL_I_REPO
+    }
+    rectangle "Application Services / Use Case Services" as PL_I_APP {
+      component "IAppServices"     as PL_I_IAPP
+      component "ImplAppServices"  as PL_I_APPSVC
+      component "IRepositories"    as PL_I_IREPO
+    }
+    rectangle "Entities / Core / Domain" as PL_I_DOM {
+      component "Aggregates"    as PL_I_AGG
+      component "Value Objects" as PL_I_VO
+      component "Services"      as PL_I_SVC
+    }
+
+    PL_I_ROUTES ..down..> PL_I_ICTRL
+    PL_I_CTRL   ..down..> PL_I_IAPP
+    PL_I_CTRL   ..down..> PL_I_APPSVC
+    PL_I_ICTRL  <..       PL_I_CTRL
+    PL_I_APPSVC ..right..> PL_I_IREPO
+    PL_I_IREPO  <..       PL_I_REPO
+    PL_I_IAPP   <..       PL_I_APPSVC
+    PL_I_APPSVC ..down..> PL_I_AGG
+    PL_I_APPSVC ..down..> PL_I_VO
+    PL_I_APPSVC ..down..> PL_I_SVC
+  }
+
+  DR_I -[hidden]-> VM_I
+  VM_I -[hidden]-> PL_I
+}
+
+' ================= RIGHT: Physical View (Level 3) =================
+rectangle "Physical View (Level 3)" as PHY {
+
+  node "localhost" as LOCAL {
+    component "«component»\nBrowser" as BROWSER
+    component "«component»\nUI" as UI_CLIENT
+  }
+
+  node "server1" as S1 {
+    component "«component»\nPlanning & Scheduling" as PLAN
+    component "«component»\nDocks & Resources"     as RES
+    component "«component»\nVisits & Manifests"    as VIS
+  }
+
+  node "server2" as S2 {
+    component "«component»\nHTTP Server" as HTTPD
+    rectangle "\n UI" as UI_STATIC #87CEEB
+  }
+
+  LOCAL -> S1 : http/s
+  LOCAL -> S2 : http/s
+}
+
+' ======================= MAPPINGS (deploy) ========================
+PL_I ..> PLAN : deploys to
+DR_I ..> RES  : deploys to
+VM_I ..> VIS  : deploys to
+
+@enduml

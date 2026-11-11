@@ -1,0 +1,92 @@
+@startuml Logical View - Level 3 (Onion) - Scheduling & Planning
+top to bottom direction
+skinparam shadowing true
+skinparam defaultTextAlignment center
+skinparam packageStyle rectangle
+
+skinparam component { 
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ===== API externa =====
+() "Scheduling API" as SCHED_API #87CEEB
+
+' ===== Container Scheduling com camadas concêntricas (Onion) =====
+package "«component»\n«container (C4)»\nScheduling & Planning" #87CEEB {
+
+  ' --------- Infrastructure Layer (outer - azul claro) ---------
+  package "Infrastructure Layer                                                                                                                                " #AEEEEE {
+    
+    component "HTTP Server\n(thread_httpd)" as HTTP_SERVER
+    component "HTTP Client\n(http_client)" as HTTP_CLIENT
+    component "CORS Handler" as CORS
+    
+    interface "Dispatch API" as I_DISPATCH
+    interface "HTTP Client API" as I_HTTP
+
+    ' --------- Interface Adapters Layer (verde) ---------
+    package "Interface Adapters Layer                                                                                                        " #C7F0C7 {
+      
+      component "REST Endpoints\n(http_dispatch)" as ENDPOINTS
+      component "JSON Converters\n(json_convert)" as JSON
+      component "Request Handlers" as HANDLERS
+      
+      interface "Handler API" as I_HANDLER
+      interface "JSON API" as I_JSON
+
+      ' --------- Application Services Layer (rosa) ---------
+      package "Application Services Layer                                                                      " #F7BFBF {
+        
+        component "Scheduling Service\n(Prolog predicates)" as SVC
+        
+        interface "Algorithm API" as I_ALG
+        
+        ' --------- Core Layer (bege - core) ---------
+        package "Core Layer                    " #F7E5B5 {
+          component "Scheduling Algorithms\n(Prolog rules)" as ALG
+          component "Config\n(config.pl)" as CONFIG
+        }
+      }
+    }
+  }
+}
+
+' ===== Ligações da API externa para HTTP Server =====
+SCHED_API --> HTTP_SERVER
+
+' ===== Ligações do HTTP Server para Endpoints =====
+HTTP_SERVER --> I_DISPATCH
+I_DISPATCH --> ENDPOINTS
+
+' ===== Ligações CORS =====
+CORS --> HTTP_SERVER
+
+' ===== Ligações dos Endpoints para Handlers e JSON =====
+ENDPOINTS --> I_HANDLER
+I_HANDLER --> HANDLERS
+
+HANDLERS --> I_JSON
+I_JSON --> JSON
+
+' ===== Ligações dos Handlers para Service =====
+HANDLERS --> SVC
+
+' ===== Ligações do Service para Algorithms e Config =====
+SVC --> I_ALG
+I_ALG --> ALG
+
+SVC --> CONFIG
+
+' ===== Ligações do Service para HTTP Client =====
+SVC --> I_HTTP
+I_HTTP --> HTTP_CLIENT
+
+' ===== Conexão a API externa (Port Logistics) =====
+() "Port Logistics API" as PORT_API #87CEEB
+HTTP_CLIENT --> PORT_API : fetch resources/staff data
+
+@enduml

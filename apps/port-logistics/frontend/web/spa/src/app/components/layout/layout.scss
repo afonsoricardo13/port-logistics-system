@@ -1,0 +1,50 @@
+// Layout styling - Consistent design system (AC)
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f5f7fa;
+
+  // Main content area
+  .main-content {
+    flex: 1;
+    padding: 2rem;
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  // Footer (optional - AC permite)
+  .app-footer {
+    background: #2d3748;
+    color: rgba(255, 255, 255, 0.8);
+    padding: 1.5rem 2rem;
+    text-align: center;
+    font-size: 0.875rem;
+    margin-top: auto;
+
+    p {
+      margin: 0;
+    }
+  }
+}
+
+// Responsive design (desktop-first - AC)
+@media (max-width: 1024px) {
+  .app-layout .main-content {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-layout {
+    .main-content {
+      padding: 1rem;
+    }
+
+    .app-footer {
+      padding: 1rem;
+      font-size: 0.8rem;
+    }
+  }
+}

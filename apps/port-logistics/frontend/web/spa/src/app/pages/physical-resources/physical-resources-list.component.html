@@ -1,0 +1,207 @@
+<!-- Physical Resources List -->
+<div class="physical-resources-list-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>Physical Resources</h1>
+    <button 
+      class="btn btn-primary" 
+      (click)="createNew()"
+      *ngIf="canManage()">
+      <i class="icon-plus"></i> Register New Resource
+    </button>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-row">
+      <!-- Search by Code -->
+      <div class="filter-group">
+        <label for="searchCode">Code</label>
+        <input 
+          id="searchCode"
+          type="text" 
+          class="form-control" 
+          placeholder="Search by code..."
+          [(ngModel)]="searchCode"
+          (ngModelChange)="onSearchChange()" />
+      </div>
+
+      <!-- Search by Description -->
+      <div class="filter-group">
+        <label for="searchDescription">Description</label>
+        <input 
+          id="searchDescription"
+          type="text" 
+          class="form-control" 
+          placeholder="Search by description..."
+          [(ngModel)]="searchDescription"
+          (ngModelChange)="onSearchChange()" />
+      </div>
+
+      <!-- Type Filter -->
+      <div class="filter-group">
+        <label for="filterType">Type</label>
+        <select 
+          id="filterType"
+          class="form-control" 
+          [(ngModel)]="selectedType"
+          (ngModelChange)="onFilterChange()">
+          <option value="">All Types</option>
+          <option *ngFor="let type of availableTypes" [value]="type">{{ type }}</option>
+        </select>
+      </div>
+
+      <!-- Status Filter -->
+      <div class="filter-group">
+        <label for="filterStatus">Status</label>
+        <select 
+          id="filterStatus"
+          class="form-control" 
+          [(ngModel)]="selectedStatus"
+          (ngModelChange)="onFilterChange()">
+          <option value="">All Statuses</option>
+          <option *ngFor="let status of availableStatuses" [value]="status">
+            {{ getStatusLabel(status) }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Clear Filters Button -->
+      <div class="filter-group filter-actions">
+        <button 
+          class="btn btn-secondary btn-sm" 
+          (click)="clearFilters()"
+          title="Clear all filters">
+          Clear Filters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading physical resources...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredResources.length === 0" class="empty-state">
+    <p *ngIf="!searchCode && !searchDescription && !selectedType && !selectedStatus">
+      No physical resources found. Register your first resource!
+    </p>
+    <p *ngIf="searchCode || searchDescription || selectedType || selectedStatus">
+      No resources match your search criteria. Try adjusting your filters.
+    </p>
+  </div>
+
+  <!-- Resources Table -->
+  <div *ngIf="!loading && filteredResources.length > 0" class="resources-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Description</th>
+          <th>Type</th>
+          <th>Capacity</th>
+          <th>Assigned Area</th>
+          <th>Operational Window</th>
+          <th>Status</th>
+          <th>Setup Time (min)</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let resource of filteredResources">
+          <!-- Code -->
+          <td class="code-cell">
+            <strong>{{ resource.code }}</strong>
+          </td>
+
+          <!-- Description -->
+          <td class="description-cell">
+            {{ resource.description }}
+          </td>
+
+          <!-- Type -->
+          <td class="type-cell">
+            <span class="type-badge">{{ resource.type }}</span>
+          </td>
+
+          <!-- Capacity -->
+          <td class="capacity-cell">
+            {{ resource.capacity }}
+          </td>
+
+          <!-- Assigned Area -->
+          <td class="area-cell">
+            <span *ngIf="resource.assignedArea">{{ resource.assignedArea }}</span>
+            <span *ngIf="!resource.assignedArea" class="text-muted">Unassigned</span>
+          </td>
+
+          <!-- Operational Window -->
+          <td class="window-cell">
+            <span *ngIf="resource.operationalWindow">{{ resource.operationalWindow }}</span>
+            <span *ngIf="!resource.operationalWindow" class="text-muted">-</span>
+          </td>
+
+          <!-- Status -->
+          <td>
+            <span [class]="'status-badge ' + getStatusClass(resource.status)">
+              {{ getStatusLabel(resource.status) }}
+            </span>
+          </td>
+
+          <!-- Setup Time -->
+          <td class="setup-cell">
+            <span *ngIf="resource.setupTimeMinutes">{{ resource.setupTimeMinutes }}</span>
+            <span *ngIf="!resource.setupTimeMinutes" class="text-muted">-</span>
+          </td>
+
+          <!-- Actions -->
+          <td class="actions-cell">
+            <!-- Edit -->
+            <button 
+              *ngIf="canManage()"
+              class="btn btn-sm btn-secondary" 
+              (click)="editResource(resource)"
+              title="Edit resource">
+              Edit
+            </button>
+
+            <!-- Deactivate -->
+            <button 
+              *ngIf="canManage() && resource.status !== 'Inactive'"
+              class="btn btn-sm btn-warning" 
+              (click)="deactivate(resource.code)"
+              title="Deactivate resource">
+              Deactivate
+            </button>
+
+            <!-- Reactivate -->
+            <button 
+              *ngIf="canManage() && resource.status === 'Inactive'"
+              class="btn btn-sm btn-success" 
+              (click)="reactivate(resource.code)"
+              title="Reactivate resource">
+              Reactivate
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Results Count -->
+  <div *ngIf="!loading && filteredResources.length > 0" class="results-count">
+    Showing {{ filteredResources.length }} of {{ resources.length }} resources
+  </div>
+</div>

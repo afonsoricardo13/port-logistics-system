@@ -1,0 +1,116 @@
+@startuml Vista de Processos Frontend – US 4.1.15 (Record Complementary Tasks - SPA)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as USER
+
+box "SPA (Angular)" #LightBlue
+    participant "VveComplementaryTasksComponent" as COMP
+    participant "ComplementaryTaskService" as CT_SVC
+    participant "ComplementaryTaskCategoryService" as CTC_SVC
+    participant "VesselVisitExecutionService" as VVE_SVC
+    participant "MatDialog" as DIALOG
+    participant "AuthService" as AUTH
+end box
+
+participant "<<external>>\nIAM" as IAM #F5F5DC
+
+USER -> COMP: 1: navigate to /vessel-visit-executions/{vveId}/tasks
+activate COMP
+
+COMP -> AUTH: 1.1: getToken()
+activate AUTH
+AUTH --> COMP: 1.1.1: token
+deactivate AUTH
+
+COMP -> VVE_SVC: 1.2: getById(vveId)
+activate VVE_SVC
+VVE_SVC --> COMP: 1.2.1: VVE details
+deactivate VVE_SVC
+
+COMP -> CT_SVC: 1.3: getByVveId(vveId)
+activate CT_SVC
+CT_SVC --> COMP: 1.3.1: complementary tasks for VVE
+deactivate CT_SVC
+
+COMP --> USER: 1.4: display tasks list with "Add Task" button
+deactivate COMP
+
+USER -> COMP: 2: click "Add Complementary Task"
+activate COMP
+
+COMP -> DIALOG: 2.1: open(CreateComplementaryTaskDialogComponent)
+activate DIALOG
+
+DIALOG -> CTC_SVC: 2.1.1: getAll()
+activate CTC_SVC
+CTC_SVC --> DIALOG: 2.1.2: available categories
+deactivate CTC_SVC
+
+DIALOG --> USER: 2.2: display create form with category dropdown
+deactivate DIALOG
+deactivate COMP
+
+USER -> DIALOG: 3: select category, fill details, click "Create"
+activate DIALOG
+
+DIALOG -> DIALOG: 3.1: validateForm()
+note right
+    Form fields:
+    - Category (dropdown, required)
+    - Description (text)
+    - Start Time (datetime)
+    - End Time (datetime, optional)
+    - Assigned Resources (multi-select)
+    - Notes
+end note
+
+DIALOG -> CT_SVC: 3.2: create(CreateComplementaryTaskDTO)
+activate CT_SVC
+CT_SVC --> DIALOG: 3.2.1: created task
+deactivate CT_SVC
+
+DIALOG --> COMP: 3.3: close(createdTask)
+deactivate DIALOG
+
+activate COMP
+COMP -> COMP: 3.4: addToTasksList(createdTask)
+COMP --> USER: 3.5: display updated list with new task
+deactivate COMP
+
+USER -> COMP: 4: click task row to update/complete
+activate COMP
+
+COMP -> DIALOG: 4.1: open(EditComplementaryTaskDialogComponent, {task})
+activate DIALOG
+DIALOG --> USER: 4.2: display edit form
+deactivate DIALOG
+deactivate COMP
+
+USER -> DIALOG: 5: set end time, click "Mark Complete"
+activate DIALOG
+
+DIALOG -> CT_SVC: 5.1: update(taskId, {endTime, status: Completed})
+activate CT_SVC
+CT_SVC --> DIALOG: 5.1.1: updated task
+deactivate CT_SVC
+
+DIALOG --> COMP: 5.2: close(updatedTask)
+deactivate DIALOG
+
+activate COMP
+COMP -> COMP: 5.3: updateTaskInList(updatedTask)
+COMP --> USER: 5.4: display task with completed status
+deactivate COMP
+
+@enduml

@@ -1,0 +1,28 @@
+@startuml SSD US 2.2.13 - Register Qualification
+skinparam shadowing true
+skinparam ArrowColor #000000
+skinparam sequence {
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+  ParticipantBorderColor #000000
+  ParticipantBackgroundColor #87CEEB
+  LifeLineBorderColor #000000
+  LifeLineBackgroundColor #87CEEB
+}
+
+actor "Logistics Operator" as Operator
+participant "«system (C4)»\nPort Operations System" as System
+
+activate Operator
+Operator -> System : 1: requests to register a Qualification
+activate System
+System --> Operator : 1.1: asks for code and name
+deactivate System
+
+Operator -> System : 2: provides code and name
+activate System
+System --> Operator : 2.1: saves qualification record and confirms
+deactivate System
+
+deactivate Operator
+@enduml

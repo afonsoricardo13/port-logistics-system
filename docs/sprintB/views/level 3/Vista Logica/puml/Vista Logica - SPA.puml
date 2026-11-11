@@ -1,0 +1,48 @@
+@startuml Logical View - Level 3 (SPA Web UI)
+top to bottom direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+' ===== estilo =====
+skinparam component { 
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ===== API externa =====
+() "UI API" as UI_API #87CEEB
+
+' ===== boundary do container SPA =====
+rectangle "«component»\n«container (C4)»\nSPA (Web UI)" as UI #87CEEB {
+  
+  component "«component»\nComponents" as UI_COMP
+  component "«component»\nServices"   as UI_SVC
+  component "«component»\nModels"     as UI_MODEL
+  component "«component»\nRouting"    as UI_ROUTE
+  
+  interface "HTTP Client API" as UI_I_HTTP
+  component "«component»\nHTTP Client" as UI_HTTP
+  
+  ' Wiring
+  UI_ROUTE --> UI_COMP
+  UI_COMP --> UI_SVC
+  UI_SVC --> UI_I_HTTP
+  UI_I_HTTP --> UI_HTTP
+  UI_SVC --> UI_MODEL
+}
+
+' ===== Entradas/saidas por API =====
+UI_API --> UI_ROUTE
+
+' ===== Conexões a APIs externas (backends) =====
+() "Port Logistics API" as PORT_API #87CEEB
+() "Scheduling API"    as SCHED_API #87CEEB
+
+UI_HTTP --> PORT_API
+UI_HTTP --> SCHED_API
+
+@enduml

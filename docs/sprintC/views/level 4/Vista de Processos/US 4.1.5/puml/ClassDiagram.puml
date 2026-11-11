@@ -1,0 +1,76 @@
+@startuml Class Diagram - US 4.1.5 - Edit Operation Plan
+skinparam shadowing true
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+title US 4.1.5 - Edit Operation Plan (Level 4 - Class Diagram)
+
+package "WebApi" #LightBlue {
+    class OperationPlansController {
+        - _operationPlanService: IOperationPlanService
+        + Update(id: Guid, request: UpdateOperationPlanRequest): ActionResult<OperationPlanDTO>
+    }
+    
+    class UpdateOperationPlanRequest {
+        + Operations: List<UpdateOperationDTO>
+    }
+    
+    class UpdateOperationDTO {
+        + Id: Guid
+        + StartTime: DateTime
+        + EndTime: DateTime
+        + AssignedResources: List<Guid>
+    }
+}
+
+package "Application" #LightGreen {
+    interface IOperationPlanService {
+        + UpdateAsync(id: Guid, updateDTO: UpdateOperationPlanRequest): Task<OperationPlanDTO>
+    }
+    
+    class OperationPlanService {
+        - _repository: IOperationPlanRepository
+        - _operationRepository: IPlannedOperationRepository
+        + UpdateAsync(id: Guid, updateDTO: UpdateOperationPlanRequest): Task<OperationPlanDTO>
+        - ValidateUpdates(plan: OperationPlan, updates: UpdateOperationPlanRequest): void
+    }
+}
+
+package "Domain" #LightYellow {
+    interface IOperationPlanRepository {
+        + GetByIdAsync(id: Guid): Task<OperationPlan?>
+        + UpdateAsync(plan: OperationPlan): Task<OperationPlan>
+    }
+    
+    interface IPlannedOperationRepository {
+        + UpdateAsync(operation: PlannedOperation): Task<PlannedOperation>
+    }
+    
+    class OperationPlan <<aggregate root>> {
+        + Id: Guid
+        + VvnId: Guid
+        + PlannedOperations: List<PlannedOperation>
+        + UpdatedAt: DateTime
+        + UpdateOperation(opId: Guid, start: DateTime, end: DateTime, resources: List<Guid>): void
+        + ValidateNoOverlaps(): bool
+    }
+    
+    class PlannedOperation <<entity>> {
+        + Id: Guid
+        + StartTime: DateTime
+        + EndTime: DateTime
+        + AssignedResources: List<Guid>
+        + Update(start: DateTime, end: DateTime, resources: List<Guid>): void
+    }
+}
+
+OperationPlansController --> IOperationPlanService
+OperationPlansController ..> UpdateOperationPlanRequest
+UpdateOperationPlanRequest *-- UpdateOperationDTO
+IOperationPlanService <|.. OperationPlanService
+OperationPlanService --> IOperationPlanRepository
+OperationPlanService --> IPlannedOperationRepository
+IOperationPlanRepository ..> OperationPlan
+OperationPlan *-- PlannedOperation
+
+@enduml

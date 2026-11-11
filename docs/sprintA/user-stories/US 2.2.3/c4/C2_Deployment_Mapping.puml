@@ -1,0 +1,24 @@
+@startuml C2 - Deployment Mapping
+left to right direction
+
+node "User's Browser\n(Chrome/Edge)" as web {
+  component "SPA (Docks UI)\nTypeScript/React" as spa_i
+}
+
+node "App Server\n(Windows/Linux VM or Container)" as app {
+  component "DDDNetCore API\nASP.NET Core 9" as api_i
+}
+
+node "Database Server\n(SQL Server/PostgreSQL)" as db {
+  database "App DB\n(EF Core)" as db_i
+}
+
+node "IAM Provider\n(Azure AD/Keycloak - External)" as iam {
+  component "OIDC/JWT Issuer\n(Managed)" as iam_i
+}
+
+spa_i --> api_i : HTTPS JSON\nJWT (Bearer)
+api_i --> db_i : EF Core / ADO.NET
+api_i --> iam_i : OIDC discovery / JWKS (TLS)
+
+@enduml

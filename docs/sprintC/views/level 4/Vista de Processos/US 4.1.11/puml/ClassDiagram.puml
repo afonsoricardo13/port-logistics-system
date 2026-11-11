@@ -1,0 +1,85 @@
+@startuml Class Diagram - US 4.1.11 - Close VVE
+skinparam shadowing true
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+title US 4.1.11 - Close VVE (Level 4 - Class Diagram)
+
+package "WebApi" #LightBlue {
+    class VesselVisitExecutionsController {
+        - _vveService: IVesselVisitExecutionService
+        + Close(id: Guid): ActionResult<VesselVisitExecutionDTO>
+    }
+}
+
+package "Application" #LightGreen {
+    interface IVesselVisitExecutionService {
+        + CloseAsync(id: Guid): Task<VesselVisitExecutionDTO>
+    }
+    
+    class VesselVisitExecutionService {
+        - _repository: IVesselVisitExecutionRepository
+        - _executedOpRepository: IExecutedOperationRepository
+        + CloseAsync(id: Guid): Task<VesselVisitExecutionDTO>
+        - ValidateCloseConditions(vve: VesselVisitExecution): List<string>
+    }
+    
+    class VesselVisitExecutionDTO {
+        + Id: Guid
+        + VvnId: Guid
+        + Status: string
+        + ArrivalTime: DateTime
+        + ActualDeparture: DateTime?
+        + ClosedAt: DateTime?
+        + TotalTurnaroundTime: double?
+    }
+}
+
+package "Domain" #LightYellow {
+    interface IVesselVisitExecutionRepository {
+        + GetByIdWithOperationsAsync(id: Guid): Task<VesselVisitExecution?>
+        + UpdateAsync(vve: VesselVisitExecution): Task<VesselVisitExecution>
+    }
+    
+    class VesselVisitExecution <<aggregate root>> {
+        + Id: Guid
+        + VvnId: Guid
+        + Status: VveStatus
+        + ArrivalTime: DateTime
+        + ActualDeparture: DateTime?
+        + ClosedAt: DateTime?
+        + ExecutedOperations: List<ExecutedOperation>
+        + Close(): void
+        + CanClose(): bool
+        + AllOperationsCompleted(): bool
+    }
+    
+    class ExecutedOperation <<entity>> {
+        + Id: Guid
+        + Status: OperationStatus
+        + IsCompleted(): bool
+    }
+    
+    enum VveStatus {
+        InProgress
+        Completed
+    }
+    
+    enum OperationStatus {
+        NotStarted
+        Started
+        Completed
+        Delayed
+    }
+}
+
+VesselVisitExecutionsController --> IVesselVisitExecutionService
+IVesselVisitExecutionService <|.. VesselVisitExecutionService
+VesselVisitExecutionService --> IVesselVisitExecutionRepository
+VesselVisitExecutionService ..> VesselVisitExecutionDTO
+IVesselVisitExecutionRepository ..> VesselVisitExecution
+VesselVisitExecution *-- ExecutedOperation
+VesselVisitExecution --> VveStatus
+ExecutedOperation --> OperationStatus
+
+@enduml

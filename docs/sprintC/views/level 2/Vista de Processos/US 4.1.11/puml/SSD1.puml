@@ -1,0 +1,49 @@
+@startuml Vista de Processos – Level 2 (US 4.1.11 – Complete VVE)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+participant "<<container (C4)>>\nSPA (Web UI)" as UI #87CEEB
+participant "<<container (C4)>>\nOEM (Backend)" as OEM #87CEEB
+participant "<<external>>\nIAM" as IAM #F5F5DC
+
+-> UI: 1: request to complete VVE
+activate UI
+UI -> IAM: 1.1: validate token
+activate IAM
+IAM --> UI: 1.1.1: token valid
+deactivate IAM
+
+UI -> OEM: 1.2: GET /api/vesselvisitexecutions/{id}
+activate OEM
+OEM --> UI: 1.2.1: VVE details with executed operations
+deactivate OEM
+
+UI --> : 1.3: display completion form (unberth/departure times)
+deactivate UI
+
+-> UI: 2: provide unberth and departure times
+activate UI
+UI -> OEM: 2.1: PUT /api/vesselvisitexecutions/{id}/complete
+activate OEM
+
+alt All operations completed
+    OEM --> UI: 2.1.1: VVE completed successfully
+else Pending operations exist
+    OEM --> UI: 2.1.2: error - complete all operations first
+end
+deactivate OEM
+
+UI --> : 2.2: display result
+deactivate UI
+
+@enduml

@@ -1,0 +1,309 @@
+@startuml Class Diagram - Level 4 (US 2.2.7 - VVN Review)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+' ===== Presentation Layer (Controllers) =====
+package "Presentation Layer" #87CEEB {
+    class VesselVisitNotificationsController <<Controller>> {
+        - _service: VesselVisitNotificationService
+        - _representativeRepo: IRepresentativeRepository
+        - _logger: ILogger
+        - _errors: List
+        + GetById(id: long): Task
+        + GetPending(filters): Task
+        + UpdateDecision(id: long, officerId: string, dto: VvnDecisionDTO): Task
+    }
+
+    class VvnDecisionDTO <<Request DTO>> {
+        + Status: string
+        + AssignedDockCode: string
+        + Reason: string
+    }
+}
+
+' ===== Application Layer (Services & DTOs) =====
+package "Application Layer" #87CEEB {
+    class VesselVisitNotificationService <<Service>> {
+        - _repo: IVesselVisitNotificationRepository
+        - _docks: IDockRepository
+        - _vessels: IVesselRepository
+        - _representativeRepo: IRepresentativeRepository
+        - _organizationRepo: IOrganizationRepository
+        + GetById(id: long): Task
+        + GetPendingForReview(): Task
+        + Approve(id: long, officerId: string, dto: DecisionDTO, errors: List): Task
+        + Reject(id: long, officerId: string, reason: string, errors: List): Task
+        - PopulateOrganizationAsync(dto: VesselVisitNotificationDTO): Task
+        - ValidateDockExists(dockCode: string): Task
+    }
+
+    interface IVesselVisitNotificationService {
+        + GetPendingForReview(): Task
+        + Approve(id: long, officerId: string, dto: DecisionDTO, errors: List): Task
+        + Reject(id: long, officerId: string, reason: string, errors: List): Task
+    }
+
+    class VesselVisitNotificationDTO <<DTO>> {
+        + Id: long
+        + VesselImoNumber: string
+        + EstimatedTimeOfArrival: DateTime
+        + EstimatedTimeOfDeparture: DateTime
+        + Status: string
+        + AssignedDockCode: string
+        + SubmittedByRepresentativeId: long
+        + OrganizationIdentifier: string
+        + RejectionReason: string
+        + ContainerIds: List
+        + Crew: List
+        + DecisionLogs: List
+        + ToDTO(vvn: VesselVisitNotification): VesselVisitNotificationDTO
+        + ToDomain(dto: VesselVisitNotificationDTO): VesselVisitNotification
+    }
+
+    class DecisionLogDTO <<DTO>> {
+        + Outcome: string
+        + DecidedByOfficerId: string
+        + Timestamp: DateTime
+        + Reason: string
+    }
+}
+
+' ===== Domain Layer (Aggregates, Entities, Value Objects) =====
+package "Domain Layer" #87CEEB {
+    class VesselVisitNotification <<Aggregate Root>> {
+        + Id: long
+        - _vesselImoNumber: string
+        - _containerIds: List
+        - _crew: List
+        - _decisionLogs: List
+        + VesselImoNumber: string
+        + EstimatedTimeOfArrival: DateTime
+        + EstimatedTimeOfDeparture: DateTime
+        + Status: VvnStatus
+        + AssignedDockCode: string
+        + SubmittedByRepresentativeId: long
+        + ContainerIds: IReadOnlyCollection
+        + Crew: IReadOnlyCollection
+        + DecisionLogs: IReadOnlyCollection
+        + TotalUnloadingContainers: int
+        + LoadingContainerCount: int
+        + Approve(officerId: string, dockCode: string, errors: List): void
+        + Reject(officerId: string, reason: string, errors: List): void
+        + Submit(errors: List): void
+        + UpdateDetails(eta, etd, errors): void
+        - ValidateForApproval(officerId, dockCode, errors): void
+        - ValidateForRejection(officerId, reason, errors): void
+        - AddDecisionLog(log: DecisionLog): void
+    }
+
+    class DecisionLog <<Value Object>> {
+        + Id: long
+        + Outcome: DecisionOutcome
+        + DecidedByOfficerId: string
+        + Timestamp: DateTime
+        + Reason: string
+        + DecisionLog(officerId: string, outcome: DecisionOutcome, reason: string)
+    }
+
+    enum VvnStatus <<Enumeration>> {
+        InProgress
+        Submitted
+        Approved
+        Rejected
+    }
+
+    enum DecisionOutcome <<Enumeration>> {
+        Approved
+        Rejected
+    }
+
+    class CrewMember <<Value Object>> {
+        + Id: long
+        + Name: string
+        + CitizenId: string
+        + Nationality: string
+        + CrewMember(name, citizenId, nationality)
+    }
+
+    interface IVesselVisitNotificationRepository <<Repository Interface>> {
+        + GetByIdAsync(id: long): Task
+        + GetByStatusAsync(status: VvnStatus): Task
+        + Add(vvn: VesselVisitNotification): Task
+        + Update(vvn: VesselVisitNotification, errors): Task
+        + GetFilteredAsync(filters): Task
+        + GetByRepresentativeIdAsync(repId: long): Task
+        + GetByOrganizationIdAsync(orgId: long): Task
+    }
+
+    interface IDockRepository <<Repository Interface>> {
+        + GetByCodeAsync(code: string): Task
+        + GetAllAsync(): Task
+        + ExistsAsync(code: string): Task
+    }
+}
+
+' ===== Infrastructure Layer (Repositories & Persistence) =====
+package "Infrastructure Layer" #87CEEB {
+    class VesselVisitNotificationRepository <<Repository>> {
+        - _context: AbsanteeContext
+        - _mapper: VesselVisitNotificationMapper
+        + GetByIdAsync(id: long): Task
+        + GetByStatusAsync(status: VvnStatus): Task
+        + Add(vvn: VesselVisitNotification): Task
+        + Update(vvn: VesselVisitNotification, errors): Task
+        + GetFilteredAsync(filters): Task
+        + GetByRepresentativeIdAsync(repId: long): Task
+        + UpdateAdditionalFields(vvnId, fields): Task
+        + GetAdditionalFieldsAsync(id: long): Task
+    }
+
+    class VesselVisitNotificationDataModel <<Entity>> {
+        + Id: long
+        + VesselImoNumber: string
+        + EstimatedTimeOfArrival: DateTime
+        + EstimatedTimeOfDeparture: DateTime
+        + Status: int
+        + AssignedDockCode: string
+        + SubmittedByRepresentativeId: long
+        + DecisionLogs: string
+        + TotalUnloadingContainers: int
+        + LoadingContainerCount: int
+        + CargoManifest: List
+        + Crew: List
+    }
+
+    class ContainerItemDataModel <<Entity>> {
+        + Id: long
+        + ContainerId: string
+        + VesselVisitNotificationId: long
+    }
+
+    class CrewMemberDataModel <<Entity>> {
+        + Id: long
+        + Name: string
+        + CitizenId: string
+        + Nationality: string
+        + VesselVisitNotificationId: long
+    }
+
+    class VesselVisitNotificationMapper <<Mapper>> {
+        + ToDomain(dm: VesselVisitNotificationDataModel): VesselVisitNotification
+        + ToDataModel(vvn: VesselVisitNotification): VesselVisitNotificationDataModel
+        + UpdateDataModel(vvn: VesselVisitNotification, dm: VesselVisitNotificationDataModel): void
+        - DeserializeDecisionLogs(json: string): List
+        - SerializeDecisionLogs(logs: List): string
+    }
+
+    class DockRepository <<Repository>> {
+        - _context: AbsanteeContext
+        + GetByCodeAsync(code: string): Task
+        + ExistsAsync(code: string): Task
+    }
+
+    class AbsanteeContext <<Context>> {
+        + VesselVisitNotifications: DbSet
+        + Docks: DbSet
+        + Representatives: DbSet
+        + Organizations: DbSet
+        + SaveChangesAsync(): Task
+        + OnModelCreating(modelBuilder): void
+    }
+}
+
+' ===== Relationships =====
+VesselVisitNotificationsController --> IVesselVisitNotificationService : uses
+VesselVisitNotificationsController ..> VesselVisitNotificationDTO : receives/returns
+VesselVisitNotificationsController ..> VvnDecisionDTO : receives
+
+VesselVisitNotificationService ..|> IVesselVisitNotificationService : implements
+VesselVisitNotificationService --> IVesselVisitNotificationRepository : uses
+VesselVisitNotificationService --> IDockRepository : validates dock
+VesselVisitNotificationService ..> VesselVisitNotification : manipulates
+VesselVisitNotificationService --> VesselVisitNotificationDTO : creates/consumes
+VesselVisitNotificationService ..> DecisionLogDTO : creates
+
+VesselVisitNotificationDTO ..> VesselVisitNotification : maps to/from
+DecisionLogDTO ..> DecisionLog : maps to/from
+
+IVesselVisitNotificationRepository <|.. VesselVisitNotificationRepository : implements
+IDockRepository <|.. DockRepository : implements
+
+VesselVisitNotificationRepository --> AbsanteeContext : uses
+VesselVisitNotificationRepository --> VesselVisitNotificationMapper : uses
+VesselVisitNotificationRepository ..> VesselVisitNotification : returns
+VesselVisitNotificationRepository ..> VesselVisitNotificationDataModel : queries/persists
+DockRepository --> AbsanteeContext : uses
+
+VesselVisitNotificationMapper ..> VesselVisitNotification : creates
+VesselVisitNotificationMapper ..> VesselVisitNotificationDataModel : creates
+VesselVisitNotificationMapper ..> DecisionLog : deserializes
+
+AbsanteeContext *-- VesselVisitNotificationDataModel : manages
+AbsanteeContext *-- "DockDataModel" : manages
+AbsanteeContext *-- "RepresentativeDataModel" : manages
+AbsanteeContext *-- "OrganizationDataModel" : manages
+
+VesselVisitNotificationDataModel *-- ContainerItemDataModel : contains
+VesselVisitNotificationDataModel *-- CrewMemberDataModel : contains
+
+VesselVisitNotification *-- DecisionLog : contains
+VesselVisitNotification *-- CrewMember : contains
+VesselVisitNotification --> VvnStatus : has state
+DecisionLog --> DecisionOutcome : has
+
+note right of VesselVisitNotification
+  **Aggregate Root**
+  Enforces business rules:
+  - Status must be Submitted to approve/reject
+  - AssignedDockCode required for approval
+  - Rejection reason required for rejection
+  - Decision creates immutable DecisionLog
+  
+  **US 2.2.7 - Approve:**
+  1. Validate status = Submitted
+  2. Validate dock exists
+  3. Set AssignedDockCode
+  4. Add DecisionLog (Approved)
+  5. Change status to Approved
+  
+  **US 2.2.7 - Reject:**
+  1. Validate status = Submitted
+  2. Validate rejection reason
+  3. Add DecisionLog (Rejected + reason)
+  4. Change status to Rejected
+end note
+
+note right of VesselVisitNotificationService
+  **Application Service**
+  Orchestrates:
+  - Approval/rejection workflow
+  - Coordinates multiple repositories
+  - Validates business rules
+  - Manages error collection
+  - Enriches DTOs with related data
+  - Enforces authorization
+end note
+
+note right of DecisionLog
+  **Audit Trail Pattern**
+  - Immutable record of each decision
+  - Tracks officer, timestamp, outcome
+  - Preserves rejection reasons
+  - Enables decision history queries
+  - Serialized as JSON in DataModel
+end note
+
+note right of VesselVisitNotificationRepository
+  **Repository**
+  Responsibilities:
+  - EF Core for ORM
+  - JSON serialization for DecisionLogs
+  - Handles related entities (Crew, Cargo)
+  - Filtering & querying
+  - Transaction management
+end note
+
+@enduml
+
+@enduml

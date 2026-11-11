@@ -1,0 +1,28 @@
+@startuml SSD US 2.2.8 - Create Vessel Visit Notification
+skinparam shadowing true
+skinparam ArrowColor #000000
+skinparam sequence {
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+  ParticipantBorderColor #000000
+  ParticipantBackgroundColor #87CEEB
+  LifeLineBorderColor #000000
+  LifeLineBackgroundColor #87CEEB
+}
+
+actor "Shipping Agent Representative" as Agent
+participant "«system (C4)»\nPort Operations System" as System
+
+activate Agent
+Agent -> System : 1: asks to create a Vessel Visit Notification (VVN)
+activate System
+System --> Agent : 1.1: ask for required data (Vessel, ETA/ETD, cargo manifest, crew info when needed)
+deactivate System
+
+Agent -> System : 2: provides VVN data (may be incomplete)
+activate System
+System --> Agent : 2.1: saves VVN with "in progress" status and displays confirmation
+deactivate System
+
+deactivate Agent
+@enduml

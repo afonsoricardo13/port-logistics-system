@@ -1,0 +1,59 @@
+@startuml US2.2.4- Domain Model Extract
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam monochrome true
+
+    package "Storage Area Management" {
+    enum StorageArea <<Entity root>>
+    class StorageAreaID <<ValueObject>> {
+        +ID
+    }
+    class StorageAreaName <<ValueObject>>
+    class StorageAreaLocation <<ValueObject>>
+    class StorageAreaCapacity <<ValueObject>>
+    class StorageAreaType <<ValueObject>>
+    class StorageAreaCurrentOccupancy <<ValueObject>>
+
+    StorageArea "1"--"1" StorageAreaID
+    StorageArea "1"--"1" StorageAreaName
+    StorageArea "1"--"1" StorageAreaLocation
+    StorageArea "1"--"1" StorageAreaCapacity
+    StorageArea "1"--"1" StorageAreaType
+    StorageArea "1"--"1" StorageAreaCurrentOccupancy
+}
+
+package "Storage Area and Dock Management" {
+    enum StorageAreaDock <<Entity root>>
+    class Distance <<ValueObject>>
+
+    StorageAreaDock "1"--"1" Distance
+}
+
+
+package "Dock Management" {
+    enum Dock <<Entity root>>
+    class DockID <<ValueObject>> {
+        +ID
+    }
+    class DockName <<ValueObject>>
+    class DockLocation <<ValueObject>>
+    class DockMaxNumberSTSCranes <<ValueObject>>
+    class DockLength <<ValueObject>>
+    class DockDepth <<ValueObject>>
+    class DockMaxDraft <<ValueObject>>
+
+    Dock "1"--"1" DockID
+    Dock "1"--"1" DockName
+    Dock "1"--"1" DockLocation
+    Dock "1"--"1" DockMaxNumberSTSCranes
+    Dock "1"--"1" DockLength
+    Dock "1"--"1" DockDepth
+    Dock "1"--"1" DockMaxDraft
+
+}
+
+StorageArea "1" -- "1..*" StorageAreaDock : serves
+StorageAreaDock "1..*" -- "1" Dock : serves
+
+
+@enduml

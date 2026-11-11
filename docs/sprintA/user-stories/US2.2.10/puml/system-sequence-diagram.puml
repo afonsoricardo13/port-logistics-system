@@ -1,0 +1,37 @@
+@startuml US2.2.10 - System Sequence Diagram
+actor "Shipping Agent Representative" as Rep
+participant "Port System" as System
+
+' View own notifications
+activate Rep
+Rep -> System : Request to view own vessel visit notifications
+activate System
+System --> Rep : Display list of own notifications with status information
+deactivate System
+
+' View organization notifications
+Rep -> System : Request to view all organization notifications
+activate System
+System --> Rep : Display list of organization notifications with status information
+deactivate System
+
+' Search and filter functionality
+Rep -> System : Apply search/filter criteria (vessel, status, representative, time)
+activate System
+System --> Rep : Display filtered notification list
+deactivate System
+
+' View detailed status information
+Rep -> System : Select specific notification to view details
+activate System
+alt Approved notification
+    System --> Rep : Display notification details with dock information
+else Rejected notification
+    System --> Rep : Display notification details with rejection reason
+else Other status
+    System --> Rep : Display standard notification details
+end
+deactivate System
+deactivate Rep
+
+@enduml

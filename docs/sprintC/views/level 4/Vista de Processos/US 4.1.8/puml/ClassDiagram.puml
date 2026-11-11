@@ -1,0 +1,78 @@
+@startuml Class Diagram - US 4.1.8 - Update VVE Berthing Times
+skinparam shadowing true
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+title US 4.1.8 - Update VVE Berthing Times (Level 4 - Class Diagram)
+
+package "WebApi" #LightBlue {
+    class VesselVisitExecutionsController {
+        - _vveService: IVesselVisitExecutionService
+        + UpdateBerthing(id: Guid, request: UpdateVveBerthingDTO): ActionResult<VesselVisitExecutionDTO>
+    }
+    
+    class UpdateVveBerthingDTO {
+        + BerthingStart: DateTime?
+        + BerthingEnd: DateTime?
+        + ActualDeparture: DateTime?
+    }
+}
+
+package "Application" #LightGreen {
+    interface IVesselVisitExecutionService {
+        + UpdateBerthingAsync(id: Guid, berthingDTO: UpdateVveBerthingDTO): Task<VesselVisitExecutionDTO>
+    }
+    
+    class VesselVisitExecutionService {
+        - _repository: IVesselVisitExecutionRepository
+        + UpdateBerthingAsync(id: Guid, berthingDTO: UpdateVveBerthingDTO): Task<VesselVisitExecutionDTO>
+        - ValidateBerthingTimes(vve: VesselVisitExecution, dto: UpdateVveBerthingDTO): void
+    }
+    
+    class VesselVisitExecutionDTO {
+        + Id: Guid
+        + VvnId: Guid
+        + Status: string
+        + ArrivalTime: DateTime
+        + BerthingStart: DateTime?
+        + BerthingEnd: DateTime?
+        + ActualDeparture: DateTime?
+        + BerthOccupancyTime: TimeSpan?
+        + WaitingTimeForBerthing: TimeSpan?
+    }
+}
+
+package "Domain" #LightYellow {
+    interface IVesselVisitExecutionRepository {
+        + GetByIdAsync(id: Guid): Task<VesselVisitExecution?>
+        + UpdateAsync(vve: VesselVisitExecution): Task<VesselVisitExecution>
+    }
+    
+    class VesselVisitExecution <<aggregate root>> {
+        + Id: Guid
+        + VvnId: Guid
+        + Status: VveStatus
+        + ArrivalTime: DateTime
+        + BerthingStart: DateTime?
+        + BerthingEnd: DateTime?
+        + ActualDeparture: DateTime?
+        + UpdateBerthing(start: DateTime?, end: DateTime?, departure: DateTime?): void
+        + GetBerthOccupancyTime(): TimeSpan?
+        + GetWaitingTimeForBerthing(): TimeSpan?
+    }
+    
+    enum VveStatus {
+        InProgress
+        Completed
+    }
+}
+
+VesselVisitExecutionsController --> IVesselVisitExecutionService
+VesselVisitExecutionsController ..> UpdateVveBerthingDTO
+IVesselVisitExecutionService <|.. VesselVisitExecutionService
+VesselVisitExecutionService --> IVesselVisitExecutionRepository
+VesselVisitExecutionService ..> VesselVisitExecutionDTO
+IVesselVisitExecutionRepository ..> VesselVisitExecution
+VesselVisitExecution --> VveStatus
+
+@enduml

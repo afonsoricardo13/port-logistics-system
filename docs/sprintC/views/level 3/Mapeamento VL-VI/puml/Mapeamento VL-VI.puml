@@ -1,0 +1,47 @@
+@startuml Mapeamento VL-VI – Nível 3 (Sprint C)
+top to bottom direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+skinparam rectangle {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam component { 
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' === Logical View ===
+rectangle "Logical View" as LV {
+  component "SPA Components" as LV_SPA
+  component "Port Logistics Controllers" as LV_PL_CTRL
+  component "Port Logistics Services" as LV_PL_SVC
+  component "OEM Controllers" as LV_OEM_CTRL
+  component "OEM Services" as LV_OEM_SVC
+  component "Domain Models" as LV_DOMAIN
+}
+
+' === Implementation View ===
+rectangle "Implementation View" as IV {
+  component "apps/port-logistics/frontend/\nweb/spa/src/app/" as IV_SPA
+  component "apps/port-logistics/backend/\nWebApi/Controllers/" as IV_PL_CTRL
+  component "apps/port-logistics/backend/\nApplication/Services/" as IV_PL_SVC
+  component "apps/operations-execution/backend/\nWebApi/Controllers/" as IV_OEM_CTRL
+  component "apps/operations-execution/backend/\nApplication/Services/" as IV_OEM_SVC
+  component "apps/*/backend/\nDomain/Model/" as IV_DOMAIN
+}
+
+LV_SPA .down.> IV_SPA : <<manifest>>
+LV_PL_CTRL .down.> IV_PL_CTRL : <<manifest>>
+LV_PL_SVC .down.> IV_PL_SVC : <<manifest>>
+LV_OEM_CTRL .down.> IV_OEM_CTRL : <<manifest>>
+LV_OEM_SVC .down.> IV_OEM_SVC : <<manifest>>
+LV_DOMAIN .down.> IV_DOMAIN : <<manifest>>
+
+@enduml

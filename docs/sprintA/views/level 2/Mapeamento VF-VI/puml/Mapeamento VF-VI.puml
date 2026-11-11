@@ -1,0 +1,70 @@
+@startuml Mapping IV ↔ PV – Level 2 (Port Operations System)
+left to right direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+skinparam rectangle {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam node {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam component {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ========== LEFT: Implementation View (Level 2) ==========
+rectangle "Implementation View (Level 2)" as IMP {
+
+  component "UI"                    as UI_I
+  component "Planning & Scheduling" as PLAN_I
+  component "Docks & Resources"     as RES_I
+  component "Visits & Manifests"    as VIS_I
+
+  UI_I  -[hidden]-> PLAN_I
+  PLAN_I-[hidden]-> RES_I
+  RES_I -[hidden]-> VIS_I
+}
+
+' ========== RIGHT: Physical View (Level 2) ==========
+rectangle "Physical View (Level 2)" as PHY {
+
+  node "localhost" as LOCAL {
+    component "«component»\nBrowser" as BROWSER
+    component "«component»\nUI (loaded in browser)" as UI_CLIENT
+  }
+
+  node "server1" as S1 {
+    component "«component»\nPlanning & Scheduling" as PLAN
+    component "«component»\nDocks & Resources"     as RES
+    component "«component»\nVisits & Manifests"    as VIS
+  }
+
+  node "server2" as S2 {
+    component "«component»\nHTTP Server" as HTTPD
+    rectangle "\n UI (static artifact)" as UI_STATIC #87CEEB
+  }
+
+  LOCAL -[hidden]-> S1
+  LOCAL -[hidden]down-> S2
+}
+
+' ========== MAPPINGS ==========
+UI_I   ..> BROWSER   : runs in browser
+UI_I   ..> UI_STATIC : served by
+UI_I   ..> HTTPD     : hosted by
+
+PLAN_I ..> PLAN      : deploy
+RES_I  ..> RES       : deploy
+VIS_I  ..> VIS       : deploy
+
+@enduml

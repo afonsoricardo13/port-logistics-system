@@ -1,0 +1,34 @@
+@startuml Vista de Processos – Level 2 (US 2.2.11 – Reactivate Operating Staff)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as LO
+participant "<<container (C4)>>\nSPA (Web UI)" as UI #87CEEB
+participant "<<container (C4)>>\nPort Logistics (Backend)" as RES #87CEEB
+
+activate LO
+LO -> UI: 1: reactivate staff member
+activate UI
+UI --> LO: 1.1: request confirmation
+deactivate UI
+LO -> UI: 2: confirm reactivation
+activate UI
+UI --> RES: 2.1: request to reactivate staff member
+activate RES
+RES -> UI: 2.2: staff member reactivated (data preserved)
+deactivate RES
+UI --> LO: 2.3: staff member reactivated
+deactivate UI
+deactivate LO
+
+@enduml

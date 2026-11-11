@@ -1,0 +1,34 @@
+@startuml Vista de Processos – Level 2 (US 2.2.11 – Update Operating Staff)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as LO
+participant "«container (C4)»\nSPA (Web UI)" as UI #87CEEB
+participant "«container (C4)»\nPort Logistics (Backend)" as RES #87CEEB
+
+activate LO
+LO -> UI: 1: update staff member
+activate UI
+UI --> LO: 1.1: show current staff member data
+deactivate UI
+LO -> UI: 2: staff member data update
+activate UI
+UI --> RES: 2.1: request to update staff member
+activate RES
+RES -> UI: 2.2: staff member updated
+deactivate RES
+UI --> LO: 2.3: staff member updated
+deactivate UI
+deactivate LO
+
+@enduml

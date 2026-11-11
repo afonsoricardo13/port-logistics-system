@@ -1,0 +1,193 @@
+@startuml Vista de Processos - Level 4 (US 2.2.3 - Create Dock)
+
+participant ":DockController" as Controller
+participant ":DockService" as Service
+participant ":IVesselTypeRepository" as VTRepo
+participant ":DockFactory" as Factory
+participant ":Dock" as Entity
+participant ":DockCode" as Code
+participant ":DockName" as Name
+participant ":Location" as Location
+participant ":Length" as Length
+participant ":Width" as Width
+participant ":Draft" as Draft
+participant ":Capacity" as Capacity
+participant ":IDockRepository" as Repository
+participant ":ApplicationDbContext" as DbContext
+participant ":DockMapper" as Mapper
+
+-> Controller: POST /api/dock\n(CreateDockDto)
+activate Controller
+
+Controller -> Controller: ValidateModelState()
+
+Controller -> Service: CreateDockAsync(dto)
+activate Service
+
+Service -> Service: ValidateVesselTypesExist(dto.CompatibleVesselTypeIds)
+
+loop for each vesselTypeId
+    Service -> VTRepo: GetByIdAsync(vesselTypeId)
+    activate VTRepo
+    VTRepo -> DbContext: VesselTypes.FindAsync(id)
+    activate DbContext
+    DbContext --> VTRepo: vesselType
+    deactivate DbContext
+    VTRepo --> Service: vesselType
+    deactivate VTRepo
+    
+    alt Vessel Type Not Found
+        Service --> Controller: throw NotFoundException("Vessel Type not found")
+        Controller --> : 404 NotFound
+    end
+end
+
+Service -> Repository: GetByCodeAsync(dto.Code)
+activate Repository
+Repository -> DbContext: Docks.FirstOrDefaultAsync(x => x.Code == code)
+activate DbContext
+DbContext --> Repository: null
+deactivate DbContext
+Repository --> Service: null
+deactivate Repository
+
+alt Dock Already Exists
+    Service --> Controller: throw BusinessRuleException("Code already exists")
+    Controller --> : 409 Conflict
+end
+
+Service -> Factory: CreateDock(code, name, location, ...)
+activate Factory
+
+Factory -> Code: new DockCode(dto.Code)
+activate Code
+Code -> Code: Validate(value)
+note right
+    Rules:
+    - Not null/empty
+    - Max 20 chars
+    - Alphanumeric + hyphen
+end note
+Code --> Factory: dockCode
+deactivate Code
+
+Factory -> Name: new DockName(dto.Name)
+activate Name
+Name -> Name: Validate(value)
+note right
+    Rules:
+    - Not null/empty
+    - Max 100 chars
+end note
+Name --> Factory: dockName
+deactivate Name
+
+Factory -> Location: new Location(dto.Location)
+activate Location
+Location -> Location: Validate(value)
+note right
+    Rules:
+    - Not null/empty
+    - Max 200 chars
+end note
+Location --> Factory: location
+deactivate Location
+
+Factory -> Length: new Length(dto.MaxLength)
+activate Length
+Length -> Length: Validate(value)
+Length --> Factory: maxLength
+deactivate Length
+
+Factory -> Width: new Width(dto.MaxWidth)
+activate Width
+Width -> Width: Validate(value)
+Width --> Factory: maxWidth
+deactivate Width
+
+Factory -> Draft: new Draft(dto.MaxDraft)
+activate Draft
+Draft -> Draft: Validate(value)
+Draft --> Factory: maxDraft
+deactivate Draft
+
+Factory -> Capacity: new Capacity(dto.Capacity)
+activate Capacity
+Capacity -> Capacity: Validate(value)
+note right
+    Rules:
+    - Positive value
+    - Max 100 vessels
+end note
+Capacity --> Factory: capacity
+deactivate Capacity
+
+Factory -> Entity: new Dock(code, name, location, ...)
+activate Entity
+Entity -> Entity: id = new DockId(Guid.NewGuid())
+Entity -> Entity: isActive = true
+Entity -> Entity: createdAt = DateTime.UtcNow
+Entity -> Entity: compatibleVesselTypes = new List<VesselTypeId>()
+Entity --> Factory: dock
+deactivate Entity
+
+Factory --> Service: dock
+deactivate Factory
+
+loop for each vesselTypeId in dto.CompatibleVesselTypeIds
+    Service -> Entity: AddCompatibleVesselType(vesselTypeId)
+    activate Entity
+    Entity -> Entity: compatibleVesselTypes.Add(vesselTypeId)
+    Entity --> Service: void
+    deactivate Entity
+end
+
+Service -> Repository: AddAsync(dock)
+activate Repository
+Repository -> DbContext: Docks.Add(dock)
+activate DbContext
+DbContext --> Repository: EntityEntry<Dock>
+deactivate DbContext
+
+Repository -> DbContext: SaveChangesAsync()
+activate DbContext
+DbContext -> DbContext: GenerateSQL()
+DbContext -> DbContext: ExecuteInsert()
+DbContext --> Repository: 1
+deactivate DbContext
+Repository --> Service: dock
+deactivate Repository
+
+Service -> Mapper: ToDto(dock)
+activate Mapper
+Mapper -> Entity: GetId()
+activate Entity
+Entity --> Mapper: id
+deactivate Entity
+Mapper -> Entity: GetCode()
+activate Entity
+Entity --> Mapper: code
+deactivate Entity
+Mapper -> Entity: GetCompatibleVesselTypes()
+activate Entity
+Entity --> Mapper: vesselTypeIds
+deactivate Entity
+
+loop for each vesselTypeId
+    Mapper -> VTRepo: GetByIdAsync(vesselTypeId)
+    activate VTRepo
+    VTRepo --> Mapper: vesselType
+    deactivate VTRepo
+end
+
+Mapper -> Mapper: Create DockDto with VesselTypeDtos
+Mapper --> Service: dockDto
+deactivate Mapper
+
+Service --> Controller: dockDto
+deactivate Service
+
+Controller --> : 201 Created(dockDto)
+deactivate Controller
+
+@enduml

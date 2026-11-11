@@ -1,0 +1,166 @@
+<!-- Docks List -->
+<div class="docks-list-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>Docks Management</h1>
+    <button 
+      class="btn btn-primary" 
+      (click)="createNew()"
+      *ngIf="canManage()">
+      <i class="icon-plus"></i> Register New Dock
+    </button>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-row">
+      <!-- Search by Name/Code -->
+      <div class="filter-group">
+        <label for="search">Search</label>
+        <input 
+          id="search"
+          type="text" 
+          class="form-control" 
+          placeholder="Search by name or code..."
+          [(ngModel)]="searchText"
+          (ngModelChange)="onSearchChange()" />
+      </div>
+
+      <!-- Location Filter -->
+      <div class="filter-group">
+        <label for="location">Location</label>
+        <input 
+          id="location"
+          type="text" 
+          class="form-control" 
+          placeholder="Filter by location..."
+          [(ngModel)]="selectedLocation"
+          (ngModelChange)="onFilterChange()" />
+      </div>
+
+      <!-- Vessel Type Filter -->
+      <div class="filter-group">
+        <label for="vesselType">Vessel Type</label>
+        <input 
+          id="vesselType"
+          type="text" 
+          class="form-control" 
+          placeholder="Filter by vessel type..."
+          [(ngModel)]="selectedVesselType"
+          (ngModelChange)="onFilterChange()" />
+      </div>
+
+      <!-- Clear Filters Button -->
+      <div class="filter-group filter-actions">
+        <button 
+          class="btn btn-secondary btn-sm" 
+          (click)="clearFilters()"
+          title="Clear all filters">
+          Clear Filters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading docks...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredDocks.length === 0" class="empty-state">
+    <p *ngIf="!searchText && !selectedLocation && !selectedVesselType">
+      No docks found. Register your first dock!
+    </p>
+    <p *ngIf="searchText || selectedLocation || selectedVesselType">
+      No docks match your search criteria. Try adjusting your filters.
+    </p>
+  </div>
+
+  <!-- Docks Table -->
+  <div *ngIf="!loading && filteredDocks.length > 0" class="docks-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Name/Number</th>
+          <th>Location</th>
+          <th>Length (m)</th>
+          <th>Depth (m)</th>
+          <th>Max Draft (m)</th>
+          <th>Allowed Vessel Types</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let dock of filteredDocks">
+          <!-- Code -->
+          <td class="code-cell">
+            <strong>{{ dock.code }}</strong>
+          </td>
+
+          <!-- Name/Number -->
+          <td class="name-cell">
+            {{ dock.nameOrNumber }}
+          </td>
+
+          <!-- Location -->
+          <td class="location-cell">
+            {{ dock.location }}
+          </td>
+
+          <!-- Length -->
+          <td class="dimension-cell">
+            {{ dock.length }}
+          </td>
+
+          <!-- Depth -->
+          <td class="dimension-cell">
+            {{ dock.depth }}
+          </td>
+
+          <!-- Max Draft -->
+          <td class="dimension-cell">
+            {{ dock.maxDraft }}
+          </td>
+
+          <!-- Allowed Vessel Types -->
+          <td class="types-cell">
+            <div class="types-list">
+              <span *ngFor="let type of dock.allowedVesselTypes" class="type-badge">
+                {{ type }}
+              </span>
+            </div>
+          </td>
+
+          <!-- Actions -->
+          <td class="actions-cell">
+            <!-- Edit -->
+            <button 
+              *ngIf="canManage()"
+              class="btn btn-sm btn-secondary" 
+              (click)="editDock(dock)"
+              title="Edit dock">
+              Edit
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Results Count -->
+  <div *ngIf="!loading && filteredDocks.length > 0" class="results-count">
+    Showing {{ filteredDocks.length }} of {{ docks.length }} docks
+  </div>
+</div>

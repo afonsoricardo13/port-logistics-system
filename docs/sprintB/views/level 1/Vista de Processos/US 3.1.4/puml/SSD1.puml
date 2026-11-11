@@ -1,0 +1,19 @@
+﻿@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+actor "System User" as User
+participant "Port Management System" as PMS
+
+
+activate User
+User -> PMS : complete action
+
+activate PMS
+PMS --> User : retrieve clear feedback on action success or failure
+deactivate PMS
+
+deactivate User
+
+@enduml

@@ -1,0 +1,179 @@
+<div class="operation-plan-update-container">
+  <div class="header">
+    <h1>Update Operation Plan</h1>
+    <p>US 4.1.4 - Manual update of operation plans for last-minute adjustments</p>
+  </div>
+  
+  <!-- Loading Spinner -->
+  <div *ngIf="loading" class="loading-spinner">
+    <div class="spinner"></div>
+    <p>Loading operation plan...</p>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="alert alert-error">
+    <strong>❌ Error:</strong> {{ error }}
+    <button type="button" class="btn-close" (click)="error = ''">×</button>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    <strong>✅ Success!</strong> {{ successMessage }}
+    <button type="button" class="btn-close" (click)="successMessage = ''">×</button>
+  </div>
+
+  <!-- Warnings -->
+  <div *ngIf="warnings.length > 0" class="alert alert-warning">
+    <h5>⚠️ Warnings:</h5>
+    <ul>
+      <li *ngFor="let warning of warnings">{{ warning }}</li>
+    </ul>
+  </div>
+
+  <!-- Resource Conflicts -->
+  <div *ngIf="resourceConflicts.length > 0" class="alert alert-danger">
+    <h5>❌ Resource Conflicts Detected:</h5>
+    <div *ngFor="let conflict of resourceConflicts" class="mb-2">
+      <strong>{{ conflict.resourceType | uppercase }}: {{ conflict.resourceId }}</strong>
+      <p>{{ conflict.conflictDescription }}</p>
+      <p><small>Conflicting VVNs: {{ conflict.conflictingVvnIds.join(', ') }}</small></p>
+      <p><small>Conflict Time: {{ formatDate(conflict.conflictStartTime) }} - {{ formatDate(conflict.conflictEndTime) }}</small></p>
+    </div>
+  </div>
+
+  <!-- VVN Inconsistencies -->
+  <div *ngIf="vvnInconsistencies.length > 0" class="alert alert-warning">
+    <h5>⚠️ Inconsistencies Detected:</h5>
+    <div *ngFor="let inconsistency of vvnInconsistencies" class="mb-2">
+      <strong>[{{ inconsistency.severity | uppercase }}] {{ inconsistency.inconsistencyType }}:</strong>
+      <p>{{ inconsistency.description }}</p>
+    </div>
+  </div>
+
+  <!-- Current Operation Plan Details -->
+  <div *ngIf="operationPlan && !loading" class="info-card">
+    <h2 class="card-title">📋 Current Operation Plan Details</h2>
+    
+    <div class="detail-row">
+      <div class="detail-item">
+        <p><strong>Plan ID:</strong> {{ operationPlan.id }}</p>
+        <p><strong>VVN ID:</strong> {{ operationPlan.vvnId }}</p>
+        <p><strong>Date:</strong> {{ operationPlan.date | date }}</p>
+        <p><strong>Algorithm:</strong> {{ operationPlan.algorithmUsed }}</p>
+      </div>
+      <div class="detail-item">
+        <p><strong>Created By:</strong> {{ operationPlan.createdBy }}</p>
+        <p><strong>Created At:</strong> {{ formatDate(operationPlan.createdAt) }}</p>
+        <p *ngIf="operationPlan.updatedBy"><strong>Last Updated By:</strong> {{ operationPlan.updatedBy }}</p>
+        <p *ngIf="operationPlan.updatedAt"><strong>Last Updated At:</strong> {{ formatDate(operationPlan.updatedAt) }}</p>
+      </div>
+      <div class="detail-item">
+        <p><strong>Current Crane:</strong> {{ getResourceByType('crane')?.id || 'None' }}</p>
+        <p><strong>Current Dock:</strong> {{ operationPlan.assignedDock || 'None' }}</p>
+        <p><strong>Start Time:</strong> {{ formatDate(operationPlan.startTime) }}</p>
+        <p><strong>End Time:</strong> {{ formatDate(operationPlan.endTime) }}</p>
+      </div>
+    </div>
+
+    <!-- Change History -->
+    <div *ngIf="operationPlan.changeLogs && operationPlan.changeLogs.length > 0" class="change-history">
+      <div class="change-history-header">
+        <h5>📝 Change History</h5>
+        <button type="button" class="btn-clear-history" (click)="clearChangeHistory()">
+          🗑️ Clear History
+        </button>
+      </div>
+      <div *ngFor="let log of operationPlan.changeLogs" class="change-log-item">
+        <div class="log-header">{{ formatDate(log.timestamp) }} - by {{ log.author }}</div>
+        <p><strong>Reason:</strong> {{ log.reason }}</p>
+        <p><strong>Changes:</strong></p>
+        <ul>
+          <li *ngFor="let change of log.changes">{{ change }}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update Form -->
+  <div *ngIf="operationPlan && !loading" class="form-card">
+    <h3>✏️ Manual Update Form</h3>
+    
+    <form (ngSubmit)="updateOperationPlan()">
+      <!-- Reason for Change (Required) -->
+      <div class="form-group">
+        <label for="reasonForChange">Reason for Change *</label>
+        <textarea 
+          id="reasonForChange" 
+          [(ngModel)]="reasonForChange"
+          name="reasonForChange"
+          placeholder="e.g., Crane malfunction - reassigning to backup crane"
+          required></textarea>
+        <small>Required for audit trail</small>
+      </div>
+
+      <!-- Resource Assignments -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="newCraneId">New Crane ID</label>
+          <input 
+            type="text" 
+            id="newCraneId" 
+            [(ngModel)]="newCraneId"
+            name="newCraneId"
+            placeholder="e.g., CRANE-002">
+          <small>Must exist in database and be operational</small>
+        </div>
+        <div class="form-group">
+          <label for="newStaffId">New Staff Mecanographic Number</label>
+          <input 
+            type="text" 
+            id="newStaffId" 
+            [(ngModel)]="newStaffId"
+            name="newStaffId"
+            placeholder="e.g., M12345">
+          <small>Must exist in database and be active</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="newDock">Assigned Dock</label>
+        <input 
+          type="text" 
+          id="newDock" 
+          [(ngModel)]="newDock"
+          name="newDock"
+          placeholder="e.g., DOCK-B">
+      </div>
+
+      <!-- Time Windows -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="newStartTime">Start Time</label>
+          <input 
+            type="datetime-local" 
+            id="newStartTime" 
+            [(ngModel)]="newStartTime"
+            name="newStartTime">
+        </div>
+        <div class="form-group">
+          <label for="newEndTime">End Time</label>
+          <input 
+            type="datetime-local" 
+            id="newEndTime" 
+            [(ngModel)]="newEndTime"
+            name="newEndTime">
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button 
+        type="submit" 
+        class="btn btn-primary"
+        [disabled]="loading || !reasonForChange.trim()">
+        <span *ngIf="loading">⏳</span>
+        <span *ngIf="!loading">💾</span>
+        Update Operation Plan
+      </button>
+    </form>
+  </div>
+</div>

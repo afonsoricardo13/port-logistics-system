@@ -1,0 +1,77 @@
+@startuml Vista Lógica – Nível 2 (Sprint C - Port Logistics + OEM + Scheduling)
+left to right direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+' ====== estilo ======
+skinparam component { 
+BackgroundColor #87CEEB 
+BorderColor #000000 
+RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ====== atores (bolas azuis) ======
+() "UI Port Authority Officer"        as PA #87CEEB
+() "UI Logistics Operator"            as LO #87CEEB
+() "UI Shipping Agent Representative" as SA #87CEEB
+() "UI Administrator"                 as AD #87CEEB
+() "UI System Administrator"          as SYSADMIN #87CEEB
+() "UI Port Operations Supervisor"    as POS #87CEEB
+
+' ====== boundary do sistema ======
+component "«component»\n«system (C4)»\nPort Operations System" as SYS #87CEEB {
+
+  ' ---- UI ----
+  component "«component»\n«container (C4)»\nSPA (Web UI)" as UI
+
+  ' ---- APIs (bolas) ----
+  interface "Port Logistics API"      as API_PL
+  interface "OEM API"                 as API_OEM
+  interface "Scheduling API"          as API_SCH
+
+  ' ---- Containers ----
+  component "«component»\n«container (C4)»\nPort Logistics (Backend)" as PORT
+  component "«component»\n«container (C4)»\nOperations & Execution\nManagement (OEM)" as OEM
+  component "«component»\n«container (C4)»\nScheduling & Planning"    as PLAN
+
+  ' ---- Internal Databases ----
+  component "«component»\n«internal»\nPort Logistics DB" as PORT_DB
+  component "«component»\n«internal»\nOEM DB" as OEM_DB
+
+  ' ---- ligações UI -> API -> Container ----
+  UI  --> API_PL
+  API_PL --> PORT
+
+  UI  --> API_OEM
+  API_OEM --> OEM
+
+  UI  --> API_SCH
+  API_SCH  --> PLAN
+
+  ' ---- Backend to backend communication ----
+  OEM --> API_PL : REST
+  OEM --> API_SCH : REST
+
+  ' ---- Internal DB connections ----
+  PORT --> PORT_DB : SQL
+  OEM --> OEM_DB : SQL
+}
+
+' ====== componente externo: IAM (Authentication) ======
+component "«external»\nIAM\n(Identity & Access\nManagement)" as IAM #F5F5DC
+
+UI --> IAM : OAuth/OIDC
+PORT --> IAM : JWT validation
+OEM --> IAM : JWT validation
+
+' ====== atores ligados à UI ======
+PA --> UI
+LO --> UI
+SA --> UI
+AD --> UI
+SYSADMIN --> UI
+POS --> UI
+@enduml

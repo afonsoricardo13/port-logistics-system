@@ -1,0 +1,32 @@
+@startuml Vista de Processos – Level 1 (US 4.1.3 – Search Operation Plans)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as LO
+participant "«system (C4)»\nPort Operations System" as SYS #87CEEB
+participant "«external»\nIAM" as IAM #F5F5DC
+
+LO -> SYS: 1: request to search Operation Plans
+activate SYS
+SYS -> IAM: 1.1: validateToken()
+activate IAM
+IAM --> SYS: 1.2: tokenValid
+deactivate IAM
+SYS --> LO: 1.3: ask for search criteria (date range, vessel)
+deactivate SYS
+LO -> SYS: 2: provides search criteria
+activate SYS
+SYS --> LO: 2.1: displays filterable/sortable list of Operation Plans
+deactivate SYS
+
+@enduml

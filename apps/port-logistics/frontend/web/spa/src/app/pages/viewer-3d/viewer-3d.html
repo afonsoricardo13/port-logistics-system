@@ -1,0 +1,256 @@
+<div class="viewer-3d-container">
+  <div class="viewer-header">
+    <h1>3D Port Visualization</h1>
+    
+    <!-- Layout Selector -->
+    <div class="layout-selector">
+      <label for="layoutSelect">Port Layout:</label>
+      <select 
+        id="layoutSelect" 
+        [(ngModel)]="currentLayoutId" 
+        (change)="switchLayout(currentLayoutId)"
+        [disabled]="isLoading">
+        <option value="A">Layout A</option>
+        <option value="B">Layout B</option>
+      </select>
+      
+      <!-- US 4.2.7: Reset camera button -->
+      <button 
+        class="reset-camera-btn" 
+        (click)="resetCamera()"
+        title="Reset camera to default view (R key)">
+        🔄 Reset View
+      </button>
+      
+      <!-- Night mode toggle button -->
+      <button 
+        class="night-mode-btn" 
+        (click)="toggleNightMode()"
+        title="Toggle between day and night mode">
+        {{ isNightMode() ? '☀️ Day Mode' : '🌙 Night Mode' }}
+      </button>
+      
+      <!-- Vessel navigation button -->
+      <button 
+        class="vessel-navigation-btn" 
+        (click)="toggleVesselNavigation()"
+        title="Simulate vessels arriving from sea">
+        {{ areVesselsNavigating() ? '⚓ Stop Navigation' : '🚢 Navigate Vessels' }}
+      </button>
+      
+      <span *ngIf="isLoading" class="loading-indicator">Loading...</span>
+      <span *ngIf="errorMessage" class="error-message">{{ errorMessage }}</span>
+    </div>
+  </div>
+
+  <div class="viewer-content">
+    <!-- Three.js canvas will be attached here -->
+    <div #canvasContainer class="canvas-container"></div>
+
+    <div class="viewer-info">
+      <div class="info-panel">
+        <h3>Controls</h3>
+        <ul>
+          <li><strong>🖱️ Left-Click:</strong> Select port facility (dock, storage area) or operational resource (vessel, crane, truck) (US 4.2.1 & 4.2.2)</li>
+          <li><strong>🖱️ Right-Click + Drag:</strong> Orbit camera around scene/object</li>
+          <li><strong>🖱️ Mouse Wheel:</strong> Zoom in/out</li>
+          <li><strong>⌨️ WASD:</strong> Move camera (disabled during inspection)</li>
+          <li><strong>⌨️ I:</strong> Toggle information overlay for selected object (US 4.2.3)</li>
+          <li><strong>⌨️ R:</strong> Reset camera to default view (US 4.2.7)</li>
+          <li><strong>⌨️ ESC:</strong> Deselect object and exit inspection mode</li>
+          <li><strong>Grid:</strong> Reference grid for spatial orientation</li>
+          <li><strong>Axes:</strong> X (Red), Y (Green), Z (Blue)</li>
+        </ul>
+        
+        <!-- US 4.2.6: Animation configuration panel -->
+        <div class="animation-config">
+          <h3>🎬 Animation Settings (US 4.2.6)</h3>
+          <p class="info-note">
+            <em>Smooth camera transitions with TWEEN.js</em>
+          </p>
+          
+          <div class="config-option">
+            <label for="animDuration">Duration (ms):</label>
+            <div class="input-group">
+              <input 
+                type="range" 
+                id="animDuration"
+                [(ngModel)]="animationDuration"
+                (change)="updateAnimationDuration()"
+                min="200" 
+                max="3000" 
+                step="100">
+              <span class="config-value">{{ animationDuration }}ms</span>
+            </div>
+          </div>
+          
+          <div class="config-option">
+            <label for="animEasing">Easing:</label>
+            <select 
+              id="animEasing"
+              [(ngModel)]="selectedEasing"
+              (change)="updateAnimationEasing()">
+              <option value="Quadratic.InOut">Quadratic InOut (default)</option>
+              <option value="Linear.None">Linear</option>
+              <option value="Cubic.InOut">Cubic InOut</option>
+              <option value="Quartic.InOut">Quartic InOut</option>
+              <option value="Quintic.InOut">Quintic InOut</option>
+              <option value="Sinusoidal.InOut">Sinusoidal InOut</option>
+              <option value="Exponential.InOut">Exponential InOut</option>
+              <option value="Circular.InOut">Circular InOut</option>
+              <option value="Elastic.InOut">Elastic InOut</option>
+              <option value="Back.InOut">Back InOut</option>
+              <option value="Bounce.InOut">Bounce InOut</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- US 4.2.4: Simulation Controls -->
+        <div class="simulation-config">
+          <h3>⏱️ Operation Simulation (US 4.2.4)</h3>
+          <p class="info-note">
+            <em>Simulate vessel operations based on time</em>
+          </p>
+          
+          <div class="config-option">
+            <label for="simDate">Date:</label>
+            <input type="date" id="simDate" [(ngModel)]="simulationDate" (change)="updateSimulation()">
+          </div>
+          
+          <div class="config-option">
+            <label for="simTime">Time:</label>
+            <input type="time" id="simTime" [(ngModel)]="simulationTime" (change)="updateSimulation()">
+          </div>
+          
+          <div class="status-legend" *ngIf="isSimulationActive">
+            <h4>Status Legend:</h4>
+            <div class="legend-item"><span class="dot" style="background-color: #800080;"></span> Arriving</div>
+            <div class="legend-item"><span class="dot" style="background-color: #FFFF00;"></span> Waiting</div>
+            <div class="legend-item"><span class="dot" style="background-color: #FFA500;"></span> Unloading</div>
+            <div class="legend-item"><span class="dot" style="background-color: #0000FF;"></span> Loading</div>
+            <div class="legend-item"><span class="dot" style="background-color: #008000;"></span> Departing</div>
+          </div>
+        </div>
+        
+        <!-- US 4.2.2: Selected object info -->
+        @if (selectedObjectType && selectedObjectName) {
+          <div class="selected-object-info">
+            <h3>🎯 Selected Object</h3>
+            <p><strong>Type:</strong> {{ selectedObjectType }}</p>
+            <p><strong>Name:</strong> {{ selectedObjectName }}</p>
+            @if (selectedObjectMetadata) {
+              <div class="metadata">
+                <p><strong>Details:</strong></p>
+                <ul>
+                  @for (item of objectEntries(selectedObjectMetadata); track item[0]) {
+                    <li><strong>{{ item[0] }}:</strong> {{ item[1] }}</li>
+                  }
+                </ul>
+              </div>
+            }
+          </div>
+        }
+        
+        <h3>{{ layoutName || ('Current Layout: ' + currentLayoutId) }}</h3>
+        <p class="layout-description">
+          @if (layoutDescription) {
+            {{ layoutDescription }}
+          } @else {
+            <em>Loading layout information...</em>
+          }
+        </p>
+        
+        <div class="layout-stats">
+          <p><strong>Elements:</strong></p>
+          <ul>
+            <li>Docks: {{ dockCount }}</li>
+            <li>Warehouses: {{ warehouseCount }}</li>
+            <li>Container Yards: {{ yardCount }}</li>
+          </ul>
+        </div>
+        
+        @if (dockIds.length > 0 || warehouseIds.length > 0 || yardIds.length > 0) {
+          <div class="layout-details">
+            <h4>Represented Elements:</h4>
+            
+            @if (dockIds.length > 0) {
+              <div class="element-list">
+                <strong>Docks:</strong>
+                <ul>
+                  @for (dockId of dockIds; track dockId) {
+                    <li>{{ dockId }}</li>
+                  }
+                </ul>
+              </div>
+            }
+            
+            @if (warehouseIds.length > 0) {
+              <div class="element-list">
+                <strong>Warehouses:</strong>
+                <ul>
+                  @for (warehouseId of warehouseIds; track warehouseId) {
+                    <li>{{ warehouseId }}</li>
+                  }
+                </ul>
+              </div>
+            }
+            
+            @if (yardIds.length > 0) {
+              <div class="element-list">
+                <strong>Container Yards:</strong>
+                <ul>
+                  @for (yardId of yardIds; track yardId) {
+                    <li>{{ yardId }}</li>
+                  }
+                </ul>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- US 4.2.3: Information overlay -->
+  @if (showInfoOverlay && selectedObjectType && selectedObjectName) {
+    <div class="info-overlay">
+      <div class="info-overlay-header">
+        <h3>ℹ️ {{ selectedObjectType }}: {{ selectedObjectName }}</h3>
+        <button class="close-overlay-btn" (click)="showInfoOverlay = false" title="Close (Press 'i')">✕</button>
+      </div>
+      <div class="info-overlay-content">
+        @if (getDisplayableData() && objectEntries(getDisplayableData()).length > 0) {
+          <table class="info-table">
+            <tbody>
+              @for (entry of objectEntries(getDisplayableData()); track entry[0]) {
+                <tr>
+                  <td class="info-key">{{ entry[0] }}</td>
+                  <td class="info-value">{{ entry[1] }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <p class="no-data">No additional information available</p>
+        }
+        
+        @if (!hasRestrictedAccess()) {
+          <p class="restricted-notice">
+            <small>⚠️ Some information is restricted to Port Authority Officers and Logistics Operators</small>
+          </p>
+        }
+        
+        <p class="overlay-hint">
+          <small>💡 Press 'i' to toggle this overlay</small>
+        </p>
+      </div>
+    </div>
+  }
+
+  <div class="viewer-footer">
+    <p class="tech-info">
+      <strong>US 3.3.2:</strong> 3D Port Visualization with Real Data from Backend API | 
+      <strong>Tech Stack:</strong> Angular + Three.js + ASP.NET Core
+    </p>
+  </div>
+</div>

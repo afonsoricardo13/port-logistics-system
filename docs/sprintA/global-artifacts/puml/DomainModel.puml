@@ -1,0 +1,290 @@
+@startuml Domain Model
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam monochrome true
+
+package "Vessel" {
+    enum Vessel <<Entity root>>
+    class IMOnum <<ValueObject>> {
+        +ID
+    }
+    class VesselOwner <<ValueObject>>
+    class VesselName <<ValueObject>>
+
+    Vessel "1"--"1" IMOnum
+    Vessel "1"--"1" VesselName
+    Vessel "1"--"1" VesselOwner
+}
+
+
+
+    package "Storage Area" {
+    enum StorageArea <<Entity root>>
+    class StorageAreaID <<ValueObject>> {
+        +ID
+    }
+    class StorageAreaName <<ValueObject>>
+    class StorageAreaLocation <<ValueObject>>
+    class StorageAreaCapacity <<ValueObject>>
+    class StorageAreaType <<ValueObject>>
+    class StorageAreaCurrentOccupancy <<ValueObject>>
+
+    StorageArea "1"--"1" StorageAreaID
+    StorageArea "1"--"1" StorageAreaName
+    StorageArea "1"--"1" StorageAreaLocation
+    StorageArea "1"--"1" StorageAreaCapacity
+    StorageArea "1"--"1" StorageAreaType
+    StorageArea "1"--"1" StorageAreaCurrentOccupancy
+}
+
+package "Storage Area and Dock" {
+    enum StorageAreaDock <<Entity root>>
+    class Distance <<ValueObject>>
+
+    StorageAreaDock "1"--"1" Distance
+}
+
+
+package "Vessel Type" {
+    enum VesselType <<Entity root>>
+    class VesselTypeName <<ValueObject>> {
+        +ID
+    }
+    class TEUCapacity <<ValueObject>>
+    class GridSpec <<ValueObject>> {
+    +bays
+    +rows
+    +tiers  
+    } 
+
+    class VesselSize <<ValueObject>>
+    
+    VesselType "1"--"1" VesselTypeName
+    VesselType "1"--"1" VesselSize
+    VesselType "1"--"1" TEUCapacity
+    VesselType "1"--"1" GridSpec
+    
+}
+
+package "Cargo Manifest" {
+    enum CargoManifest <<Entity root>>
+    class CargoManifestID <<ValueObject>> {
+        +ID
+    }
+    class ManifestType <<ValueObject>>
+
+    CargoManifest "1"--"1" CargoManifestID
+    CargoManifest "1"--"1" ManifestType
+}
+
+package "Container" {
+    enum Container <<Entity root>>
+    class ContainerID <<ValueObject>> {
+        +ID
+    }
+    class ContainerPosition <<ValueObject>> {
+        +bay
+        +row
+        +tier
+    }
+    class ContainerDescription <<ValueObject>>
+    class ContainerTEUSize <<ValueObject>>
+
+    Container "1"--"1" ContainerID
+    Container "1"--"1" ContainerDescription
+    Container "1"--"1" ContainerPosition
+    Container "1"--"1" ContainerTEUSize
+
+    }
+
+package "Cargo" {
+    enum Cargo <<Entity root>>
+    class CargoType <<ValueObject>> {
+        +ID
+    }
+    class CargoVolume <<ValueObject>>
+
+    Cargo "1"--"1" CargoType
+    Cargo "1"--"1" CargoVolume
+}
+    
+
+
+package "Dock" {
+    enum Dock <<Entity root>>
+    class DockID <<ValueObject>> {
+        +ID
+    }
+    class DockName <<ValueObject>>
+    class DockLocation <<ValueObject>>
+    class DockMaxNumberSTSCranes <<ValueObject>>
+    class DockLength <<ValueObject>>
+    class DockDepth <<ValueObject>>
+    class DockMaxDraft <<ValueObject>>
+
+    Dock "1"--"1" DockID
+    Dock "1"--"1" DockName
+    Dock "1"--"1" DockLocation
+    Dock "1"--"1" DockMaxNumberSTSCranes
+    Dock "1"--"1" DockLength
+    Dock "1"--"1" DockDepth
+    Dock "1"--"1" DockMaxDraft
+
+}
+
+package "Physical Resources" {
+    enum PhysicalResource <<Entity root>>
+    class PhysicalResourceID <<ValueObject>> {
+        +ID
+    }
+    class PhysicalResourceOperationalWindow <<ValueObject>>
+    class PhysicalResourceCapacity <<ValueObject>>
+    class PhysicalResourceStatus <<ValueObject>>
+    class PhysicalResourceSetupTime <<ValueObject>>
+    class PhysicalResourceType <<ValueObject>>
+    class PhysicalResourceDescription <<ValueObject>>
+
+    PhysicalResource "1"--"1" PhysicalResourceID
+    PhysicalResource "1"--"1" PhysicalResourceOperationalWindow
+    PhysicalResource "1"--"1" PhysicalResourceCapacity
+    PhysicalResource "1"--"1" PhysicalResourceStatus
+    PhysicalResource "1"--"1" PhysicalResourceSetupTime
+    PhysicalResource "1"--"1" PhysicalResourceType
+    PhysicalResource "1"--"1" PhysicalResourceDescription
+}
+
+package "Staff" {
+    enum Staff <<Entity root>>
+    class StaffMecanographicNumber <<ValueObject>> {
+        +ID
+    }
+    class StaffName <<ValueObject>>
+    class StaffEmail <<ValueObject>>
+    class StaffPhoneNumber <<ValueObject>>
+    class StaffOperationalWindow <<ValueObject>> 
+    class StaffCurrentStatus <<ValueObject>>
+
+    Staff "1"--"1" StaffMecanographicNumber
+    Staff "1"--"1" StaffName
+    Staff "1"--"1" StaffEmail
+    Staff "1"--"1" StaffPhoneNumber
+    Staff "1"--"1" StaffOperationalWindow
+    Staff "1"--"1" StaffCurrentStatus
+}
+
+package "Staff Qualification" {
+    enum StaffQualification <<Entity root>>
+    
+    class QualificationName <<ValueObject>> {
+        +ID
+    }
+    class RequiredNumber <<ValueObject>>
+    
+    StaffQualification "1"--"1" QualificationName
+    StaffQualification "1"--"1" RequiredNumber
+}
+
+package "Logistics Operator" {
+    enum LogisticsOperator <<Entity root>>
+    class LogisticsOperatorID <<ValueObject>> {
+        +ID
+    }
+    class LogisticsOperatorName <<ValueObject>>
+    
+    LogisticsOperator "1"--"1" LogisticsOperatorID
+    LogisticsOperator "1"--"1" LogisticsOperatorName
+}
+package "Shipping Agent" {
+   
+
+    enum ShippingAgentOrganization <<Entity root>>
+    class ShippingAgentOrgID <<ValueObject>> {
+        +ID
+    }
+    class ShippingAgentOrgName <<ValueObject>>
+    ShippingAgentOrganization "1"--"1" ShippingAgentOrgID
+    ShippingAgentOrganization "1"--"1" ShippingAgentOrgName
+
+  
+   
+}
+
+
+package "Shipping Agent Representative" {
+    enum ShippingAgentRepresentative <<Entity root>>
+    class ShippingAgentRepID <<ValueObject>> {
+        +ID
+    }
+    class ShippingAgentRepName <<ValueObject>>
+    class ShippingAgentRepEmail <<ValueObject>>
+    
+    ShippingAgentRepresentative "1"--"1" ShippingAgentRepID
+    ShippingAgentRepresentative "1"--"1" ShippingAgentRepName
+    ShippingAgentRepresentative "1"--"1" ShippingAgentRepEmail
+    ShippingAgentOrganization "1"--"*" ShippingAgentRepresentative 
+}
+
+
+
+package "Port Authority Officer" {
+        enum Request <<Entity root>>
+        class RequestID <<ValueObject>> {
+                +ID
+        }
+        class RequestStatus <<ValueObject>>
+        class RequestDocumentation <<ValueObject>>
+        class RequestType <<ValueObject>>
+
+        Request "1"--"1" RequestID
+        Request "1"--"1" RequestStatus
+        Request "1"--"1" RequestDocumentation : includes
+        Request "1"--"1" RequestType
+        Request "1"--"1" ShippingAgentOrganization : submittedBy
+        Request "1"--"1" Vessel : toRepresent
+}
+
+package "Vessel Visit" {
+    enum VesselVisitNotification <<Entity root>>
+    class VesselVisitID <<ValueObject>> {
+        +ID
+    }
+    class VesselVisitStatus <<ValueObject>>
+    class VesselVisitETA <<ValueObject>>
+    class VesselVisitETD <<ValueObject>>
+    class VesselVisitReason <<ValueObject>>
+    class VesselVisitCrewInfo <<ValueObject>>
+    class VesselVisitSafetyOfficer <<ValueObject>>
+    class VesselVisitRejectionReason <<ValueObject>>
+    class VesselVisitDescription <<ValueObject>>
+
+    VesselVisitNotification "1"--"1" VesselVisitID
+    VesselVisitNotification "1"--"1" VesselVisitStatus
+    VesselVisitNotification "1"--"1" VesselVisitETA
+    VesselVisitNotification "1"--"1" VesselVisitETD
+    VesselVisitNotification "1"--"1" VesselVisitReason
+    VesselVisitNotification "1"--"1" VesselVisitCrewInfo
+    VesselVisitNotification "1"--"1" CargoManifest : submittedWith
+    VesselVisitNotification "1"--"1" Vessel : for
+    VesselVisitNotification "1"--"*" VesselVisitSafetyOfficer
+    VesselVisitNotification "1"--"1" LogisticsOperator : plannedBy
+    VesselVisitNotification "1"--"1" ShippingAgentRepresentative : submittedBy
+    VesselVisitNotification "1"--"1" VesselVisitRejectionReason : rejectedWith
+    VesselVisitNotification "1"--"1" VesselVisitDescription
+}
+
+Vessel "1" -- "1" VesselType : has
+Vessel "1" -- "1" Dock : assignedTo
+Container "*" -- "1" StorageArea : storedIn
+PhysicalResource "1" -- "*" StaffQualification : requires
+Dock "1" -- "1..*" PhysicalResource : has
+Staff "*" -- "*" PhysicalResource : operates
+Staff "*" -- "*" VesselVisitNotification : assignedTo
+Staff "*" -- "*" StaffQualification : has
+CargoManifest "1"--"1..*" Container : includesInformation
+Container "1" -- "1" Cargo: contains
+StorageArea "1" -- "1..*" Cargo: handles
+Dock "1" -- "1..*" VesselType : berths
+StorageArea "1" -- "1..*" StorageAreaDock : serves
+StorageAreaDock "1..*" -- "1" Dock : serves
+
+@enduml

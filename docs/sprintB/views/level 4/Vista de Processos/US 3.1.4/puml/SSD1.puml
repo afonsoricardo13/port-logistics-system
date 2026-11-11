@@ -1,0 +1,95 @@
+﻿@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+actor "System User" as User
+participant "HTML+CSS+TS" as UI
+participant "Component" as Comp
+participant "Model" as Model
+participant "Frontend Service" as FS
+participant "HTTP Driver" as HTTP
+participant "Controller" as Backend
+participant "DTO" as DTO
+participant "Backend Service" as BS
+participant "Domain" as Domain
+participant "Repository" as Repo
+participant "IRepository" as IRepository
+participant "Database" as DB
+
+activate User
+User -> UI : complete action
+
+activate UI
+UI -> Comp : handle user interaction
+
+activate Comp
+Comp -> Model : validate and prepare data
+
+activate Model
+Model --> Comp : return prepared data
+deactivate Model
+
+Comp -> FS : send data for processing  
+
+activate FS
+FS -> HTTP : make request with data
+
+activate HTTP
+HTTP -> Backend : send request to process action
+
+activate Backend
+Backend -> DTO : validate and prepare data
+
+activate DTO
+DTO --> Backend : return prepared data
+deactivate DTO
+
+Backend -> BS : process action with data
+
+activate BS
+BS -> Domain : map data to domain entities
+
+activate Domain
+Domain --> BS : return domain entities
+deactivate Domain
+
+BS -> Repo : interact with data storage
+
+activate Repo
+Repo -> IRepository : use repository interface
+
+activate IRepository
+IRepository --> Repo : perform data interaction
+deactivate IRepository
+
+Repo -> DB : query/update data as needed
+
+activate DB
+DB --> Repo : return result of query/update
+deactivate DB
+
+Repo --> BS : return result of data interaction
+deactivate Repo
+
+BS --> Backend : return result of action processing
+deactivate BS
+
+Backend --> HTTP : return result of action
+deactivate Backend
+
+HTTP --> FS : return result of request
+deactivate HTTP
+
+FS --> Comp : return result of processing
+deactivate FS
+
+Comp --> UI : return result to user interface
+deactivate Comp
+
+UI --> User : retrieve clear feedback on action success or failure
+deactivate UI
+
+deactivate User
+
+@enduml

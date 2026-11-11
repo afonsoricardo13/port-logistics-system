@@ -1,0 +1,183 @@
+@startuml Domain Model - Sprint C (Operations & Execution Management)
+
+skinparam linetype ortho
+skinparam class {
+    BackgroundColor #87CEEB
+    BorderColor #000000
+}
+
+title Domain Model - Sprint C (OEM Module)
+
+' ===== Existing Entities (from Port Logistics) =====
+package "Port Logistics Domain" #LightGray {
+    class VesselVisitNotification {
+        id: long
+        vesselImoNumber: string
+        estimatedTimeOfArrival: DateTime
+        estimatedTimeOfDeparture: DateTime
+        status: VvnStatus
+        assignedDockCode: string
+    }
+
+    class Vessel {
+        imoNumber: string
+        name: string
+        type: VesselType
+    }
+
+    class Dock {
+        code: string
+        name: string
+        length: decimal
+        depth: decimal
+    }
+
+    class PhysicalResource {
+        code: string
+        name: string
+        type: ResourceType
+        status: ResourceStatus
+    }
+
+    class OperatingStaff {
+        id: long
+        name: string
+        qualifications: List<Qualification>
+    }
+}
+
+' ===== OEM Module Entities =====
+package "Operations & Execution Management Domain" #87CEEB {
+    class OperationPlan <<aggregate root>> {
+        id: Guid
+        vvnId: string
+        date: DateTime
+        operations: List<PlannedOperation>
+        algorithmUsed: string
+        createdBy: string
+        createdAt: DateTime
+        metadata: PlanMetadata
+    }
+
+    class PlannedOperation {
+        id: Guid
+        operationType: OperationType
+        startTime: DateTime
+        endTime: DateTime
+        containerId: string
+        assignedCrane: string
+        assignedStaff: List<string>
+    }
+
+    class VesselVisitExecution <<aggregate root>> {
+        id: string
+        vvnId: string
+        actualArrivalTime: DateTime
+        actualBerthTime: DateTime
+        dockUsed: string
+        actualUnberthTime: DateTime
+        actualDepartureTime: DateTime
+        status: VveStatus
+        executedOperations: List<ExecutedOperation>
+    }
+
+    class ExecutedOperation {
+        id: Guid
+        operationType: OperationType
+        actualStartTime: DateTime
+        actualEndTime: DateTime
+        status: ExecutionStatus
+        containerId: string
+        usedCrane: string
+        usedStaff: List<string>
+        notes: string
+    }
+
+    class Incident <<aggregate root>> {
+        id: Guid
+        incidentTypeCode: string
+        startTime: DateTime
+        endTime: DateTime
+        severity: Severity
+        description: string
+        responsibleUser: string
+        affectedVves: List<string>
+    }
+
+    class IncidentType {
+        code: string
+        name: string
+        description: string
+        severity: Severity
+        parentCode: string
+    }
+
+    class ComplementaryTask <<aggregate root>> {
+        id: Guid
+        categoryCode: string
+        vveId: string
+        startTime: DateTime
+        endTime: DateTime
+        status: TaskStatus
+        impactType: ImpactType
+        responsibleTeam: string
+    }
+
+    class ComplementaryTaskCategory {
+        code: string
+        name: string
+        description: string
+        defaultDuration: TimeSpan
+        expectedImpact: string
+    }
+
+    enum VveStatus {
+        InProgress
+        Completed
+    }
+
+    enum ExecutionStatus {
+        NotStarted
+        Started
+        Completed
+        Delayed
+    }
+
+    enum Severity {
+        Minor
+        Major
+        Critical
+    }
+
+    enum TaskStatus {
+        Ongoing
+        Completed
+    }
+
+    enum ImpactType {
+        Parallel
+        Blocking
+    }
+
+    enum OperationType {
+        Loading
+        Unloading
+    }
+}
+
+' ===== Relationships =====
+OperationPlan "1" --> "*" PlannedOperation : contains
+OperationPlan --> VesselVisitNotification : references
+VesselVisitExecution --> VesselVisitNotification : references
+VesselVisitExecution "1" --> "*" ExecutedOperation : records
+VesselVisitExecution --> Dock : uses
+Incident --> IncidentType : classifiedBy
+Incident "*" --> "*" VesselVisitExecution : affects
+IncidentType --> IncidentType : parentType
+ComplementaryTask --> ComplementaryTaskCategory : classifiedBy
+ComplementaryTask --> VesselVisitExecution : performedDuring
+PlannedOperation --> PhysicalResource : assigns
+PlannedOperation --> OperatingStaff : assigns
+ExecutedOperation --> PlannedOperation : derivesFrom
+
+@enduml

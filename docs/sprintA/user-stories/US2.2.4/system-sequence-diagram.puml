@@ -1,0 +1,45 @@
+@startuml US2.2.4 - System Sequence Diagram
+
+actor "Port Authority Officer" as Officer
+participant "Port System" as System
+
+' --- Create storage area ---
+activate Officer
+Officer -> System : Request to create storage area
+activate System
+alt Valid data
+  System --> Officer : Storage area created
+else Invalid or missing data
+  System --> Officer : Show validation errors
+end
+deactivate System
+
+' --- Update storage area ---
+Officer -> System : Request to update storage area
+activate System
+
+alt New maxCapacityTEU < currentOccupancy
+  System --> Officer : Reject update with reason
+else Valid update
+  System --> Officer : Update successful
+end
+deactivate System
+
+' --- Search & filter ---
+Officer -> System : Apply search/filter
+activate System
+System --> Officer : Display filtered list of storage areas
+deactivate System
+
+' --- View details ---
+Officer -> System : Select storage area to view details
+activate System
+alt Yard constrained to specific docks
+  System --> Officer : Show details with
+else Warehouse or yard serving whole port
+  System --> Officer : Show details with
+end
+deactivate System
+deactivate Officer
+
+@enduml

@@ -1,0 +1,59 @@
+@startuml Vista de Processos – Level 3 (US 2.2.12 – Register Physical Resource)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as PA
+participant "«container (C4)»\nVisualization (UI)" as UI_CTRL #87CEEB
+participant "«container (C4)»\nPhysical Resources\nController" as PR_CTRL #87CEEB
+participant "«component»\nApplication Service" as PR_APP #87CEEB
+participant "«component»\nDomain Model (PhysicalResource)" as PR_DOMAIN #87CEEB
+participant "«component»\nRepository" as PR_REPO #87CEEB
+participant "«component»\nData Model" as PR_DATA #87CEEB
+participant "«component»\nPersistence" as PR_PERSIST #87CEEB
+
+activate PA
+PA -> UI_CTRL: 1: register physical resource
+activate UI_CTRL
+UI_CTRL --> PA: 1.1: ask for resource data
+deactivate UI_CTRL
+PA -> UI_CTRL: 2: resource data (PhysicalResourceDTO)\n(code, description, type, capacity, assignedArea, status, setupTimeMinutes, staffQualificationIds, operationalWindow)
+activate UI_CTRL
+UI_CTRL -> PR_CTRL: 2.1: request to register resource (PhysicalResourceDTO)
+activate PR_CTRL
+PR_CTRL -> PR_APP: 2.1.1: registerPhysicalResource(dto)
+activate PR_APP
+PR_APP -> PR_DOMAIN: 2.1.1.1: create PhysicalResource aggregate
+activate PR_DOMAIN
+PR_DOMAIN --> PR_APP: 2.1.1.2: physical resource aggregate
+deactivate PR_DOMAIN
+PR_APP -> PR_REPO: 2.1.1.3: save(resource)
+activate PR_REPO
+PR_REPO -> PR_DATA: 2.1.1.3.1: map to data model
+activate PR_DATA
+PR_DATA --> PR_REPO: 2.1.1.3.2: record
+deactivate PR_DATA
+PR_REPO -> PR_PERSIST: 2.1.1.3.3: persist(record)
+activate PR_PERSIST
+PR_PERSIST --> PR_REPO: 2.1.1.3.4: ok
+deactivate PR_PERSIST
+PR_REPO --> PR_APP: 2.1.1.4: persisted(resource)
+deactivate PR_REPO
+PR_APP --> PR_CTRL: 2.1.2: resource created (PhysicalResourceDTO)
+deactivate PR_APP
+PR_CTRL --> UI_CTRL: 2.2: resource registered (PhysicalResourceDTO)
+deactivate PR_CTRL
+UI_CTRL --> PA: 2.3: resource registered
+deactivate UI_CTRL
+deactivate PA
+
+@enduml

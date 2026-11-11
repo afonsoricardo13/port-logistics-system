@@ -1,0 +1,16 @@
+# Cypress artifacts
+videos/
+screenshots/
+downloads/
+
+# Cypress cache
+.cache/
+
+# Test results
+results/
+reports/
+mochawesome-report/
+
+# OS files
+.DS_Store
+Thumbs.db

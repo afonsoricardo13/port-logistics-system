@@ -1,0 +1,78 @@
+@startuml US2.2.11 - System Sequence Diagram
+actor "Logistics Operator" as Operator
+participant "Port System" as System
+
+' Register new staff member
+activate Operator
+Operator -> System : Request to register new staff member
+activate System
+System --> Operator : Display staff registration form
+deactivate System
+
+Operator -> System : Submit staff data (mecanographic number, name, contact details, qualifications, operational window, status)
+activate System
+System --> Operator : Validate data and create staff member
+System --> Operator : Display confirmation of successful registration
+deactivate System
+
+' Update existing staff member
+Operator -> System : Request to update staff member
+activate System
+System --> Operator : Display list of staff members
+deactivate System
+
+Operator -> System : Select staff member to update
+activate System
+System --> Operator : Display staff member details form
+deactivate System
+
+Operator -> System : Submit updated staff data (contact details, qualifications, operational window, status)
+activate System
+System --> Operator : Validate updates and save changes
+System --> Operator : Display confirmation of successful update
+deactivate System
+
+' Deactivate staff member
+Operator -> System : Request to deactivate staff member
+activate System
+System --> Operator : Display list of active staff members
+deactivate System
+
+Operator -> System : Select staff member to deactivate
+activate System
+System --> Operator : Request deactivation confirmation
+deactivate System
+
+Operator -> System : Confirm deactivation
+activate System
+System --> Operator : Preserve data and mark as deactivated
+System --> Operator : Display confirmation of deactivation
+deactivate System
+
+' Reactivate staff member
+Operator -> System : Request to reactivate staff member
+activate System
+System --> Operator : Display list of deactivated staff members
+deactivate System
+
+Operator -> System : Select staff member to reactivate
+activate System
+System --> Operator : Restore active status
+System --> Operator : Display confirmation of reactivation
+deactivate System
+
+' Search and filter staff members
+Operator -> System : Apply search/filter criteria (ID, name, status, qualifications)
+activate System
+System --> Operator : Display filtered staff member list
+deactivate System
+
+' View staff member details
+Operator -> System : Select specific staff member to view details
+activate System
+System --> Operator : Display complete staff member information (ID, name, contact, qualifications, operational window, status)
+deactivate System
+
+deactivate Operator
+
+@enduml

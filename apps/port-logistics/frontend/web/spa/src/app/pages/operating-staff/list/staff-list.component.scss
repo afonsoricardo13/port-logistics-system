@@ -1,0 +1,357 @@
+// Operating Staff List Styles
+.staff-list-container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+
+    h1 {
+      margin: 0;
+      font-size: 2rem;
+      color: #333;
+    }
+  }
+
+  // Alerts
+  .alert {
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+
+    &.alert-success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    &.alert-error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+  }
+
+  // Filters Section
+  .filters-section {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+
+    .filters-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr auto;
+      gap: 1rem;
+      align-items: end;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+
+      label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #555;
+      }
+
+      .form-control {
+        padding: 0.5rem;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 1rem;
+
+        &:focus {
+          outline: none;
+          border-color: #0066cc;
+          box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+        }
+      }
+
+      &.filter-actions {
+        .btn-sm {
+          padding: 0.5rem 1rem;
+        }
+      }
+    }
+  }
+
+  // Loading State
+  .loading {
+    text-align: center;
+    padding: 3rem;
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #0066cc;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    p {
+      color: #666;
+    }
+  }
+
+  // Empty State
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+    font-size: 1.1rem;
+  }
+
+  // Staff Table
+  .staff-table {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow-x: auto;
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+
+      thead {
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+
+        th {
+          padding: 1rem;
+          text-align: left;
+          font-weight: 600;
+          color: #555;
+          white-space: nowrap;
+        }
+      }
+
+      tbody {
+        tr {
+          border-bottom: 1px solid #dee2e6;
+          transition: background-color 0.2s;
+
+          &:hover {
+            background-color: #f8f9fa;
+          }
+
+          &:last-child {
+            border-bottom: none;
+          }
+        }
+
+        td {
+          padding: 1rem;
+          vertical-align: middle;
+
+          &.id-cell {
+            font-weight: 600;
+            color: #0066cc;
+          }
+
+          &.name-cell {
+            font-weight: 500;
+          }
+
+          &.email-cell,
+          &.phone-cell {
+            color: #666;
+            font-size: 0.9rem;
+          }
+
+          &.qualifications-cell {
+            .qualifications-list {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 0.25rem;
+            }
+
+            .qualification-badge {
+              display: inline-block;
+              padding: 0.25rem 0.5rem;
+              background: #e7f3ff;
+              color: #0066cc;
+              border-radius: 4px;
+              font-size: 0.75rem;
+              font-weight: 500;
+            }
+          }
+
+          &.window-cell {
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #666;
+          }
+
+          &.actions-cell {
+            .btn {
+              margin-right: 0.5rem;
+
+              &:last-child {
+                margin-right: 0;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Status Badges
+  .status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+
+    &.status-available {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    &.status-unavailable,
+    &.status-deactivated {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+  }
+
+  // Buttons
+  .btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    &.btn-primary {
+      background-color: #0066cc;
+      color: white;
+
+      &:hover {
+        background-color: #0052a3;
+      }
+    }
+
+    &.btn-secondary {
+      background-color: #6c757d;
+      color: white;
+
+      &:hover {
+        background-color: #5a6268;
+      }
+    }
+
+    &.btn-info {
+      background-color: #17a2b8;
+      color: white;
+
+      &:hover {
+        background-color: #138496;
+      }
+    }
+
+    &.btn-success {
+      background-color: #28a745;
+      color: white;
+
+      &:hover {
+        background-color: #218838;
+      }
+    }
+
+    &.btn-warning {
+      background-color: #ffc107;
+      color: #212529;
+
+      &:hover {
+        background-color: #e0a800;
+      }
+    }
+
+    &.btn-sm {
+      padding: 0.25rem 0.75rem;
+      font-size: 0.8rem;
+    }
+  }
+
+  // Results Count
+  .results-count {
+    margin-top: 1rem;
+    text-align: right;
+    color: #666;
+    font-size: 0.9rem;
+  }
+
+  // Responsive
+  @media (max-width: 1200px) {
+    .filters-section .filters-row {
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+
+    .header {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: stretch;
+
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+
+    .filters-section .filters-row {
+      grid-template-columns: 1fr;
+    }
+
+    .staff-table {
+      font-size: 0.875rem;
+
+      table {
+        thead th,
+        tbody td {
+          padding: 0.75rem 0.5rem;
+        }
+
+        tbody td.actions-cell {
+          .btn {
+            margin-bottom: 0.25rem;
+            width: 100%;
+          }
+        }
+      }
+    }
+  }
+}

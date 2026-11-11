@@ -1,0 +1,71 @@
+@startuml Vista de Processos – Level 3 (US 2.2.12 – Manage Physical Resource)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as PA
+participant "«container (C4)»\nVisualization (UI)" as UI_CTRL #87CEEB
+participant "«container (C4)»\nPhysical Resources\nController" as PR_CTRL #87CEEB
+participant "«component»\nApplication Service" as PR_APP #87CEEB
+participant "«component»\nDomain Model (PhysicalResource)" as PR_DOMAIN #87CEEB
+participant "«component»\nRepository" as PR_REPO #87CEEB
+participant "«component»\nData Model" as PR_DATA #87CEEB
+participant "«component»\nPersistence" as PR_PERSIST #87CEEB
+
+activate PA
+PA -> UI_CTRL: 1: manage physical resource (create | update | deactivate)
+activate UI_CTRL
+UI_CTRL --> PA: 1.1: show current resource data
+deactivate UI_CTRL
+PA -> UI_CTRL: 2: submit action payload (code for update | deactivate)
+activate UI_CTRL
+UI_CTRL -> PR_CTRL: 2.1: request to update/complete resource (PhysicalResourceDTO)
+activate PR_CTRL
+PR_CTRL -> PR_APP: 2.1.1: updatePhysicalResource(resourceId, dto)
+activate PR_APP
+PR_APP -> PR_REPO: 2.1.1.1: getById(resourceId)
+activate PR_REPO
+PR_REPO -> PR_PERSIST: 2.1.1.1.1: fetch(record)
+activate PR_PERSIST
+PR_PERSIST --> PR_REPO: 2.1.1.1.2: record
+deactivate PR_PERSIST
+PR_REPO -> PR_DATA: 2.1.1.1.3: map to domain
+activate PR_DATA
+PR_DATA --> PR_REPO: 2.1.1.1.4: physical resource aggregate
+deactivate PR_DATA
+PR_REPO --> PR_APP: 2.1.1.2: physical resource aggregate
+deactivate PR_REPO
+PR_APP -> PR_DOMAIN: 2.1.1.3: validate & apply changes or mark complete
+activate PR_DOMAIN
+PR_DOMAIN --> PR_APP: 2.1.1.4: physical resource updated/completed
+deactivate PR_DOMAIN
+PR_APP -> PR_REPO: 2.1.1.5: save(updated resource)
+activate PR_REPO
+PR_REPO -> PR_DATA: 2.1.1.5.1: map to data model
+activate PR_DATA
+PR_DATA --> PR_REPO: 2.1.1.5.2: updated record
+deactivate PR_DATA
+PR_REPO -> PR_PERSIST: 2.1.1.5.3: persist(updated record)
+activate PR_PERSIST
+PR_PERSIST --> PR_REPO: 2.1.1.5.4: ok
+deactivate PR_PERSIST
+PR_REPO --> PR_APP: 2.1.1.6: persisted(updated resource)
+deactivate PR_REPO
+PR_APP --> PR_CTRL: 2.1.2: resource updated/deactivated (PhysicalResourceDTO)
+deactivate PR_APP
+PR_CTRL --> UI_CTRL: 2.2: confirmation
+deactivate PR_CTRL
+UI_CTRL --> PA: 2.3: show confirmation
+deactivate UI_CTRL
+deactivate PA
+
+@enduml

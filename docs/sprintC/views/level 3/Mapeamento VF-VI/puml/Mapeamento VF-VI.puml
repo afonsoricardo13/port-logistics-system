@@ -1,0 +1,50 @@
+@startuml Mapeamento VF-VI – Nível 3 (Sprint C)
+top to bottom direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+skinparam node {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam component { 
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' === Physical View ===
+rectangle "Physical View" as PV {
+  node "Client Browser" as PV_BROWSER
+  node "Azure App Service (PL)" as PV_AZURE_PL
+  node "Azure App Service (OEM)" as PV_AZURE_OEM
+  node "Azure VM (Scheduling)" as PV_AZURE_SCHED
+  node "Azure SQL (PL)" as PV_SQL_PL
+  node "Azure SQL (OEM)" as PV_SQL_OEM
+  node "IAM Provider" as PV_IAM #F5F5DC
+}
+
+' === Implementation View ===
+rectangle "Implementation View" as IV {
+  component "Angular SPA Bundle" as IV_SPA
+  component "Port Logistics\nWebApi.dll" as IV_PL
+  component "OEM\nWebApi.dll" as IV_OEM
+  component "scheduling_server.pl" as IV_SCHED
+  database "PortLogisticsDb Schema" as IV_PL_DB
+  database "OEMDb Schema" as IV_OEM_DB
+  component "IAM Service" as IV_IAM #F5F5DC
+}
+
+PV_BROWSER .down.> IV_SPA : <<deploys>>
+PV_AZURE_PL .down.> IV_PL : <<deploys>>
+PV_AZURE_OEM .down.> IV_OEM : <<deploys>>
+PV_AZURE_SCHED .down.> IV_SCHED : <<deploys>>
+PV_SQL_PL .down.> IV_PL_DB : <<hosts>>
+PV_SQL_OEM .down.> IV_OEM_DB : <<hosts>>
+PV_IAM .down.> IV_IAM : <<hosts>>
+
+@enduml

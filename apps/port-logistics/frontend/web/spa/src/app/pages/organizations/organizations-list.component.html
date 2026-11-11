@@ -1,0 +1,96 @@
+<!-- US 2.2.5: Organizations List -->
+<div class="organizations-container">
+  <div class="header">
+    <h1>Shipping Agent Organizations</h1>
+    <button 
+      *ngIf="canManageOrganizations()"
+      class="btn btn-primary" 
+      (click)="createNew()">
+      <i class="icon-plus"></i> Register New Organization
+    </button>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <!-- Search Filter -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label for="search">Search</label>
+      <input 
+        id="search"
+        type="text" 
+        class="form-control" 
+        placeholder="Search by identifier, legal name, or tax number..."
+        [(ngModel)]="searchText"
+        (ngModelChange)="onSearchChange()" />
+      <small class="help-text" style="color: #6c757d; font-size: 0.85rem; margin-top: 0.5rem;">Currently showing organizations but data fields may be empty due to incomplete seeding</small>
+    </div>
+
+    <div class="filter-actions">
+      <button class="btn btn-secondary btn-sm" (click)="clearFilters()">
+        Clear Filters
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading organizations...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredOrganizations.length === 0" class="empty-state">
+    <p *ngIf="!searchText">No organizations registered yet.</p>
+    <p *ngIf="searchText">No organizations match your search criteria.</p>
+  </div>
+
+  <!-- Organizations Table -->
+  <div *ngIf="!loading && filteredOrganizations.length > 0" class="organizations-table">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Identifier</th>
+          <th>Legal Name</th>
+          <th>Tax Number</th>
+          <th>Address</th>
+          <th>Representatives</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let org of filteredOrganizations">
+          <td class="id-cell">#{{ org.id }}</td>
+          <td><strong>{{ org.identifier }}</strong></td>
+          <td>{{ org.legalName }}</td>
+          <td>{{ org.taxNumber }}</td>
+          <td>{{ org.address.street }}, {{ org.address.postalCode }} {{ org.address.city }}</td>
+          <td class="text-center">
+            <span class="badge badge-info">{{ org.representatives?.length || 0 }}</span>
+          </td>
+          <td class="actions-cell">
+            <button 
+              class="btn btn-sm btn-info" 
+              (click)="viewRepresentatives(org)"
+              title="View representatives">
+              Representatives
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Results Count -->
+  <div *ngIf="!loading && filteredOrganizations.length > 0" class="results-count">
+    Showing {{ filteredOrganizations.length }} of {{ organizations.length }} organizations
+  </div>
+</div>

@@ -1,0 +1,111 @@
+name: VM Deployment and Test Plan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Runs every day at 1:00 AM UTC
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      DOTNET_NOLOGO: true
+      DOTNET_INSTALL_DIR: ${{ github.workspace }}/.dotnet
+      DOTNET_ROOT: ${{ github.workspace }}/.dotnet
+      PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${{ github.workspace }}/.dotnet
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up .NET 9 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+          global-json-file: global.json
+        env:
+          DOTNET_INSTALL_DIR: ${{ github.workspace }}/.dotnet
+
+      - name: Display .NET version
+        run: dotnet --version
+
+      - name: Restore dependencies
+        run: dotnet restore apps/port-logistics/backend/PortLogistics.sln
+
+      - name: Build (Release)
+        run: dotnet build apps/port-logistics/backend/PortLogistics.sln --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test apps/port-logistics/backend/PortLogistics.sln --configuration Release --no-build --logger "trx" --collect "XPlat Code Coverage"
+
+      - name: Publish application
+        run: dotnet publish apps/port-logistics/backend/WebApi/WebApi.csproj --configuration Release --no-build --output ./publish
+
+      - name: Create deployment package
+        run: |
+          cd publish
+          tar -czf ../portlogistics-deploy.tar.gz *
+          cd ..
+
+      # Temporarily disabled - VM connection timeout issues
+      # - name: Setup SSH key
+      #   run: |
+      #     mkdir -p ~/.ssh
+      #     echo "${{ secrets.VM_DEPLOY_KEY }}" > ~/.ssh/vm_deploy_key
+      #     chmod 600 ~/.ssh/vm_deploy_key
+
+      # - name: Copy to VM (using SCP)
+      #   run: |
+      #     scp -o StrictHostKeyChecking=no -i ~/.ssh/vm_deploy_key portlogistics-deploy.tar.gz ${{ secrets.DEI_VM_USERNAME }}@${{ secrets.DEI_VM_HOST }}:/tmp/
+      #   continue-on-error: true
+
+      # - name: Deploy on VM (using SSH)
+      #   run: |
+      #     ssh -o StrictHostKeyChecking=no -i ~/.ssh/vm_deploy_key ${{ secrets.DEI_VM_USERNAME }}@${{ secrets.DEI_VM_HOST }} << 'ENDSSH'
+      #       cd /tmp
+      #       mkdir -p ~/portlogistics-deployments/$(date +%Y%m%d-%H%M%S)
+      #       tar -xzf portlogistics-deploy.tar.gz -C ~/portlogistics-deployments/$(date +%Y%m%d-%H%M%S)/
+      #       ln -sfn ~/portlogistics-deployments/$(date +%Y%m%d-%H%M%S) ~/portlogistics-current
+      #       rm -f portlogistics-deploy.tar.gz
+      #       echo "Deployment completed successfully"
+      #     ENDSSH
+      #   continue-on-error: true
+
+      # Temporarily disabled due to storage quota - quota recalculates every 6-12 hours
+      # - name: Upload test results
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: test-results
+      #     path: |
+      #       **/TestResults/**/*.trx
+      #     if-no-files-found: warn
+      #     retention-days: 1
+
+      # - name: Upload code coverage
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: code-coverage
+      #     path: |
+      #       **/TestResults/**/coverage.cobertura.xml
+      #     if-no-files-found: warn
+      #     retention-days: 1
+
+      # - name: Upload deployment package
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: deployment-package
+      #     path: portlogistics-deploy.tar.gz
+      #     if-no-files-found: warn
+      #     retention-days: 7

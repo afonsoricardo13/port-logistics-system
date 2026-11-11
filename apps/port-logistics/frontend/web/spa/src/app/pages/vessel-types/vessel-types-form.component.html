@@ -1,0 +1,120 @@
+<div class="vessel-type-form-container">
+  <div class="header">
+    <h1>{{ isEditMode ? 'Edit' : 'Create New' }} Vessel Type</h1>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
+
+  <form [formGroup]="vesselTypeForm" class="vessel-type-form">
+    <div class="form-section">
+      <h2>Basic Information</h2>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="name" class="required">Name</label>
+          <input 
+            id="name"
+            type="text" 
+            formControlName="name"
+            class="form-control"
+            placeholder="e.g., Container Ship"
+            [class.error]="vesselTypeForm.get('name')?.invalid && vesselTypeForm.get('name')?.touched" />
+          <span *ngIf="vesselTypeForm.get('name')?.invalid && vesselTypeForm.get('name')?.touched" class="error-message">
+            Name is required (min 2 characters)
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="capacity" class="required">Capacity (TEU)</label>
+          <input 
+            id="capacity"
+            type="number" 
+            formControlName="capacity"
+            class="form-control"
+            placeholder="Total container capacity"
+            [class.error]="vesselTypeForm.get('capacity')?.invalid && vesselTypeForm.get('capacity')?.touched" />
+          <span *ngIf="vesselTypeForm.get('capacity')?.invalid && vesselTypeForm.get('capacity')?.touched" class="error-message">
+            Capacity is required (min 1)
+          </span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="description" class="required">Description</label>
+          <textarea 
+            id="description"
+            formControlName="description"
+            class="form-control"
+            rows="3"
+            placeholder="Describe the vessel type and its characteristics"
+            [class.error]="vesselTypeForm.get('description')?.invalid && vesselTypeForm.get('description')?.touched"></textarea>
+          <span *ngIf="vesselTypeForm.get('description')?.invalid && vesselTypeForm.get('description')?.touched" class="error-message">
+            Description is required (min 5 characters)
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>Operational Constraints</h2>
+      <p class="section-description">
+        Define the maximum dimensions for container stacking on this vessel type
+      </p>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="maxRows" class="required">Maximum Rows</label>
+          <input 
+            id="maxRows"
+            type="number" 
+            formControlName="maxRows"
+            class="form-control"
+            placeholder="e.g., 12"
+            [class.error]="vesselTypeForm.get('maxRows')?.invalid && vesselTypeForm.get('maxRows')?.touched" />
+          <span *ngIf="vesselTypeForm.get('maxRows')?.invalid && vesselTypeForm.get('maxRows')?.touched" class="error-message">
+            Max rows is required (min 1)
+          </span>
+          <span class="help-text">Number of container rows across the vessel width</span>
+        </div>
+
+        <div class="form-group">
+          <label for="maxBays" class="required">Maximum Bays</label>
+          <input 
+            id="maxBays"
+            type="number" 
+            formControlName="maxBays"
+            class="form-control"
+            placeholder="e.g., 20"
+            [class.error]="vesselTypeForm.get('maxBays')?.invalid && vesselTypeForm.get('maxBays')?.touched" />
+          <span *ngIf="vesselTypeForm.get('maxBays')?.invalid && vesselTypeForm.get('maxBays')?.touched" class="error-message">
+            Max bays is required (min 1)
+          </span>
+          <span class="help-text">Number of container bays along the vessel length</span>
+        </div>
+
+        <div class="form-group">
+          <label for="maxTiers" class="required">Maximum Tiers</label>
+          <input 
+            id="maxTiers"
+            type="number" 
+            formControlName="maxTiers"
+            class="form-control"
+            placeholder="e.g., 8"
+            [class.error]="vesselTypeForm.get('maxTiers')?.invalid && vesselTypeForm.get('maxTiers')?.touched" />
+          <span *ngIf="vesselTypeForm.get('maxTiers')?.invalid && vesselTypeForm.get('maxTiers')?.touched" class="error-message">
+            Max tiers is required (min 1)
+          </span>
+          <span class="help-text">Number of container tiers vertically stacked</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-outline" routerLink="/vessel-types" [disabled]="isSubmitting">Cancel</button>
+      <button type="submit" class="btn btn-primary" (click)="onSubmit()" [disabled]="isSubmitting">
+        {{ isEditMode ? 'Update' : 'Create' }} Vessel Type
+      </button>
+    </div>
+  </form>
+</div>

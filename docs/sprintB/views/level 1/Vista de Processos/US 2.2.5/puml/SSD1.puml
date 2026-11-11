@@ -1,0 +1,28 @@
+@startuml SSD US 2.2.5 - Register Shipping Agent Organization
+  skinparam shadowing true
+  skinparam ArrowColor #000000
+  skinparam sequence {
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    ParticipantBorderColor #000000
+    ParticipantBackgroundColor #87CEEB
+    LifeLineBorderColor #000000
+    LifeLineBackgroundColor #87CEEB
+  }
+  
+  actor "Port Authority Officer" as Officer
+  participant "«system (C4)»\nPort Operations System" as System
+  
+  activate Officer
+  Officer -> System : 1: starts organization registration
+  activate System
+  System  --> Officer : 1.1: request organization data\n(identifier, legal name,\nalternative name, address,\ntax number,\nrepresentative:\nname, citizen ID, nationality,\nemail, phone)
+  deactivate System
+  
+  Officer -> System : 2: provide requested data (org + representatives)
+  activate System
+  System -> System : 2.1: validate required fields\n(including >=1 representative)
+  System  --> Officer : 2.2: organization created successfully\n(and representative(s) registered)
+  deactivate System
+  deactivate Officer
+  @enduml

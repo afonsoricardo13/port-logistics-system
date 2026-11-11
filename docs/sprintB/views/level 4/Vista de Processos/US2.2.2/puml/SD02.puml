@@ -1,0 +1,95 @@
+@startuml Vista de Processos - Level 4 (US 2.2.2 - Update Vessel)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Port Authority Officer" as Officer
+participant "<<container (C4)>>\nVisualization (UI)\nController" as UI_CTRL #87CEEB
+participant "<<container (C4)>>\nVisits & Manifests\nController" as MDR_CTRL #87CEEB
+participant "<<component>>\nApplication Service" as MDR_APP #87CEEB
+participant "<<component>>\nDomain Model (Vessel)" as MDR_DOMAIN #87CEEB
+participant "<<component>>\nRepository" as MDR_REPO #87CEEB
+participant "<<component>>\nData Model" as MDR_DATA #87CEEB
+participant "<<component>>\nPersistence" as MDR_PERSIST #87CEEB
+
+activate Officer
+Officer -> UI_CTRL: 1: PUT /api/vessels/{imo} {VesselDTO}
+activate UI_CTRL
+UI_CTRL -> MDR_CTRL: 1.1: updateVessel(dto)
+activate MDR_CTRL
+MDR_CTRL -> MDR_APP: 1.1.1: updateVessel(imo, dto, errors)
+activate MDR_APP
+
+MDR_APP -> MDR_REPO: 1.1.1.1: getByImoNumber(imo)
+activate MDR_REPO
+MDR_REPO -> MDR_PERSIST: 1.1.1.1.1: fetch vessel by IMO
+activate MDR_PERSIST
+MDR_PERSIST --> MDR_REPO: 1.1.1.1.2: vessel record or null
+deactivate MDR_PERSIST
+MDR_REPO -> MDR_DATA: 1.1.1.1.3: map to domain
+activate MDR_DATA
+MDR_DATA --> MDR_REPO: 1.1.1.1.4: vessel aggregate or null
+deactivate MDR_DATA
+MDR_REPO --> MDR_APP: 1.1.1.1.5: vessel or null
+deactivate MDR_REPO
+
+alt vessel not found
+  MDR_APP --> MDR_CTRL: 1.1.1.a: false, errors = ["Vessel not found"]
+  MDR_CTRL --> UI_CTRL: 1.1.a: HTTP 404 Not Found
+  UI_CTRL --> Officer: 1.1.b: show error
+else vessel found
+
+  MDR_APP -> MDR_DOMAIN: 1.1.1.2: VesselDTO.UpdateToDomain(vessel, dto)
+  activate MDR_DOMAIN
+  MDR_DOMAIN -> MDR_DOMAIN: apply updates (name, vesselType, operator)
+  MDR_DOMAIN --> MDR_APP: 1.1.1.2.1: updated vessel
+  deactivate MDR_DOMAIN
+
+  MDR_APP -> MDR_REPO: 1.1.1.3: save(updated vessel)
+  activate MDR_REPO
+  MDR_REPO -> MDR_DATA: 1.1.1.3.1: map to data model
+  activate MDR_DATA
+  MDR_DATA --> MDR_REPO: 1.1.1.3.2: updated record
+  deactivate MDR_DATA
+  MDR_REPO -> MDR_PERSIST: 1.1.1.3.3: UPDATE vessel
+  activate MDR_PERSIST
+  MDR_PERSIST --> MDR_REPO: 1.1.1.3.4: ok
+  deactivate MDR_PERSIST
+  MDR_REPO --> MDR_APP: 1.1.1.3.5: persisted(updated vessel)
+  deactivate MDR_REPO
+
+  MDR_APP --> MDR_CTRL: 1.1.2: true
+  deactivate MDR_APP
+  MDR_CTRL --> UI_CTRL: 1.2: HTTP 200 OK
+  deactivate MDR_CTRL
+  UI_CTRL --> Officer: 1.3: show confirmation
+end
+
+deactivate UI_CTRL
+deactivate Officer
+
+note right of MDR_DOMAIN
+  Update rules:
+  - IMO is immutable (search key)
+  - Name / VesselType / Operator trimmed
+  - Reuses aggregate validation
+end note
+
+note right of MDR_APP
+  Service coordination:
+  - Get vessel by IMO
+  - Apply DTO changes on aggregate
+  - Persist via repository
+  - Return bool + errors
+end note
+
+@enduml

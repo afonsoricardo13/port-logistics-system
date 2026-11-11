@@ -1,0 +1,27 @@
+@startuml SSD US 2.2.11 - Deactivate Operating Staff
+skinparam shadowing true
+skinparam ArrowColor #000000
+skinparam sequence {
+	ArrowColor Black
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as Operator
+participant "«system (C4)»\nPort Operations System" as System
+
+activate Operator
+Operator -> System : 1: selects staff member to deactivate
+activate System
+System  --> Operator : 1.1: request confirmation
+Operator -> System : 2: confirm deactivation
+System  --> Operator : 2.1: staff member deactivated (data preserved)
+deactivate System
+deactivate Operator
+
+@enduml

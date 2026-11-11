@@ -1,0 +1,30 @@
+@startuml SSD US 2.2.9 - Change Vessel Visit Notification
+skinparam shadowing true
+skinparam ArrowColor #000000
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Shipping Agent Representative" as Agent
+participant "«system (C4)»\nPort Operations System" as System
+
+activate Agent
+Agent -> System : 1: starts editing a Vessel Visit Notification (VVN)
+activate System
+System --> Agent : 1.1: request current Vessel Visit Notification data\n(Vessel, ETA, ETD, cargo manifest, crew info,...)
+deactivate System
+
+Agent -> System : 2: provide changes (updated fields)
+activate System
+System --> Agent : 2.1: save changes (VVN remains "in progress")
+deactivate System
+deactivate Agent
+
+@enduml

@@ -1,0 +1,64 @@
+@startuml UseCaseDiagram
+
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+title Use Case Diagram
+
+left to right direction
+
+actor "Project Manager" as PM
+actor "Port Authority Officer" as PAO
+actor "Shipping Agent Representative" as SAR
+actor "Logistics Operator" as LO
+
+usecase "US2.1.1 - Set up the tools and infrastructure necessary to properly develop and manage the project" as UC2.1.1
+usecase "US2.2.1 - Create and update vessel types" as UC2.2.1
+usecase "US2.2.2 - Register and update vessel records" as UC2.2.2
+usecase "US2.2.3 - Register and update docks" as UC2.2.3
+usecase "US2.2.4 - Register and update storage areas" as UC2.2.4
+usecase "US2.2.5 - Register new shipping agent organizations" as UC2.2.5
+usecase "US2.2.6 - Register and manage representatives of a shipping agent organization" as UC2.2.6
+usecase "US2.2.7 - Review pending Vessel Visit Notifications and approve or reject them" as UC2.2.7
+usecase "US2.2.8 - Create/submit a Vessel Visit Notification" as UC2.2.8
+usecase "US2.2.9 - Change / complete a Vessel Visit Notification while it is still in progress" as UC2.2.9
+usecase "US2.2.10 - View the status of all my submitted Vessel Visit Notification" as UC2.2.10
+usecase "US2.2.11 - Register and manage operating staff members" as UC2.2.11
+usecase "US2.2.12 - Register and manage physical resources" as UC2.2.12
+usecase "US2.2.13 - Register and manage qualifications" as UC2.2.13
+usecase "US2.3.1 - Prepare a summary presentation of the client organization" as UC2.3.1
+usecase "US2.3.2 - Analyze the organizational structure of the client" as UC2.3.2
+usecase "US2.3.3 - Suggest improvements to the organization's internal structure or rules" as UC2.3.3
+usecase "US2.3.4 - Identify and comment on the organization's values, vision, and mission" as UC2.3.4
+usecase "US2.3.5 - Propose one SMART objective for each of the three management levels" as UC2.3.5
+usecase "US2.3.6 - Conduct a SWOT analysis of the organization" as UC2.3.6
+usecase "US2.3.7 - Propose a possible strategy for the organization" as UC2.3.7
+
+
+PM --> UC2.1.1
+PM --> UC2.3.1
+PM --> UC2.3.2
+PM --> UC2.3.3
+PM --> UC2.3.4
+PM --> UC2.3.5
+PM --> UC2.3.6
+PM --> UC2.3.7
+
+PAO --> UC2.2.1
+PAO --> UC2.2.2
+PAO --> UC2.2.3
+PAO --> UC2.2.4
+PAO --> UC2.2.5
+PAO --> UC2.2.6
+PAO --> UC2.2.7
+
+LO --> UC2.2.11
+LO --> UC2.2.12
+LO --> UC2.2.13
+
+SAR --> UC2.2.8
+SAR --> UC2.2.9
+SAR --> UC2.2.10
+
+@enduml

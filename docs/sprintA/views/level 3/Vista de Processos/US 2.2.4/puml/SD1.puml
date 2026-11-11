@@ -1,0 +1,59 @@
+@startuml Vista de Processos – Level 3 (US 2.2.4 – Register Storage Area)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+  ArrowColor Black
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+  LifeLineBorderColor Black
+  LifeLineBackgroundColor #87CEEB
+  ParticipantBorderColor Black
+  ParticipantBackgroundColor #87CEEB
+  ParticipantFontStyle bold
+}
+
+actor "Port Authority Officer" as PA
+participant "«container (C4)»\nVisualization (UI)\nController" as UI_CTRL #87CEEB
+participant "«container (C4)»\nDocks & Resources\nController" as SA_CTRL #87CEEB
+participant "«component»\nApplication Service" as SA_APP #87CEEB
+participant "«component»\nDomain Model (StorageArea)" as SA_DOMAIN #87CEEB
+participant "«component»\nRepository" as SA_REPO #87CEEB
+participant "«component»\nData Model" as SA_DATA #87CEEB
+participant "«component»\nPersistence" as SA_PERSIST #87CEEB
+
+activate PA
+PA -> UI_CTRL: 1: register storage area
+activate UI_CTRL
+UI_CTRL --> PA: 1.1: ask for storage area data
+deactivate UI_CTRL
+PA -> UI_CTRL: 2: storage area data (StorageAreaDTO)
+activate UI_CTRL
+UI_CTRL -> SA_CTRL: 2.1: request to register storage area (StorageAreaDTO)
+activate SA_CTRL
+SA_CTRL -> SA_APP: 2.1.1: registerStorageArea(StorageAreaDTO)
+activate SA_APP
+SA_APP -> SA_DOMAIN: 2.1.1.1: create StorageArea aggregate
+activate SA_DOMAIN
+SA_DOMAIN --> SA_APP: 2.1.1.2: storageArea aggregate
+deactivate SA_DOMAIN
+SA_APP -> SA_REPO: 2.1.1.3: save(storageArea)
+activate SA_REPO
+SA_REPO -> SA_DATA: 2.1.1.3.1: map to data model
+activate SA_DATA
+SA_DATA --> SA_REPO: 2.1.1.3.2: storageArea record
+deactivate SA_DATA
+SA_REPO -> SA_PERSIST: 2.1.1.3.3: persist(record)
+activate SA_PERSIST
+SA_PERSIST --> SA_REPO: 2.1.1.3.4: ok
+deactivate SA_PERSIST
+SA_REPO --> SA_APP: 2.1.1.4: persisted(storageArea)
+deactivate SA_REPO
+SA_APP --> SA_CTRL: 2.1.2: storage area created (StorageAreaDTO)
+deactivate SA_APP
+SA_CTRL --> UI_CTRL: 2.2: storage area registered (StorageAreaDTO)
+deactivate SA_CTRL
+UI_CTRL --> PA: 2.3: storage area registered
+deactivate UI_CTRL
+deactivate PA
+
+@enduml

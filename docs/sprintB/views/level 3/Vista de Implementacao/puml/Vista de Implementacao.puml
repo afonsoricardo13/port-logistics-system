@@ -1,0 +1,60 @@
+@startuml Implementation View – Level 3 (Port Logistics Backend)
+top to bottom direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+skinparam component {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+rectangle "Port Operations System" #87CEEB {
+
+  rectangle "Infrastructure" #87CEEB {
+    component "Routes" as ROUTES
+    component "Persistence" as PERS
+  }
+
+  rectangle "Interface Adapters" #87CEEB {
+    component "Controllers" as CTRL
+    component "Repositories" as REPO
+  }
+
+  rectangle "Application Services / Use Case Services" #87CEEB {
+    component "App Services" as APP_SVC
+  }
+
+  rectangle "Entities / Core / Domain" #87CEEB {
+    component "Aggregates" as AGG
+    component "Value Objects" as VO
+    component "Services" as SVC
+  }
+
+  ' --- dependências (tracejado), conforme exemplo ---
+  ROUTES ..down..> CTRL
+  REPO   ..up..>   PERS
+  
+  CTRL ..down..> APP_SVC
+  
+  REPO ..right..> APP_SVC
+  
+  APP_SVC ..down..> AGG
+  APP_SVC ..down..> VO
+  APP_SVC ..down..> SVC
+  
+  ' Layout hints
+  ROUTES -[hidden]down- CTRL
+  PERS -[hidden]down- REPO
+  CTRL -[hidden]down- APP_SVC
+  APP_SVC -[hidden]down- AGG
+}
+
+' ====== componente externo: base de dados ======
+component "«external»\nDatabase" as DB #F5F5DC
+
+PERS ..> DB : SQL
+
+@enduml

@@ -1,0 +1,30 @@
+@startuml Vista de Processos – Level 2 (US 2.2.7 – Review Pending Vessel Visit Notifications)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Port Authority Officer" as Officer
+participant "<<container (C4)>>\nVisualization (UI)" as UI #87CEEB
+participant "<<container (C4)>>\nVisits & Manifests" as VVN #87CEEB
+
+activate Officer
+Officer -> UI: 1: request pending notifications
+activate UI
+UI -> VVN: 1.1: get pending notifications
+activate VVN
+VVN --> UI: 1.2: list of pending notifications
+deactivate VVN
+UI --> Officer: 1.3: display pending notifications\n(Vessel, IMO, ETA, ETD, purpose, cargo)
+deactivate UI
+deactivate Officer
+
+@enduml

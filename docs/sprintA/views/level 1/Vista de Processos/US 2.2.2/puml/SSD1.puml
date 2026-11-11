@@ -1,0 +1,31 @@
+@startuml SSD US 2.2.2 - Register Vessels
+skinparam shadowing true
+skinparam ArrowColor #000000
+skinparam sequence {
+	ArrowColor Black
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Port Authority Officer" as Officer
+participant "«system (C4)»\nPort Operations System" as System
+
+activate Officer
+Officer -> System : 1: starts vessel creation
+activate System
+System  --> Officer : 1.1: request vessel data\n(IMO, name, type, operator/owner)
+deactivate System
+
+Officer -> System : 2: provide requested data
+activate System
+System  --> Officer : 2.1: vessel created successfully
+deactivate System
+deactivate Officer
+
+
+@enduml

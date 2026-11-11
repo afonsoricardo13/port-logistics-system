@@ -1,0 +1,95 @@
+@startuml Logical View - Level 3 (Onion) - Port Logistics Backend
+top to bottom direction
+skinparam shadowing true
+skinparam defaultTextAlignment center
+skinparam packageStyle rectangle
+
+skinparam component { 
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ===== APIs externas =====
+() "Port Logistics API" as PORT_API #87CEEB
+
+' ===== Container com camadas concêntricas (Onion) =====
+package "«component»\n«container (C4)»\nPort Logistics (Backend)" #87CEEB {
+
+  ' --------- Camada 1: Frameworks & Drivers Layer (outer - azul claro) ---------
+  package "Frameworks and Drivers Layer                                                                                                                                " #AEEEEE {
+    
+    component "Program.cs\nStartup.cs" as ROUT
+    component "AbsanteeContext\n(EF Core)" as PERSIST
+    component "Data Model\n(DataModel)" as DMODEL
+    
+    interface "Controller API" as I_CTRL
+    interface "Persistence API" as I_PERSIST
+    interface "Data Model API" as I_DATA
+    
+    ' --------- Camada 2: Interface Adapters Layer (verde) ---------
+    package "Interface Adapters Layer                                                                                                        " #C7F0C7 {
+      
+      component "Controllers\n(15 controllers)" as CTRL
+      component "Repositories\n(GenericRepository)" as REPO
+      component "DTOs\n(18 DTOs)" as DTO
+      component "Authorization\n(Attributes)" as AUTH
+      
+      interface "DTO API" as I_DTO
+      interface "App Service API" as I_APP
+      interface "IRepository" as I_IREPO
+      
+      ' --------- Camada 3: Application Business Rules (rosa) ---------
+      package "Application Business Rules                                                                      " #F7BFBF {
+        
+        component "Application Services\n(16 services)" as APP
+        
+        interface "Model API" as I_MODEL
+        
+        ' --------- Camada 4: Enterprise Business Rules (bege - core) ---------
+        package "Enterprise Business Rules                    " #F7E5B5 {
+          component "Domain Model\n(Entities + Value Objects)" as DOMAIN
+        }
+      }
+    }
+  }
+}
+
+' ===== Ligações da API externa para Routing =====
+PORT_API --> ROUT
+
+' ===== Ligações do Routing para Controller =====
+ROUT --> I_CTRL
+I_CTRL --> CTRL
+
+' ===== Ligações do Controller para DTO, Authorization e App Service =====
+CTRL --> I_DTO
+I_DTO --> DTO
+
+CTRL --> AUTH
+
+CTRL --> I_APP
+I_APP --> APP
+
+' ===== Ligações do App Service para Domain Model e IRepository =====
+APP --> I_MODEL
+I_MODEL --> DOMAIN
+
+APP --> I_IREPO
+I_IREPO --> REPO
+
+' ===== Ligações do Repository para Persistence e Data Model =====
+REPO --> I_PERSIST
+I_PERSIST --> PERSIST
+
+REPO --> I_DATA
+I_DATA --> DMODEL
+
+' ===== componente externo: base de dados =====
+component "«external»\nDatabase" as DB #F5F5DC
+
+PERSIST --> DB : SQL
+
+@enduml

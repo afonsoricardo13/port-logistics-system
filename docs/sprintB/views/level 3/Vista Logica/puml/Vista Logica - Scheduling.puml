@@ -1,0 +1,51 @@
+@startuml Logical View - Level 3 (Scheduling & Planning)
+top to bottom direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+' ===== estilo =====
+skinparam component { 
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ===== API externa =====
+() "Scheduling API" as SCHED_API #87CEEB
+
+' ===== boundary do container Scheduling =====
+rectangle "«component»\n«container (C4)»\nScheduling & Planning" as PLAN #87CEEB {
+  
+  component "«component»\nController" as PLAN_CTRL
+  
+  interface "Service API" as PLAN_I_SVC
+  component "«component»\nPlanning Service" as PLAN_SVC
+  
+  interface "Algorithm API" as PLAN_I_ALG
+  component "«component»\nScheduling Algorithms" as PLAN_ALG
+  
+  interface "Client API" as PLAN_I_CLIENT
+  component "«component»\nHTTP Client (to Port Logistics)" as PLAN_CLIENT
+  
+  ' Wiring
+  PLAN_CTRL --> PLAN_I_SVC
+  PLAN_I_SVC --> PLAN_SVC
+  
+  PLAN_SVC --> PLAN_I_ALG
+  PLAN_I_ALG --> PLAN_ALG
+  
+  PLAN_SVC --> PLAN_I_CLIENT
+  PLAN_I_CLIENT --> PLAN_CLIENT
+}
+
+' ===== Entradas/saidas por API =====
+SCHED_API --> PLAN_CTRL
+
+' ===== Conexão a API externa (Port Logistics) =====
+() "Port Logistics API" as PORT_API #87CEEB
+PLAN_CLIENT --> PORT_API : fetch resources/staff data
+
+@enduml

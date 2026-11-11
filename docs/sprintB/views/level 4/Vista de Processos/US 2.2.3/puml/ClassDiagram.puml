@@ -1,0 +1,155 @@
+@startuml Vista Logica - Level 4 (US 2.2.3 - Dock Management)
+
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor<<Controller>> LightBlue
+    BackgroundColor<<Service>> LightGreen
+    BackgroundColor<<Repository>> LightYellow
+    BackgroundColor<<Entity>> LightCoral
+    BackgroundColor<<DTO>> Wheat
+    BackgroundColor<<Factory>> LightCyan
+    BackgroundColor<<ValueObject>> LightGray
+}
+
+package "WebApi Layer" {
+    class DocksController <<Controller>> {
+        - _service: DockService
+        - _logger: ILogger<DocksController>
+        - _errors: List<string>
+        + GetAll(name: string?, vesselType: string?, location: string?): Task<ActionResult<IEnumerable<DockDTO>>>
+        + GetByCode(code: string): Task<ActionResult<DockDTO>>
+        + Create(dto: DockDTO): Task<ActionResult<DockDTO>>
+        + Update(code: string, dto: DockDTO): Task<IActionResult>
+    }
+}
+
+package "Application Layer" {
+    class DockService <<Service>> {
+        - _dockRepository: IDockRepository
+        + GetAll(): Task<IEnumerable<DockDTO>>
+        + GetByCode(code: string): Task<DockDTO?>
+        + Search(name: string?, vesselType: string?, location: string?): Task<IEnumerable<DockDTO>>
+        + Add(dto: DockDTO, errors: List<string>): Task<DockDTO?>
+        + Update(code: string, dto: DockDTO, errors: List<string>): Task<bool>
+    }
+
+    class DockDTO <<DTO>> {
+        + Code: string
+        + NameOrNumber: string
+        + Location: string
+        + Length: double
+        + Depth: double
+        + MaxDraft: double
+        + AllowedVesselTypes: List<string>
+        + {static} ToDTO(d: Dock): DockDTO
+        + {static} ToDTO(docks: IEnumerable<Dock>): IEnumerable<DockDTO>
+        + {static} ToDomain(dto: DockDTO): Dock
+        + {static} UpdateToDomain(dock: Dock, dto: DockDTO): Dock
+    }
+}
+
+package "Domain Layer" {
+    class Dock <<Entity>> {
+        + Id: long
+        - _code: string
+        - _nameOrNumber: string
+        - _location: string
+        - _physical: PhysicalCharacteristics
+        - _allowedVesselTypes: List<string>
+        + Code: string {get}
+        + NameOrNumber: string {get}
+        + Location: string {get}
+        + Physical: PhysicalCharacteristics {get}
+        + AllowedVesselTypes: IReadOnlyCollection<string> {get}
+        + Dock(code, nameOrNumber, location, length, depth, maxDraft, allowedVesselTypes)
+        + Update(nameOrNumber, location, length, depth, maxDraft, allowedVesselTypes): void
+        - SetAllowedVesselTypes(types: IEnumerable<string>): void
+    }
+
+    class PhysicalCharacteristics <<ValueObject>> {
+        - _length: double
+        - _depth: double
+        - _maxDraft: double
+        + Length: double {get}
+        + Depth: double {get}
+        + MaxDraft: double {get}
+        + PhysicalCharacteristics(length, depth, maxDraft)
+        + Update(length, depth, maxDraft): bool
+    }
+
+    interface IDockRepository <<Repository>> {
+        + GetAllAsync(): Task<IEnumerable<Dock>>
+        + GetByCodeAsync(code: string): Task<Dock?>
+        + SearchAsync(name: string?, vesselType: string?, location: string?): Task<IEnumerable<Dock>>
+        + Add(dock: Dock): Task<Dock>
+        + Update(dock: Dock, errors: List<string>): Task<Dock?>
+        + Exists(code: string): Task<bool>
+    }
+
+    interface IDockFactory <<Factory>> {
+        + NewDock(code, nameOrNumber, location, length, depth, maxDraft, allowedVesselTypes): Dock
+    }
+}
+
+package "DataModel Layer" {
+    class DockRepository <<Repository>> {
+        - _context: AbsanteeContext
+        - _mapper: DockMapper
+        + GetAllAsync(): Task<IEnumerable<Dock>>
+        + GetByCodeAsync(code: string): Task<Dock?>
+        + SearchAsync(name: string?, vesselType: string?, location: string?): Task<IEnumerable<Dock>>
+        + Add(dock: Dock): Task<Dock>
+        + Update(dock: Dock, errors: List<string>): Task<Dock?>
+        + Exists(code: string): Task<bool>
+    }
+
+    class DockMapper {
+        - _factory: IDockFactory
+        + ToDomain(dm: DockDataModel): Dock
+        + ToDomain(items: IEnumerable<DockDataModel>): IEnumerable<Dock>
+        + ToDataModel(d: Dock): DockDataModel
+        + UpdateDataModel(dm: DockDataModel, d: Dock): void
+    }
+
+    class DockDataModel {
+        + Id: long
+        + Code: string
+        + NameOrNumber: string
+        + Location: string
+        + Length: double
+        + Depth: double
+        + MaxDraft: double
+        + AllowedVesselTypesCsv: string
+    }
+
+    class AbsanteeContext {
+        + Docks: DbSet<DockDataModel>
+        + SaveChangesAsync(): Task<int>
+    }
+}
+
+' Relationships
+DocksController --> DockService : uses
+DocksController ..> DockDTO : receives/returns
+
+DockService --> IDockRepository : uses
+DockService ..> DockDTO : uses
+DockService ..> Dock : uses
+
+DockDTO ..> Dock : converts to/from
+
+Dock *-- PhysicalCharacteristics
+
+DockRepository ..|> IDockRepository : implements
+DockRepository --> AbsanteeContext : uses
+DockRepository --> DockMapper : uses
+DockRepository ..> Dock : manages
+DockRepository ..> DockDataModel : uses
+
+DockMapper --> IDockFactory : uses
+DockMapper ..> Dock : maps
+DockMapper ..> DockDataModel : maps
+
+AbsanteeContext --> DockDataModel : manages
+
+@enduml

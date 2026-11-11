@@ -1,0 +1,128 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test_password
+          MYSQL_DATABASE: AbsanteeDB
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+    
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      DOTNET_NOLOGO: true
+      ConnectionStrings__AbsanteeDatabase: "Server=localhost;Port=3306;Database=AbsanteeDB;User=root;Password=test_password;SslMode=None;AllowPublicKeyRetrieval=True;"
+      ConnectionStrings__OEMDatabase: "Server=localhost;Port=3306;Database=OEMDB;User=root;Password=test_password;SslMode=None;AllowPublicKeyRetrieval=True;"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 9 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+          global-json-file: global.json
+
+      # Cache to uncomment in the future if the project gets a packages.lock.json
+      # - name: Cache NuGet packages
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ~/.nuget/packages
+      #     key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.sln') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-nuget-
+
+      - name: Display .NET version
+        run: dotnet --version
+
+      - name: Create OEM Database
+        run: |
+          mysql -h 127.0.0.1 -u root -ptest_password -e "CREATE DATABASE IF NOT EXISTS OEMDB;"
+
+      - name: Restore Port Logistics
+        run: dotnet restore apps/port-logistics/backend/PortLogistics.sln
+
+      - name: Build Port Logistics (Release)
+        run: dotnet build apps/port-logistics/backend/PortLogistics.sln --configuration Release --no-restore
+
+      - name: Restore OEM
+        run: dotnet restore apps/operations-execution/backend/OEM.sln
+
+      - name: Build OEM (Release)
+        run: dotnet build apps/operations-execution/backend/OEM.sln --configuration Release --no-restore
+
+      - name: Run tests (if any)
+        shell: bash
+        run: |
+          set -e
+          mapfile -t tests < <(find . -type f -name "*Tests.csproj" | sort || true)
+          if (( ${#tests[@]} > 0 )); then
+            echo "Found ${#tests[@]} test project(s):"; printf ' - %s\n' "${tests[@]}"
+            for t in "${tests[@]}"; do
+              dotnet test "$t" --configuration Release --no-build --logger "trx;LogFileName=$(basename "${t%.csproj}").trx" --collect "XPlat Code Coverage" --results-directory ./TestResults/
+            done
+          else
+            echo "No *Tests.csproj found. Skipping tests."
+          fi
+
+      # Temporarily disabled due to storage quota - will re-enable after cleanup
+      # - name: Upload test results
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: test-results
+      #     path: |
+      #       **/*.trx
+      #     if-no-files-found: warn
+      #     retention-days: 1
+
+      # - name: Upload code coverage
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: code-coverage
+      #     path: |
+      #       TestResults/**/coverage.cobertura.xml
+      #     if-no-files-found: warn
+      #     retention-days: 1
+
+      - name: Publish Port Logistics (self-contained=false)
+        run: dotnet publish apps/port-logistics/backend/WebApi/WebApi.csproj --configuration Release --no-build --output ./publish/portlogistics
+
+      - name: Publish OEM (self-contained=false)
+        run: dotnet publish apps/operations-execution/backend/WebApi/WebApi.csproj --configuration Release --no-build --output ./publish/oem
+
+      # Temporarily disabled due to storage quota - will re-enable after cleanup
+      # - name: Upload Port Logistics artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: portlogistics-publish
+      #     path: publish/portlogistics/**
+      #     if-no-files-found: error
+      #     retention-days: 7
+
+      # - name: Upload OEM artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: oem-publish
+      #     path: publish/oem/**
+      #     if-no-files-found: error
+      #     retention-days: 7

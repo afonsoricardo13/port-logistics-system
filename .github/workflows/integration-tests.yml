@@ -1,0 +1,36 @@
+﻿name: Run Integration Tests (Operations Execution)
+
+on:
+  push:
+    paths:
+      - 'apps/operations-execution/**'
+  pull_request:
+    paths:
+      - 'apps/operations-execution/**'
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        run: dotnet restore "apps/operations-execution/backend/WebApi.IntegrationTests/WebApi.IntegrationTests.csproj"
+
+      - name: Build
+        run: dotnet build "apps/operations-execution/backend/WebApi.IntegrationTests/WebApi.IntegrationTests.csproj" --configuration Release --no-restore
+
+      - name: Run Integration Tests (US 4.1.6)
+        run: |
+          dotnet test "apps/operations-execution/backend/WebApi.IntegrationTests/WebApi.IntegrationTests.csproj" \
+            --configuration Release \
+            --no-build \
+            --filter "FullyQualifiedName~OperationPlansControllerTests_US4_1_6" \
+            -v minimal
+

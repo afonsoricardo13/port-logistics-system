@@ -1,0 +1,77 @@
+@startuml SD - US 4.1.8 - Update VVE Berthing Times (Level 3)
+skinparam shadowing true
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+title US 4.1.8 - Update VVE Berthing Times (SD Level 3 - OEM Backend)
+
+actor "Logistics Operator" as LO
+
+box "SPA (Angular)" #LightBlue
+    participant "VveDetailsComponent" as COMP
+end box
+
+box "OEM Backend" #LightGreen
+    participant "VesselVisitExecutionsController" as CTRL
+    participant "VesselVisitExecutionService" as SVC
+    participant "IVesselVisitExecutionRepository" as REPO
+end box
+
+database "«internal»\nOEM DB" as DB #87CEEB
+
+LO -> COMP: 1: updateBerthing(vveId, berthingData)
+activate COMP
+
+COMP -> CTRL: 1.1: PATCH /api/vessel-visit-executions/{vveId}/berthing
+activate CTRL
+
+CTRL -> SVC: 1.2: UpdateBerthingAsync(vveId, berthingDTO)
+activate SVC
+
+SVC -> REPO: 1.3: GetByIdAsync(vveId)
+activate REPO
+REPO -> DB: 1.4: SELECT VVE
+activate DB
+DB --> REPO: 1.5: VVE
+deactivate DB
+REPO --> SVC: 1.6: VesselVisitExecution
+deactivate REPO
+
+SVC -> SVC: 1.7: validateBerthingTimes(vve, berthingDTO)
+note right
+    Validations:
+    - BerthingStart after ArrivalTime
+    - BerthingEnd after BerthingStart
+    - DepartureTime after BerthingEnd
+    - VVE status is InProgress
+end note
+
+SVC -> SVC: 1.8: vve.UpdateBerthing(berthingDTO)
+
+SVC -> REPO: 1.9: UpdateAsync(vve)
+activate REPO
+REPO -> DB: 1.10: UPDATE VesselVisitExecutions
+activate DB
+DB --> REPO: 1.11: updated
+deactivate DB
+REPO --> SVC: 1.12: VesselVisitExecution
+deactivate REPO
+
+SVC --> CTRL: 1.13: VesselVisitExecutionDTO
+deactivate SVC
+
+CTRL --> COMP: 1.14: 200 OK (updatedVve)
+deactivate CTRL
+
+COMP --> LO: 1.15: display updated VVE berthing times
+deactivate COMP
+
+@enduml

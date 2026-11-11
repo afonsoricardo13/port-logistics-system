@@ -1,0 +1,136 @@
+@startuml Vista de Processos - Level 4 (US 2.2.1 - Create Vessel Type)
+
+participant ":VesselTypesController" as Controller
+participant ":VesselTypeService" as Service
+participant ":IVesselTypeRepository" as Repository
+participant "dto:VesselTypeDTO" as DTO
+participant ":IVesselTypeFactory" as Factory
+participant ":VesselType" as Entity
+participant ":VesselTypeMapper" as Mapper
+participant ":VesselTypeDataModel" as DataModel
+participant ":AbsanteeContext" as DbContext
+
+-> Controller: POST /api/vesseltypes\n(VesselTypeDTO)
+activate Controller
+
+Controller -> Controller: ValidateModelState()
+
+Controller -> Service: Add(dto, errors)
+activate Service
+
+Service -> Service: Validate name not empty
+alt Name is empty
+    Service --> Controller: null (errors: "Name is required")
+    Controller --> : 400 BadRequest(errors)
+end
+
+Service -> Repository: Exists(dto.Name)
+activate Repository
+Repository -> DbContext: VesselTypes.AnyAsync(x => x.Name == name)
+activate DbContext
+DbContext --> Repository: false
+deactivate DbContext
+Repository --> Service: false
+deactivate Repository
+
+alt Vessel Type Already Exists
+    Service --> Controller: null (errors: "A Vessel Type with this name already exists")
+    Controller --> : 400 BadRequest(errors)
+end
+
+Service -> DTO: ToDomain(dto)
+activate DTO
+DTO -> Entity: new VesselType(name, description, capacity, maxRows, maxBays, maxTiers)
+activate Entity
+
+Entity -> Entity: Validate parameters
+note right
+    Throws ArgumentException if:
+    - Name is null/whitespace
+    - Capacity <= 0
+    - MaxRows/MaxBays/MaxTiers <= 0
+end note
+
+Entity -> Entity: _name = name.Trim()
+Entity -> Entity: _description = description
+Entity -> Entity: _capacity = capacity
+Entity -> Entity: _maxRows = maxRows
+Entity -> Entity: _maxBays = maxBays
+Entity -> Entity: _maxTiers = maxTiers
+
+Entity --> DTO: vesselType
+deactivate Entity
+DTO --> Service: vesselType
+deactivate DTO
+
+Service -> Repository: Add(vesselType)
+activate Repository
+
+Repository -> Mapper: ToDataModel(vesselType)
+activate Mapper
+Mapper -> DataModel: new VesselTypeDataModel(vesselType)
+activate DataModel
+DataModel -> DataModel: Name = vesselType.Name
+DataModel -> DataModel: Description = vesselType.Description
+DataModel -> DataModel: Capacity = vesselType.Capacity
+DataModel -> DataModel: MaxRows = vesselType.MaxRows
+DataModel -> DataModel: MaxBays = vesselType.MaxBays
+DataModel -> DataModel: MaxTiers = vesselType.MaxTiers
+DataModel --> Mapper: dataModel
+deactivate DataModel
+Mapper --> Repository: dataModel
+deactivate Mapper
+
+Repository -> DbContext: VesselTypes.Add(dataModel)
+activate DbContext
+DbContext --> Repository: EntityEntry<VesselTypeDataModel>
+deactivate DbContext
+
+Repository -> DbContext: SaveChangesAsync()
+activate DbContext
+DbContext -> DbContext: GenerateSQL()
+note right
+    INSERT INTO VesselTypes
+    (Name, Description, Capacity,
+     MaxRows, MaxBays, MaxTiers)
+    VALUES (...)
+end note
+DbContext -> DbContext: ExecuteInsert()
+DbContext --> Repository: 1
+deactivate DbContext
+
+Repository -> Mapper: ToDomain(dataModel)
+activate Mapper
+Mapper -> Factory: NewVesselType(name, description, capacity, maxRows, maxBays, maxTiers)
+activate Factory
+Factory -> Entity: new VesselType(...)
+activate Entity
+Entity --> Factory: vesselType
+deactivate Entity
+Factory --> Mapper: vesselType
+deactivate Factory
+Mapper -> Entity: Id = dataModel.Id
+activate Entity
+Entity --> Mapper: vesselType
+deactivate Entity
+Mapper --> Repository: vesselType
+deactivate Mapper
+
+Repository --> Service: vesselType
+deactivate Repository
+
+Service -> DTO: ToDTO(vesselType)
+activate DTO
+DTO -> DTO: new VesselTypeDTO(name, description, capacity, maxRows, maxBays, maxTiers)
+DTO --> Service: vesselTypeDTO
+deactivate DTO
+
+Service --> Controller: vesselTypeDTO
+deactivate Service
+
+Controller -> Controller: _logger.LogInformation("Creating vessel type {Name}", dto.Name)
+
+Controller --> : 201 Created(vesselTypeDTO)\nLocation: /api/vesseltypes/{name}
+deactivate Controller
+
+@enduml

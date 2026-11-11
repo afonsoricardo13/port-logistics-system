@@ -1,0 +1,84 @@
+@startuml SD - US 4.1.5 - Edit Operation Plan (Level 3)
+skinparam shadowing true
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+title US 4.1.5 - Edit Operation Plan (SD Level 3 - OEM Backend)
+
+actor "Logistics Operator" as LO
+
+box "SPA (Angular)" #LightBlue
+    participant "OperationPlanEditComponent" as COMP
+end box
+
+box "OEM Backend" #LightGreen
+    participant "OperationPlansController" as CTRL
+    participant "OperationPlanService" as SVC
+    participant "IOperationPlanRepository" as REPO
+    participant "IPlannedOperationRepository" as OP_REPO
+end box
+
+database "«internal»\nOEM DB" as DB #87CEEB
+
+LO -> COMP: 1: submitUpdates(planId, updates)
+activate COMP
+
+COMP -> CTRL: 1.1: PUT /api/operation-plans/{planId}
+activate CTRL
+
+CTRL -> SVC: 1.2: UpdateAsync(planId, updateDTO)
+activate SVC
+
+SVC -> REPO: 1.3: GetByIdAsync(planId)
+activate REPO
+REPO -> DB: 1.4: SELECT plan
+activate DB
+DB --> REPO: 1.5: existing plan
+deactivate DB
+REPO --> SVC: 1.6: OperationPlan
+deactivate REPO
+
+SVC -> SVC: 1.7: validateUpdates(plan, updates)
+note right
+    Validations:
+    - No VVE started yet
+    - Times valid
+    - Resources available
+end note
+
+SVC -> OP_REPO: 1.8: UpdateOperationsAsync(operations)
+activate OP_REPO
+OP_REPO -> DB: 1.9: UPDATE PlannedOperations
+activate DB
+DB --> OP_REPO: 1.10: updated
+deactivate DB
+OP_REPO --> SVC: 1.11: success
+deactivate OP_REPO
+
+SVC -> REPO: 1.12: UpdateAsync(plan)
+activate REPO
+REPO -> DB: 1.13: UPDATE OperationPlans
+activate DB
+DB --> REPO: 1.14: updated plan
+deactivate DB
+REPO --> SVC: 1.15: OperationPlan
+deactivate REPO
+
+SVC --> CTRL: 1.16: OperationPlanDTO
+deactivate SVC
+
+CTRL --> COMP: 1.17: 200 OK (updatedPlan)
+deactivate CTRL
+
+COMP --> LO: 1.18: display updated plan, success notification
+deactivate COMP
+
+@enduml

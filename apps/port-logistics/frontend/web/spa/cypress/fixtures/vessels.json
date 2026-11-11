@@ -1,0 +1,34 @@
+{
+  "validVessel": {
+    "imoNumber": "9074729",
+    "name": "MSC Oscar",
+    "vesselType": "Container Ship",
+    "operator": "Mediterranean Shipping Company"
+  },
+  "vesselToUpdate": {
+    "imoNumber": "1234567",
+    "name": "Test Cargo",
+    "vesselType": "Cargo",
+    "operator": "Test Shipping Ltd"
+  },
+  "vesselList": [
+    {
+      "imoNumber": "9074729",
+      "name": "MSC Oscar",
+      "vesselType": "Container Ship",
+      "operator": "Mediterranean Shipping Company"
+    },
+    {
+      "imoNumber": "1234567",
+      "name": "Test Cargo",
+      "vesselType": "Cargo",
+      "operator": "Test Shipping Ltd"
+    },
+    {
+      "imoNumber": "9999999",
+      "name": "Pacific Explorer",
+      "vesselType": "Tanker",
+      "operator": "Pacific Shipping Co"
+    }
+  ]
+}

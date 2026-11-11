@@ -1,0 +1,80 @@
+@startuml Mapping Logical ↔ Implementation – Level 2 (Port Operations System)
+left to right direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+skinparam rectangle {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam component {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ---- actors (blue balls) ----
+  () "UI Port Authority Officer"        as PA  #87CEEB
+  () "UI Logistics Operator"            as LO  #87CEEB
+  () "UI Shipping Agent Representative" as SA  #87CEEB
+  () "UI Administrator"                 as AD  #87CEEB
+
+' ================= LEFT: Logical View (L2) =================
+rectangle "Logical View (Level 2)" as LOG {
+
+  component "«component»\n«container (C4)»\nVisualization (UI)" as UI_L
+
+  ' actors -> UI
+  PA --> UI_L
+  LO --> UI_L
+  SA --> UI_L
+  AD --> UI_L
+
+  ' APIs and containers (logical)
+  interface "Planning API"           as API_PLAN_L
+  interface "Docks & Resources API"  as API_RES_L
+  interface "Visits & Manifests API" as API_VIS_L
+
+  component "«component»\n«container (C4)»\nPlanning & Scheduling" as PLAN_L
+  component "«component»\n«container (C4)»\nDocks & Resources"     as RES_L
+  component "«component»\n«container (C4)»\nVisits & Manifests"    as VIS_L
+
+  ' keep original logical wiring
+  UI_L --> API_PLAN_L
+  API_PLAN_L --> PLAN_L
+
+  UI_L --> API_RES_L
+  API_RES_L --> RES_L
+
+  UI_L --> API_VIS_L
+  API_VIS_L --> VIS_L
+}
+
+' =============== RIGHT: Implementation View (L2) ===============
+rectangle "Implementation View (Level 2)" as IMP {
+
+  component "UI"                    as UI_I
+  component "Planning & Scheduling" as PLAN_I
+  component "Docks & Resources"     as RES_I
+  component "Visits & Manifests"    as VIS_I
+
+  ' layout spacing
+  UI_I  -[hidden]-> PLAN_I
+  PLAN_I-[hidden]-> RES_I
+  RES_I -[hidden]-> VIS_I
+}
+
+' ======================= MAPPINGS ========================
+UI_L      ..> UI_I    : realizes
+API_PLAN_L ..> PLAN_I : mapped to
+API_RES_L  ..> RES_I  : mapped to
+API_VIS_L  ..> VIS_I  : mapped to
+PLAN_L     ..> PLAN_I : mapped to
+RES_L      ..> RES_I  : mapped to
+VIS_L      ..> VIS_I  : mapped to
+
+@enduml

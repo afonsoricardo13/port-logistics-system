@@ -1,0 +1,24 @@
+@startuml SSD US 2.2.6 - Deactivate Representative
+        skinparam shadowing true
+        skinparam ArrowColor #000000
+        skinparam sequence {
+          ActorBorderColor #000000
+          ActorBackgroundColor #87CEEB
+          ParticipantBorderColor #000000
+          ParticipantBackgroundColor #87CEEB
+          LifeLineBorderColor #000000
+          LifeLineBackgroundColor #87CEEB
+        }
+    
+        actor "Port Authority Officer" as Officer
+        participant "«system (C4)»\nPort Operations System" as System
+    
+        activate Officer
+        Officer -> System : 1: request deactivate representative\n
+        activate System
+        System -> System : 1.1: authorize action (PortAuthorityOfficer)\n1.2: fetch representative by id and org
+        System -> System : 2.1: if rep found and authorized then set active = false\n2.2: record audit \n2.3: preserve historical data
+        System --> Officer : 2.4: Deactivated
+        deactivate System
+        deactivate Officer
+    @enduml

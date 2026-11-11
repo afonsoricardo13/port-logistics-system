@@ -1,0 +1,36 @@
+@startuml Vista de Processos – Level 1 (US 4.1.11 – Complete VVE)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as LO
+participant "«system (C4)»\nPort Operations System" as SYS #87CEEB
+participant "«external»\nIAM" as IAM #F5F5DC
+
+LO -> SYS: 1: request to complete VVE
+activate SYS
+SYS -> IAM: 1.1: validateToken()
+activate IAM
+IAM --> SYS: 1.2: tokenValid
+deactivate IAM
+SYS --> LO: 1.3: ask for unberth and departure times
+deactivate SYS
+LO -> SYS: 2: provides actual unberth and departure times
+activate SYS
+alt All operations completed
+    SYS --> LO: 2.1: VVE marked as "Completed"
+else Operations pending
+    SYS --> LO: 2.2: error - pending operations must be completed
+end
+deactivate SYS
+
+@enduml

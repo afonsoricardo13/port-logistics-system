@@ -1,0 +1,69 @@
+@startuml Vista de Processos – Level 3 (US 4.1.14 – Manage Complementary Task Categories)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+participant "«container (C4)»\nSPA (Web UI)" as UI #87CEEB
+participant "«component»\nComplementaryTaskCategoriesController" as CTC_CTRL #87CEEB
+participant "«component»\nIComplementaryTaskCategoryRepository" as CTC_REPO #87CEEB
+participant "«component»\nComplementaryTaskCategory" as CTC_DOMAIN #87CEEB
+participant "«component»\nOEMDbContext" as DB_CTX #87CEEB
+participant "«external»\nIAM" as IAM #F5F5DC
+
+-> UI: 1: request to manage Complementary Task Categories
+activate UI
+UI -> IAM: 1.1: validate token (Port Operations Supervisor role)
+activate IAM
+IAM --> UI: 1.1.1: token valid
+deactivate IAM
+
+UI -> CTC_CTRL: 1.2: GET /api/complementarytaskcategories
+activate CTC_CTRL
+CTC_CTRL -> CTC_REPO: 1.2.1: GetAllAsync()
+activate CTC_REPO
+CTC_REPO --> CTC_CTRL: 1.2.2: list of categories
+deactivate CTC_REPO
+CTC_CTRL --> UI: 1.3: 200 OK (categories)
+deactivate CTC_CTRL
+
+UI --> : 1.4: display categories table
+deactivate UI
+
+-> UI: 2: create new category
+activate UI
+UI -> CTC_CTRL: 2.1: POST /api/complementarytaskcategories (CreateCategoryDTO)
+activate CTC_CTRL
+
+CTC_CTRL -> CTC_DOMAIN: 2.1.1: new ComplementaryTaskCategory(code, name, description, duration, impact)
+activate CTC_DOMAIN
+CTC_DOMAIN -> CTC_DOMAIN: 2.1.1.1: ValidateCode() [CTC###]
+CTC_DOMAIN -> CTC_DOMAIN: 2.1.1.2: SetDefaultDuration(optional)
+CTC_DOMAIN -> CTC_DOMAIN: 2.1.1.3: SetExpectedImpact(optional)
+CTC_DOMAIN --> CTC_CTRL: 2.1.2: ComplementaryTaskCategory entity
+deactivate CTC_DOMAIN
+
+CTC_CTRL -> CTC_REPO: 2.1.3: AddAsync(category)
+activate CTC_REPO
+CTC_REPO -> DB_CTX: 2.1.3.1: Add(category)
+activate DB_CTX
+DB_CTX --> CTC_REPO: 2.1.3.2: saved
+deactivate DB_CTX
+CTC_REPO --> CTC_CTRL: 2.1.4: persisted
+deactivate CTC_REPO
+
+CTC_CTRL --> UI: 2.2: 201 Created
+deactivate CTC_CTRL
+
+UI --> : 2.3: display confirmation, update table
+deactivate UI
+
+@enduml

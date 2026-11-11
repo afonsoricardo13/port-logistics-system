@@ -1,0 +1,204 @@
+@startuml Class Diagram - Level 4 (US 2.2.11 - Operating Staff Management)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+' ===== Presentation Layer (Controllers) =====
+package "<<layer>> Presentation" #87CEEB {
+  class OperatingStaffController <<Controller>> {
+    - _service: IOperatingStaffService
+    + CreateOperatingStaff(dto: CreateOperatingStaffDTO): IActionResult
+    + UpdateOperatingStaff(id: StaffId, dto: UpdateOperatingStaffDTO): IActionResult
+    + DeactivateOperatingStaff(id: StaffId): IActionResult
+    + GetOperatingStaff(id: StaffId): IActionResult
+    + ListOperatingStaff(filters: StaffFilters): IActionResult
+  }
+}
+
+' ===== Application Layer (Services & DTOs) =====
+package "<<layer>> Application" #87CEEB {
+  class OperatingStaffService <<Service>> {
+    - _repository: IOperatingStaffRepository
+    - _mapper: IMapper
+    + CreateOperatingStaff(dto: CreateOperatingStaffDTO): OperatingStaffDTO
+    + UpdateOperatingStaff(id: StaffId, dto: UpdateOperatingStaffDTO): OperatingStaffDTO
+    + DeactivateOperatingStaff(id: StaffId): OperatingStaffDTO
+    + GetOperatingStaff(id: StaffId): OperatingStaffDTO
+    + ListOperatingStaff(filters: StaffFilters): List<OperatingStaffDTO>
+  }
+
+  interface IOperatingStaffService {
+    + CreateOperatingStaff(dto: CreateOperatingStaffDTO): OperatingStaffDTO
+    + UpdateOperatingStaff(id: StaffId, dto: UpdateOperatingStaffDTO): OperatingStaffDTO
+    + DeactivateOperatingStaff(id: StaffId): OperatingStaffDTO
+  }
+
+  class CreateOperatingStaffDTO <<DTO>> {
+    + Name: string
+    + Email: string
+    + Phone: string
+    + Qualifications: List<string>
+  }
+
+  class UpdateOperatingStaffDTO <<DTO>> {
+    + Name: string
+    + Email: string
+    + Phone: string
+    + Qualifications: List<string>
+  }
+
+  class OperatingStaffDTO <<DTO>> {
+    + Id: string
+    + Name: string
+    + Email: string
+    + Phone: string
+    + Qualifications: List<string>
+    + IsActive: bool
+    + CreatedAt: DateTime
+    + UpdatedAt: DateTime?
+  }
+}
+
+' ===== Domain Layer (Aggregates, Entities, Value Objects) =====
+package "<<layer>> Domain" #87CEEB {
+  class OperatingStaff <<Aggregate Root>> {
+    - _id: StaffId
+    - _name: StaffName
+    - _email: Email
+    - _phone: PhoneNumber
+    - _qualifications: List<Qualification>
+    - _isActive: bool
+    - _createdAt: DateTime
+    - _updatedAt: DateTime?
+    - _deactivatedAt: DateTime?
+    + OperatingStaff(name, email, phone, qualifications)
+    + Update(name, email, phone, qualifications): void
+    + Deactivate(): void
+    + Reactivate(): void
+    + IsActive(): bool
+    + {static} Create(name, email, phone, qualifications): OperatingStaff
+  }
+
+  class StaffId <<Value Object>> {
+    - _value: Guid
+    + StaffId(value: Guid)
+    + Value: Guid
+    + {static} NewId(): StaffId
+    + Equals(other: StaffId): bool
+  }
+
+  class StaffName <<Value Object>> {
+    - _value: string
+    + StaffName(value: string)
+    + Value: string
+    - Validate(value: string): void
+  }
+
+  class Email <<Value Object>> {
+    - _value: string
+    + Email(value: string)
+    + Value: string
+    - Validate(value: string): void
+  }
+
+  class PhoneNumber <<Value Object>> {
+    - _value: string
+    + PhoneNumber(value: string)
+    + Value: string
+    - Validate(value: string): void
+  }
+
+  class Qualification <<Value Object>> {
+    - _code: string
+    - _name: string
+    + Qualification(code: string, name: string)
+    + Code: string
+    + Name: string
+  }
+
+  interface IOperatingStaffRepository <<Repository Interface>> {
+    + Save(staff: OperatingStaff): Task<OperatingStaff>
+    + GetById(id: StaffId): Task<OperatingStaff>
+    + ExistsByEmail(email: Email): Task<bool>
+    + ExistsByEmailExcludingId(email: Email, id: StaffId): Task<bool>
+    + FindByFilters(filters: StaffFilters): Task<List<OperatingStaff>>
+  }
+}
+
+' ===== Infrastructure Layer (Repositories & Persistence) =====
+package "<<layer>> Infrastructure" #87CEEB {
+  class OperatingStaffRepository <<Repository>> {
+    - _context: DbContext
+    + Save(staff: OperatingStaff): Task<OperatingStaff>
+    + GetById(id: StaffId): Task<OperatingStaff>
+    + ExistsByEmail(email: Email): Task<bool>
+    + ExistsByEmailExcludingId(email: Email, id: StaffId): Task<bool>
+    + FindByFilters(filters: StaffFilters): Task<List<OperatingStaff>>
+    - MapToDomain(dataModel: OperatingStaffDataModel): OperatingStaff
+    - MapToDataModel(staff: OperatingStaff): OperatingStaffDataModel
+  }
+
+  class OperatingStaffDataModel <<Entity>> {
+    + Id: Guid
+    + Name: string
+    + Email: string
+    + Phone: string
+    + Qualifications: string
+    + IsActive: bool
+    + CreatedAt: DateTime
+    + UpdatedAt: DateTime?
+    + DeactivatedAt: DateTime?
+  }
+
+  class DbContext <<Context>> {
+    + OperatingStaff: DbSet<OperatingStaffDataModel>
+    + SaveChangesAsync(): Task<int>
+  }
+}
+
+' ===== Relationships =====
+OperatingStaffController --> IOperatingStaffService : uses
+OperatingStaffController ..> CreateOperatingStaffDTO : receives
+OperatingStaffController ..> UpdateOperatingStaffDTO : receives
+OperatingStaffController ..> OperatingStaffDTO : returns
+
+OperatingStaffService ..|> IOperatingStaffService : implements
+OperatingStaffService --> IOperatingStaffRepository : uses
+OperatingStaffService ..> OperatingStaff : manipulates
+OperatingStaffService ..> CreateOperatingStaffDTO : receives
+OperatingStaffService ..> UpdateOperatingStaffDTO : receives
+OperatingStaffService ..> OperatingStaffDTO : returns
+
+OperatingStaff *-- StaffId : has
+OperatingStaff *-- StaffName : has
+OperatingStaff *-- Email : has
+OperatingStaff *-- PhoneNumber : has
+OperatingStaff *-- "1..*" Qualification : has
+
+OperatingStaffRepository ..|> IOperatingStaffRepository : implements
+OperatingStaffRepository --> DbContext : uses
+OperatingStaffRepository ..> OperatingStaff : returns
+OperatingStaffRepository ..> OperatingStaffDataModel : maps
+
+DbContext *-- OperatingStaffDataModel : manages
+
+note right of OperatingStaff
+  **Aggregate Root**
+  Enforces business rules:
+  - Name required
+  - Email unique & valid format
+  - Phone valid format
+  - At least one qualification
+  - Soft delete (IsActive flag)
+end note
+
+note right of OperatingStaffService
+  **Application Service**
+  Orchestrates:
+  - Email uniqueness check
+  - Domain validation
+  - Persistence operations
+  - DTO mapping
+end note
+
+@enduml

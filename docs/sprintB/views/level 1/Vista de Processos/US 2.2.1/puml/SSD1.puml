@@ -1,0 +1,28 @@
+@startuml SSD US 2.2.1 - Create Vessel Type
+skinparam shadowing true
+skinparam ArrowColor #000000
+skinparam sequence {
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	ParticipantBorderColor #000000
+	ParticipantBackgroundColor #87CEEB
+	LifeLineBorderColor #000000
+	LifeLineBackgroundColor #87CEEB
+}
+
+actor "Port Authority Officer" as Officer
+participant "«system (C4)»\nPort Operations System" as System
+
+activate Officer
+Officer -> System : 1: request to create a new Vessel Type
+activate System
+System --> Officer : 1.1: request required data\n(name, description, capacity,\nconstraints: max rows, bays, tiers)
+deactivate System
+
+Officer -> System : 2: provide Vessel Type data
+activate System
+System --> Officer : 2.1: validate and create Vessel Type\nconfirmation shown; available for vessel registration\nand searchable by name/description
+deactivate System
+
+deactivate Officer
+@enduml

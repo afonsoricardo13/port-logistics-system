@@ -1,0 +1,256 @@
+<div class="staff-form-container">
+  <div class="form-header">
+    <h1>{{ pageTitle }}</h1>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading" data-cy="loading-indicator">
+    <div class="spinner"></div>
+    <p>Loading staff member data...</p>
+  </div>
+
+  <!-- Form -->
+  <form *ngIf="!loading && canManageStaff()" (ngSubmit)="onSubmit()" class="staff-form" data-cy="staff-form">
+    <!-- Mecanographic Number -->
+    <div class="form-group">
+      <label for="mecanographicNumber">
+        Mecanographic Number <span class="required">*</span>
+      </label>
+      <input
+        type="text"
+        id="mecanographicNumber"
+        name="mecanographicNumber"
+        class="form-control"
+        [(ngModel)]="formData.mecanographicNumber"
+        [disabled]="isEditMode"
+        [class.readonly-field]="isEditMode"
+        [attr.aria-label]="'Mecanographic Number'"
+        placeholder="e.g., OP001"
+        data-cy="mecanographic-number-input"
+        required
+      />
+      <small class="form-text" [class.info-text]="isEditMode">
+        <span *ngIf="!isEditMode">Unique identifier for the staff member (cannot be changed after creation).</span>
+        <span *ngIf="isEditMode">⚠️ This field cannot be modified.</span>
+      </small>
+    </div>
+
+    <!-- Name -->
+    <div class="form-group">
+      <label for="name">
+        Full Name <span class="required">*</span>
+      </label>
+      <input
+        type="text"
+        id="name"
+        name="name"
+        class="form-control"
+        [(ngModel)]="formData.name"
+        [attr.aria-label]="'Full Name'"
+        placeholder="e.g., John Doe"
+        data-cy="name-input"
+        required
+      />
+    </div>
+
+    <!-- Email -->
+    <div class="form-group">
+      <label for="email">
+        Email <span class="required">*</span>
+      </label>
+      <input
+        type="email"
+        id="email"
+        name="email"
+        class="form-control"
+        [(ngModel)]="formData.email"
+        [attr.aria-label]="'Email Address'"
+        placeholder="e.g., john.doe@port.com"
+        data-cy="email-input"
+        required
+      />
+    </div>
+
+    <!-- Phone Number -->
+    <div class="form-group">
+      <label for="phoneNumber">
+        Phone Number <span class="required">*</span>
+      </label>
+      <input
+        type="tel"
+        id="phoneNumber"
+        name="phoneNumber"
+        class="form-control"
+        [(ngModel)]="formData.phoneNumber"
+        [attr.aria-label]="'Phone Number'"
+        placeholder="e.g., +351 912 345 678"
+        data-cy="phone-input"
+        required
+      />
+    </div>
+
+    <!-- Qualifications -->
+    <div class="form-group">
+      <label>
+        Qualifications <span class="required">*</span>
+      </label>
+      
+      <!-- Add Qualification Input -->
+      <div class="qualification-input-group">
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="newQualification"
+          [ngModelOptions]="{standalone: true}"
+          (keyup.enter)="addQualification()"
+          placeholder="Type a qualification and press Enter or click Add"
+          [attr.aria-label]="'Add Qualification'"
+          data-cy="qualification-input"
+        />
+        <button type="button" class="btn btn-secondary" (click)="addQualification()" data-cy="add-qualification-btn">
+          Add
+        </button>
+      </div>
+
+      <!-- Qualifications List -->
+      <div class="qualifications-list" *ngIf="formData.qualifications.length > 0">
+        <div class="qualification-item" *ngFor="let qualification of formData.qualifications; let i = index" data-cy="qualification-item">
+          <span class="qualification-text">{{ qualification }}</span>
+          <button type="button" class="btn-remove" (click)="removeQualification(i)" [attr.aria-label]="'Remove ' + qualification" data-cy="remove-qualification-btn">
+            ×
+          </button>
+        </div>
+      </div>
+
+      <small class="form-text">
+        Add at least one qualification (e.g., "Forklift Operator", "Crane Operator", "Safety Certified").
+      </small>
+    </div>
+
+    <!-- Operational Window -->
+    <div class="form-group">
+      <label>
+        Operational Window <span class="required">*</span>
+      </label>
+      
+      <div class="operational-window-inputs">
+        <div class="days-input-group">
+          <label for="daysPattern">Days Pattern</label>
+          <select
+            id="daysPattern"
+            name="daysPattern"
+            class="form-control"
+            [(ngModel)]="formData.daysPattern"
+            [attr.aria-label]="'Days Pattern'"
+            data-cy="days-pattern-select"
+            required
+          >
+            <option value="Mon-Fri">Monday to Friday</option>
+            <option value="Mon-Sat">Monday to Saturday</option>
+            <option value="Mon-Sun">Monday to Sunday</option>
+            <option value="Sat-Sun">Saturday to Sunday (Weekend)</option>
+            <option value="Custom">Custom</option>
+          </select>
+        </div>
+
+        <div class="custom-days-input" *ngIf="formData.daysPattern === 'Custom'">
+          <label for="customDays">Custom Days</label>
+          <input
+            type="text"
+            id="customDays"
+            name="customDays"
+            class="form-control"
+            [(ngModel)]="formData.customDays"
+            [attr.aria-label]="'Custom Days'"
+            placeholder="e.g., Mon-Wed, Fri"
+            data-cy="custom-days-input"
+            [required]="formData.daysPattern === 'Custom'"
+          />
+          <small class="form-text">Enter custom days pattern (e.g., "Mon-Wed", "Tue-Thu")</small>
+        </div>
+
+        <div class="time-inputs">
+          <div class="time-input-group">
+            <label for="startTime">Start Time</label>
+            <input
+              type="time"
+              id="startTime"
+              name="startTime"
+              class="form-control"
+              [(ngModel)]="formData.startTime"
+              [attr.aria-label]="'Start Time'"
+              data-cy="start-time-input"
+              required
+            />
+          </div>
+
+          <div class="time-input-group">
+            <label for="endTime">End Time</label>
+            <input
+              type="time"
+              id="endTime"
+              name="endTime"
+              class="form-control"
+              [(ngModel)]="formData.endTime"
+              [attr.aria-label]="'End Time'"
+              data-cy="end-time-input"
+              required
+            />
+          </div>
+        </div>
+      </div>
+
+      <small class="form-text" data-cy="operational-window-preview">
+        Format: {{ getOperationalWindowPreview() }}
+      </small>
+    </div>
+
+    <!-- Status (only visible in edit mode) -->
+    <div class="form-group" *ngIf="isEditMode">
+      <label for="status">Current Status</label>
+      <select
+        id="status"
+        name="status"
+        class="form-control readonly-field"
+        [(ngModel)]="formData.status"
+        disabled
+        [attr.aria-label]="'Current Status'"
+      >
+        <option value="Available">Available</option>
+        <option value="Unavailable">Unavailable</option>
+      </select>
+      <small class="form-text info-text">
+        ⚠️ Status can only be changed via Deactivate/Reactivate actions in the list view.
+      </small>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="submitting" data-cy="cancel-btn">
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="submitting" data-cy="submit-btn">
+        <span *ngIf="!submitting">{{ submitButtonText }}</span>
+        <span *ngIf="submitting">
+          <span class="spinner-small"></span> Saving...
+        </span>
+      </button>
+    </div>
+  </form>
+
+  <!-- No Permission Message -->
+  <div *ngIf="!loading && !canManageStaff()" class="no-permission">
+    <p>You do not have permission to manage operating staff.</p>
+    <button class="btn btn-secondary" (click)="onCancel()">Back to List</button>
+  </div>
+</div>

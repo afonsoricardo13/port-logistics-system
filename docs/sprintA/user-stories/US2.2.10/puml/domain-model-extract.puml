@@ -1,0 +1,92 @@
+@startuml US2.2.10 - Domain Model Extract
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam monochrome true
+
+package "Shipping Agent Management" {
+    enum ShippingAgentOrganization <<Entity root>>
+    class ShippingAgentOrgID <<ValueObject>> {
+        +ID
+    }
+    class ShippingAgentOrgName <<ValueObject>>
+    ShippingAgentOrganization "1"--"1" ShippingAgentOrgID
+    ShippingAgentOrganization "1"--"1" ShippingAgentOrgName
+}
+
+package "Shipping Agent Representative Management" {
+    enum ShippingAgentRepresentative <<Entity root>>
+    class ShippingAgentRepID <<ValueObject>> {
+        +ID
+    }
+    class ShippingAgentRepName <<ValueObject>>
+    class ShippingAgentRepEmail <<ValueObject>>
+
+    ShippingAgentRepresentative "1"--"1" ShippingAgentRepID
+    ShippingAgentRepresentative "1"--"1" ShippingAgentRepName
+    ShippingAgentRepresentative "1"--"1" ShippingAgentRepEmail
+}
+
+package "Vessel Management" {
+    enum Vessel <<Entity root>>
+    class IMOnum <<ValueObject>> {
+        +ID
+    }
+    class VesselOwner <<ValueObject>>
+    class VesselName <<ValueObject>>
+
+    Vessel "1"--"1" IMOnum
+    Vessel "1"--"1" VesselName
+    Vessel "1"--"1" VesselOwner
+}
+
+package "Dock Management" {
+    enum Dock <<Entity root>>
+    class DockID <<ValueObject>> {
+        +ID
+    }
+    class DockName <<ValueObject>>
+    class DockLocation <<ValueObject>>
+    class DockMaxNumberSTSCranes <<ValueObject>>
+    class DockLength <<ValueObject>>
+    class DockDepth <<ValueObject>>
+    class DockMaxDraft <<ValueObject>>
+
+    Dock "1"--"1" DockID
+    Dock "1"--"1" DockName
+    Dock "1"--"1" DockLocation
+    Dock "1"--"1" DockMaxNumberSTSCranes
+    Dock "1"--"1" DockLength
+    Dock "1"--"1" DockDepth
+    Dock "1"--"1" DockMaxDraft
+}
+
+package "Vessel Visit Management" {
+    enum VesselVisitNotification <<Entity root>>
+    class VesselVisitID <<ValueObject>> {
+        +ID
+    }
+    class VesselVisitStatus <<ValueObject>>
+    class VesselVisitETA <<ValueObject>>
+    class VesselVisitETD <<ValueObject>>
+    class VesselVisitReason <<ValueObject>>
+    class VesselVisitCrewInfo <<ValueObject>>
+    class VesselVisitSafetyOfficer <<ValueObject>>
+    class VesselVisitRejectionReason <<ValueObject>>
+
+    VesselVisitNotification "1"--"1" VesselVisitID
+    VesselVisitNotification "1"--"1" VesselVisitStatus
+    VesselVisitNotification "1"--"1" VesselVisitETA
+    VesselVisitNotification "1"--"1" VesselVisitETD
+    VesselVisitNotification "1"--"1" VesselVisitReason
+    VesselVisitNotification "1"--"1" VesselVisitCrewInfo
+    VesselVisitNotification "1"--"*" VesselVisitSafetyOfficer
+    VesselVisitNotification "1"--"1" VesselVisitRejectionReason : rejectedWith
+}
+
+' Relationships relevant to this user story
+ShippingAgentOrganization "1"--"*" ShippingAgentRepresentative 
+VesselVisitNotification "1"--"1" Vessel : for
+VesselVisitNotification "1"--"1" ShippingAgentRepresentative : submittedBy
+Vessel "1" -- "1" Dock : assignedTo
+
+@enduml

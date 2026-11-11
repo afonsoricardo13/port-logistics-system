@@ -1,0 +1,61 @@
+﻿@startuml Vista de Processos – Level 3 (US 2.2.6 – Create Representative)
+	skinparam shadowing true
+	skinparam linetype ortho
+	skinparam sequence {
+		ArrowColor Black
+		ActorBorderColor #000000
+		ActorBackgroundColor #87CEEB
+		LifeLineBorderColor Black
+		LifeLineBackgroundColor #87CEEB
+		ParticipantBorderColor Black
+		ParticipantBackgroundColor #87CEEB
+		ParticipantFontStyle bold
+	}
+	
+	actor "Port Authority Officer" as PA
+	participant "«container (C4)»\nVisualization (UI)" as UI_CTRL #87CEEB
+	participant "«container (C4)»\nPlanning & Scheduling\nController" as PLAN_CTRL #87CEEB
+	participant "«component»\nApplication Service" as PLAN_APP #87CEEB
+	participant "«component»\nDomain Model (Representative)" as PLAN_DOMAIN #87CEEB
+	participant "«component»\nRepository" as PLAN_REPO #87CEEB
+	participant "«component»\nData Model" as PLAN_DATA #87CEEB
+	participant "«component»\nPersistence" as PLAN_PERSIST #87CEEB
+	
+	activate PA
+	PA -> UI_CTRL: 1: create representative
+	activate UI_CTRL
+	UI_CTRL --> PA: 1.1: ask for representative data\n(name, citizenId, nationality, email, phone, orgIdentifier)
+	deactivate UI_CTRL
+	
+	PA -> UI_CTRL: 2: representative data (RepresentativeDTO)
+	activate UI_CTRL
+	UI_CTRL -> PLAN_CTRL: 2.1: request to create representative (RepresentativeDTO)
+	activate PLAN_CTRL
+	PLAN_CTRL -> PLAN_APP: 2.1.1: createRepresentative(RepresentativeDTO)
+	activate PLAN_APP
+	PLAN_APP -> PLAN_DOMAIN: 2.1.1.1: create Representative aggregate\n(verify organization exists, ensure association to exactly one org)
+	activate PLAN_DOMAIN
+	PLAN_DOMAIN --> PLAN_APP: 2.1.1.2: representative aggregate
+	deactivate PLAN_DOMAIN
+	PLAN_APP -> PLAN_APP: 2.1.1.3: validate required fields\nvalidate email/phone formats\nset active = true\nrecord audit
+	PLAN_APP -> PLAN_REPO: 2.1.1.4: save(representative)
+	activate PLAN_REPO
+	PLAN_REPO -> PLAN_DATA: 2.1.1.4.1: map to data model
+	activate PLAN_DATA
+	PLAN_DATA --> PLAN_REPO: 2.1.1.4.2: representative record
+	deactivate PLAN_DATA
+	PLAN_REPO -> PLAN_PERSIST: 2.1.1.4.3: persist(record)
+	activate PLAN_PERSIST
+	PLAN_PERSIST --> PLAN_REPO: 2.1.1.4.4: ok
+	deactivate PLAN_PERSIST
+	PLAN_REPO --> PLAN_APP: 2.1.1.5: persisted(representative)
+	deactivate PLAN_REPO
+	PLAN_APP --> PLAN_CTRL: 2.1.2: representative created (RepresentativeDTO)
+	deactivate PLAN_APP
+	PLAN_CTRL --> UI_CTRL: 2.2: representative created (RepresentativeDTO + Location)
+	deactivate PLAN_CTRL
+	UI_CTRL --> PA: 2.3: representative created
+	deactivate UI_CTRL
+	deactivate PA
+	
+	@enduml

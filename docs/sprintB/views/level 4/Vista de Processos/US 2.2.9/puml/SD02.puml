@@ -1,0 +1,113 @@
+@startuml Vista de Processos - Level 4 (US 2.2.9 - Update Storage Area)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Port Authority Officer" as PAO
+participant "<<container (C4)>>\nSPA (Web UI)" as UI_CTRL #87CEEB
+participant "<<container (C4)>>\nPort Logistics (Backend)\nController" as MDR_CTRL #87CEEB
+participant "<<component>>\nApplication Service" as MDR_APP #87CEEB
+participant "<<component>>\nDomain Model (StorageArea)" as MDR_DOMAIN #87CEEB
+participant "<<component>>\nRepository" as MDR_REPO #87CEEB
+participant "<<component>>\nData Model" as MDR_DATA #87CEEB
+participant "<<component>>\nPersistence" as MDR_PERSIST #87CEEB
+
+activate PAO
+PAO -> UI_CTRL: 1: PUT /api/storage-areas/{identifier}\n{type, location, maxCapacityTeu, currentOccupancyTeu, servedDocks[]}
+activate UI_CTRL
+UI_CTRL -> MDR_CTRL: 1.1: updateStorageArea(identifier, dto)
+activate MDR_CTRL
+MDR_CTRL -> MDR_APP: 1.1.1: updateStorageArea(identifier, dto)
+activate MDR_APP
+
+MDR_APP -> MDR_REPO: 1.1.1.1: getByIdentifierAsync(identifier)
+activate MDR_REPO
+MDR_REPO -> MDR_PERSIST: 1.1.1.1.1: fetch storage area record
+activate MDR_PERSIST
+MDR_PERSIST --> MDR_REPO: 1.1.1.1.2: record or null
+deactivate MDR_PERSIST
+MDR_REPO -> MDR_DATA: 1.1.1.1.3: map to domain
+activate MDR_DATA
+MDR_DATA --> MDR_REPO: 1.1.1.1.4: area aggregate or null
+deactivate MDR_DATA
+MDR_REPO --> MDR_APP: 1.1.1.1.5: area or null
+deactivate MDR_REPO
+
+alt storage area not found
+  MDR_APP --> MDR_CTRL: 1.1.1.a: NotFoundException\n"Storage area not found"
+  MDR_CTRL --> UI_CTRL: 1.1.a: HTTP 404 Not Found
+  UI_CTRL --> PAO: 1.1.b: show error
+else area found
+
+  MDR_APP -> MDR_DOMAIN: 1.1.1.2: update(dto)
+  activate MDR_DOMAIN
+  MDR_DOMAIN -> MDR_DOMAIN: validate type (Yard/Warehouse)\nvalidate location not empty\nvalidate maxCapacityTeu >= 0\nvalidate currentOccupancyTeu >= 0\nvalidate currentOccupancy <= maxCapacity
+  
+  alt invalid data
+    MDR_DOMAIN --> MDR_APP: 1.1.1.2.a: ArgumentException\n"Invalid storage area data"
+    MDR_APP --> MDR_CTRL: 1.1.1.b: validation error
+    MDR_CTRL --> UI_CTRL: 1.1.c: HTTP 400 Bad Request
+    UI_CTRL --> PAO: 1.1.d: show validation errors
+  else valid update
+    MDR_DOMAIN -> MDR_DOMAIN: apply changes
+    
+    MDR_DOMAIN -> MDR_DOMAIN: clear existing served docks
+    loop for each new served dock
+      MDR_DOMAIN -> MDR_DOMAIN: validate DockCode not empty\nvalidate DistanceMeters > 0
+      MDR_DOMAIN -> MDR_DOMAIN: add ServedDock(dockCode, distance)
+    end
+    
+    MDR_DOMAIN --> MDR_APP: 1.1.1.2.1: updated area
+    deactivate MDR_DOMAIN
+
+    MDR_APP -> MDR_REPO: 1.1.1.3: update(area, errorList)
+    activate MDR_REPO
+    MDR_REPO -> MDR_DATA: 1.1.1.3.1: map to data model
+    activate MDR_DATA
+    MDR_DATA --> MDR_REPO: 1.1.1.3.2: updated record + served_docks
+    deactivate MDR_DATA
+    MDR_REPO -> MDR_PERSIST: 1.1.1.3.3: UPDATE storage_areas\nDELETE old served_docks\nINSERT new served_docks
+    activate MDR_PERSIST
+    MDR_PERSIST --> MDR_REPO: 1.1.1.3.4: ok
+    deactivate MDR_PERSIST
+    MDR_REPO --> MDR_APP: 1.1.1.3.5: persisted(updated area)
+    deactivate MDR_REPO
+
+    MDR_APP --> MDR_CTRL: 1.1.2: updated StorageAreaDTO
+    deactivate MDR_APP
+    MDR_CTRL --> UI_CTRL: 1.2: HTTP 200 OK {identifier, type, ...}
+    deactivate MDR_CTRL
+    UI_CTRL --> PAO: 1.3: show confirmation\n"Storage area updated successfully"
+  end
+end
+
+deactivate UI_CTRL
+deactivate PAO
+
+note right of MDR_DOMAIN
+  Update rules:
+  - Area must exist (404 if not)
+  - Identifier cannot be changed
+  - All validations re-applied
+  - MaxCapacity >= CurrentOccupancy (BR2)
+  - ServedDocks replaced entirely
+end note
+
+note right of MDR_APP
+  Service coordination:
+  - Fetch existing area
+  - Delegate validation to domain
+  - Persist changes via repository
+  - Handle cascade update of served docks
+end note
+
+@enduml

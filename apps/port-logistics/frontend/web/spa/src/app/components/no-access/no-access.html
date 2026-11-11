@@ -1,0 +1,25 @@
+<div class="no-access-container">
+  <div class="no-access-card">
+    <div class="icon-container">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="forbidden-icon">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+      </svg>
+    </div>
+    
+    <h1>Access Denied</h1>
+    <p class="message">You don't have permission to access this resource.</p>
+    
+    <div class="details" *ngIf="userRole">
+      <p><strong>Your Role:</strong> {{ userRole }}</p>
+      <p *ngIf="requiredPermission"><strong>Required Permission:</strong> {{ requiredPermission }}</p>
+      <p *ngIf="requiredPermissions.length > 0"><strong>Required Permissions:</strong> {{ requiredPermissions.join(', ') }}</p>
+      <p *ngIf="attemptedUrl"><strong>Attempted URL:</strong> {{ attemptedUrl }}</p>
+    </div>
+    
+    <div class="actions">
+      <button class="btn-primary" (click)="goBack()">Return to Home</button>
+    </div>
+    
+    <p class="help-text">If you believe this is an error, please contact your administrator.</p>
+  </div>
+</div>

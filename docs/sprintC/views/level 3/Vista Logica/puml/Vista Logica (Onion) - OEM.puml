@@ -1,0 +1,64 @@
+@startuml Logical View - Level 3 (OEM Backend - Onion Architecture)
+top to bottom direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+skinparam component { 
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ===== Onion Architecture Layers =====
+
+rectangle "«container (C4)»\nOEM - Operations & Execution Management" as OEM {
+
+    ' === Infrastructure Layer (Outermost) ===
+    rectangle "Infrastructure Layer" as INFRA #E6E6FA {
+        component "WebApi\n(Controllers)" as WEBAPI
+        component "DataModel\n(EF Core, Repositories)" as DATAMODEL
+        component "External Clients\n(Port Logistics, Scheduling)" as CLIENTS
+    }
+    
+    ' === Application Layer ===
+    rectangle "Application Layer" as APP #98FB98 {
+        component "Services\n(OperationPlanService, VVEService, etc.)" as SERVICES
+        component "DTOs\n(Data Transfer Objects)" as DTOS
+    }
+    
+    ' === Domain Layer (Core) ===
+    rectangle "Domain Layer (Core)" as DOMAIN #FFB6C1 {
+        component "Entities\n(OperationPlan, VVE, Incident, etc.)" as ENTITIES
+        component "Value Objects\n(Status, Severity, etc.)" as VALUEOBJ
+        component "Repository Interfaces\n(IOperationPlanRepository, etc.)" as IREPOS
+    }
+    
+    ' === Relationships ===
+    WEBAPI --> SERVICES : uses
+    WEBAPI --> DTOS : uses
+    
+    SERVICES --> ENTITIES : uses
+    SERVICES --> IREPOS : depends on
+    SERVICES --> DTOS : maps
+    
+    DATAMODEL .up.|> IREPOS : implements
+    DATAMODEL --> ENTITIES : maps
+    
+    CLIENTS --> SERVICES : used by
+}
+
+' === External Systems ===
+database "«internal»\nOEM Database" as DB #87CEEB
+component "«external»\nIAM" as IAM #F5F5DC
+component "«external»\nPort Logistics API" as PL_API #F5F5DC
+component "«external»\nScheduling API" as SCHED_API #F5F5DC
+
+DATAMODEL --> DB : SQL
+WEBAPI --> IAM : JWT validation
+CLIENTS --> PL_API : REST
+CLIENTS --> SCHED_API : REST
+
+@enduml

@@ -1,0 +1,80 @@
+@startuml Vista de Processos – Level 3 (US 4.1.12 – Manage Incident Types)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+participant "«container (C4)»\nSPA (Web UI)" as UI #87CEEB
+participant "«component»\nIncidentTypesController" as IT_CTRL #87CEEB
+participant "«component»\nIncidentTypeService" as IT_SVC #87CEEB
+participant "«component»\nIncidentType" as IT_DOMAIN #87CEEB
+participant "«component»\nIIncidentTypeRepository" as IT_REPO #87CEEB
+participant "«component»\nOEMDbContext" as DB_CTX #87CEEB
+participant "«external»\nIAM" as IAM #F5F5DC
+
+-> UI: 1: request to manage Incident Types
+activate UI
+UI -> IAM: 1.1: validate token (Port Authority Officer role)
+activate IAM
+IAM --> UI: 1.1.1: token valid
+deactivate IAM
+
+UI -> IT_CTRL: 1.2: GET /api/incidenttypes
+activate IT_CTRL
+IT_CTRL -> IT_SVC: 1.2.1: GetAllAsync()
+activate IT_SVC
+IT_SVC -> IT_REPO: 1.2.1.1: GetAllAsync()
+activate IT_REPO
+IT_REPO --> IT_SVC: 1.2.1.2: list of IncidentTypes
+deactivate IT_REPO
+IT_SVC --> IT_CTRL: 1.2.2: List<IncidentTypeDTO>
+deactivate IT_SVC
+IT_CTRL --> UI: 1.3: 200 OK (hierarchical types)
+deactivate IT_CTRL
+
+UI --> : 1.4: display tree view
+deactivate UI
+
+-> UI: 2: create new incident type
+activate UI
+UI -> IT_CTRL: 2.1: POST /api/incidenttypes (CreateIncidentTypeDTO)
+activate IT_CTRL
+IT_CTRL -> IT_SVC: 2.1.1: CreateAsync(dto)
+activate IT_SVC
+
+IT_SVC -> IT_SVC: 2.1.1.1: ValidateCodeUnique(code)
+IT_SVC -> IT_SVC: 2.1.1.2: ValidateParentExists(parentCode)
+
+IT_SVC -> IT_DOMAIN: 2.1.1.3: new IncidentType(code, name, severity, parentCode)
+activate IT_DOMAIN
+IT_DOMAIN -> IT_DOMAIN: 2.1.1.3.1: ValidateCode() [T-INC###]
+IT_DOMAIN -> IT_DOMAIN: 2.1.1.3.2: SetSeverity(Minor|Major|Critical)
+IT_DOMAIN --> IT_SVC: 2.1.1.4: IncidentType entity
+deactivate IT_DOMAIN
+
+IT_SVC -> IT_REPO: 2.1.1.5: AddAsync(incidentType)
+activate IT_REPO
+IT_REPO -> DB_CTX: 2.1.1.5.1: Add(entity)
+activate DB_CTX
+DB_CTX --> IT_REPO: 2.1.1.5.2: saved
+deactivate DB_CTX
+IT_REPO --> IT_SVC: 2.1.1.6: persisted
+deactivate IT_REPO
+
+IT_SVC --> IT_CTRL: 2.1.2: IncidentTypeDTO
+deactivate IT_SVC
+IT_CTRL --> UI: 2.2: 201 Created
+deactivate IT_CTRL
+
+UI --> : 2.3: display confirmation, update tree
+deactivate UI
+
+@enduml

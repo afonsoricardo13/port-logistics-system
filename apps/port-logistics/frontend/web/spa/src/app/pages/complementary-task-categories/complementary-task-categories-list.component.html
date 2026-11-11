@@ -1,0 +1,111 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Complementary Task Categories</h1>
+    <div class="header-actions">
+      <a routerLink="/operations/task-categories/new" class="btn btn-primary">
+        Create Category
+      </a>
+    </div>
+  </div>
+
+  <div class="filters-bar">
+    <div class="filter-group">
+      <label>Search:</label>
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm" 
+        (input)="onSearchChange()" 
+        placeholder="Search by code, name or description..."
+        class="search-input"
+      />
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="loading">Loading...</div>
+  }
+
+  @if (error) {
+    <div class="alert alert-error">{{ error }}</div>
+  }
+
+  @if (!loading && !error) {
+    <div class="categories-grid">
+      @for (category of filteredCategories; track category.code) {
+        <div class="category-card">
+          <div class="card-header">
+            <div class="category-info">
+              <h3>{{ category.name }}</h3>
+              <span class="category-code">{{ category.code }}</span>
+            </div>
+          </div>
+
+          <p class="description">{{ category.description }}</p>
+
+          <div class="category-details">
+            @if (category.defaultDuration) {
+              <div class="detail-item">
+                <span class="label">Default Duration:</span>
+                <span class="value">{{ formatDuration(category.defaultDuration) }}</span>
+              </div>
+            }
+
+            @if (category.expectedImpact) {
+              <div class="detail-item">
+                <span class="label">Expected Impact:</span>
+                <span class="value">{{ category.expectedImpact }}</span>
+              </div>
+            }
+          </div>
+
+          <div class="card-actions">
+            <a [routerLink]="['/operations/task-categories', category.code, 'edit']" class="btn btn-sm btn-secondary">
+              Edit
+            </a>
+            <button (click)="deleteCategory(category.code, category.name)" class="btn btn-sm btn-danger">
+              Delete
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (filteredCategories.length === 0 && categories.length > 0) {
+      <div class="empty-state">
+        <p>No categories match your search criteria.</p>
+      </div>
+    }
+
+    @if (categories.length === 0) {
+      <div class="empty-state">
+        <p>No complementary task categories found.</p>
+        <a routerLink="/operations/task-categories/new" class="btn btn-primary">
+          Create First Category
+        </a>
+      </div>
+    }
+  }
+
+  <!-- Delete Confirmation Modal -->
+  @if (showDeleteModal && deleteTarget) {
+    <div class="modal-overlay" (click)="cancelDelete()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Confirm Delete</h2>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete this category?</p>
+          <p class="delete-target">"{{ deleteTarget.name }}" ({{ deleteTarget.code }})</p>
+        </div>
+        <div class="modal-actions">
+          <button (click)="cancelDelete()" class="btn btn-secondary">
+            Cancel
+          </button>
+          <button (click)="confirmDelete()" class="btn btn-danger">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

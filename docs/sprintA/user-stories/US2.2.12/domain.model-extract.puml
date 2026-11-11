@@ -1,0 +1,84 @@
+@startuml
+
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam monochrome true
+
+package "Physical Resources" {
+    enum PhysicalResource <<Entity root>>
+    class PhysicalResourceID <<ValueObject>> {
+        +ID
+    }
+    class PhysicalResourceOperationalWindow <<ValueObject>>
+    class PhysicalResourceCapacity <<ValueObject>>
+    class PhysicalResourceStatus <<ValueObject>>
+    class PhysicalResourceSetupTime <<ValueObject>>
+    class PhysicalResourceType <<ValueObject>>
+    class PhysicalResourceDescription <<ValueObject>>
+
+    PhysicalResource "1"--"1" PhysicalResourceID
+    PhysicalResource "1"--"1" PhysicalResourceOperationalWindow
+    PhysicalResource "1"--"1" PhysicalResourceCapacity
+    PhysicalResource "1"--"1" PhysicalResourceStatus
+    PhysicalResource "1"--"1" PhysicalResourceSetupTime
+    PhysicalResource "1"--"1" PhysicalResourceType
+    PhysicalResource "1"--"1" PhysicalResourceDescription
+}
+
+package "Staff Management" {
+    enum Staff <<Entity root>>
+    class StaffMecanographicNumber <<ValueObject>> {
+        +ID
+    }
+    class StaffName <<ValueObject>>
+    class StaffEmail <<ValueObject>>
+    class StaffPhoneNumber <<ValueObject>>
+    class StaffOperationalWindow <<ValueObject>> 
+    class StaffCurrentStatus <<ValueObject>>
+
+    Staff "1"--"1" StaffMecanographicNumber
+    Staff "1"--"1" StaffName
+    Staff "1"--"1" StaffEmail
+    Staff "1"--"1" StaffPhoneNumber
+    Staff "1"--"1" StaffOperationalWindow
+    Staff "1"--"1" StaffCurrentStatus
+}
+
+package "Staff Qualification Management" {
+    enum StaffQualification <<Entity root>>
+    
+    class QualificationName <<ValueObject>> {
+        +ID
+    }
+    class RequiredNumber <<ValueObject>>
+    
+    StaffQualification "1"--"1" QualificationName
+    StaffQualification "1"--"1" RequiredNumber
+}
+package "Dock Management" {
+    enum Dock <<Entity root>>
+    class DockID <<ValueObject>> {
+        +ID
+    }
+    class DockName <<ValueObject>>
+    class DockLocation <<ValueObject>>
+    class DockMaxNumberSTSCranes <<ValueObject>>
+    class DockLength <<ValueObject>>
+    class DockDepth <<ValueObject>>
+    class DockMaxDraft <<ValueObject>>
+
+    Dock "1"--"1" DockID
+    Dock "1"--"1" DockName
+    Dock "1"--"1" DockLocation
+    Dock "1"--"1" DockMaxNumberSTSCranes
+    Dock "1"--"1" DockLength
+    Dock "1"--"1" DockDepth
+    Dock "1"--"1" DockMaxDraft
+
+}
+
+PhysicalResource "1" -- "*" StaffQualification : requires
+Dock "1" -- "1..*" PhysicalResource : has
+Staff "*" -- "*" PhysicalResource : operates
+
+@enduml

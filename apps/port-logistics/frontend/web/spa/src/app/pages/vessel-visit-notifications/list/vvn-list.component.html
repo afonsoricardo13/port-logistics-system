@@ -1,0 +1,227 @@
+<!-- US 2.2.10: Vessel Visit Notifications List -->
+<div class="vessel-visit-list-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>Vessel Visit Notifications</h1>
+    <button 
+      class="btn btn-primary" 
+      (click)="createNewNotification()"
+      *ngIf="userRole === 'ShippingAgentRepresentative' || userRole === 'Administrator'">
+      <i class="icon-plus"></i> Create New Notification
+    </button>
+  </div>
+
+  <!-- Success/Error Messages (US 3.1.4 - AC: Clear feedback) -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <!-- Filters Section (US 2.2.10 - AC: Support filtering and searching) -->
+  <div class="filters-section">
+    <div class="filters-row">
+      <!-- Search by Vessel IMO -->
+      <div class="filter-group">
+        <label for="vesselImo">Vessel IMO</label>
+        <input 
+          id="vesselImo"
+          type="text" 
+          class="form-control" 
+          placeholder="IMO number..."
+          [(ngModel)]="searchText"
+          (ngModelChange)="onSearchChange()" />
+      </div>
+
+      <!-- Status Filter -->
+      <div class="filter-group">
+        <label for="status">Status</label>
+        <select 
+          id="status"
+          class="form-control" 
+          [(ngModel)]="selectedStatus"
+          (ngModelChange)="onFilterChange()">
+          <option *ngFor="let status of statusOptions" [value]="status.value">
+            {{ status.label }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Date From Filter -->
+      <div class="filter-group">
+        <label for="dateFrom">ETA From</label>
+        <input 
+          id="dateFrom"
+          type="date" 
+          class="form-control" 
+          [(ngModel)]="dateFrom"
+          (ngModelChange)="onFilterChange()" />
+      </div>
+
+      <!-- Date To Filter -->
+      <div class="filter-group">
+        <label for="dateTo">ETA To</label>
+        <input 
+          id="dateTo"
+          type="date" 
+          class="form-control" 
+          [(ngModel)]="dateTo"
+          (ngModelChange)="onFilterChange()" />
+      </div>
+
+      <!-- Clear Filters Button -->
+      <div class="filter-group filter-actions">
+        <button 
+          class="btn btn-secondary btn-sm" 
+          (click)="clearFilters()"
+          title="Clear all filters">
+          Clear Filters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Indicator (US 3.1.4 - AC: Loading indicators) -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading vessel visit notifications...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredNotifications.length === 0" class="empty-state">
+    <p *ngIf="!searchText && !selectedStatus && !dateFrom && !dateTo">
+      No vessel visit notifications found. Create your first notification!
+    </p>
+    <p *ngIf="searchText || selectedStatus || dateFrom || dateTo">
+      No notifications match your search criteria. Try adjusting your filters.
+    </p>
+  </div>
+
+  <!-- Notifications Table (US 2.2.10 - AC: List views with filtering) -->
+  <div *ngIf="!loading && filteredNotifications.length > 0" class="notifications-table">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Vessel IMO</th>
+          <th>ETA</th>
+          <th>ETD</th>
+          <th>Status</th>
+          <th>Assigned Dock</th>
+          <th>Organization</th>
+          <th>Containers</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let notification of filteredNotifications">
+          <!-- ID -->
+          <td class="id-cell">#{{ notification.id }}</td>
+
+          <!-- Vessel IMO -->
+          <td class="imo-cell">
+            <strong>{{ notification.vesselImoNumber }}</strong>
+          </td>
+
+          <!-- ETA -->
+          <td class="date-cell">
+            {{ formatDateShort(notification.estimatedTimeOfArrival) }}
+          </td>
+
+          <!-- ETD -->
+          <td class="date-cell">
+            {{ formatDateShort(notification.estimatedTimeOfDeparture) }}
+          </td>
+
+          <!-- Status (US 2.2.10 - AC: Show status with visual indicators) -->
+          <td>
+            <span [class]="'status-badge ' + getStatusClass(notification.status)">
+              {{ getStatusText(notification.status) }}
+            </span>
+            <!-- Show rejection reason if rejected (US 2.2.10 - AC) -->
+            <span *ngIf="notification.status === 'Rejected' && notification.rejectionReason" 
+                  class="rejection-reason"
+                  [title]="notification.rejectionReason">
+              <i class="icon-info"></i>
+            </span>
+          </td>
+
+          <!-- Assigned Dock (US 2.2.10 - AC: Show dock assignment) -->
+          <td class="dock-cell">
+            <span *ngIf="notification.assignedDockCode" class="dock-badge">
+              {{ notification.assignedDockCode }}
+            </span>
+            <span *ngIf="!notification.assignedDockCode" class="text-muted">
+              Not assigned
+            </span>
+          </td>
+
+          <!-- Organization -->
+          <td class="org-cell">
+            {{ notification.organizationIdentifier || 'N/A' }}
+          </td>
+
+          <!-- Containers Count -->
+          <td class="count-cell">
+            {{ notification.containerIds.length }} TEU
+          </td>
+
+          <!-- Actions -->
+          <td class="actions-cell">
+            <!-- View Details -->
+            <button 
+              *ngIf="notification.id"
+              class="btn btn-sm btn-info" 
+              (click)="viewDetails(notification.id!)"
+              title="View details">
+              View
+            </button>
+
+            <!-- Edit (only for InProgress) -->
+            <button 
+              *ngIf="canEdit(notification)"
+              class="btn btn-sm btn-secondary" 
+              (click)="editNotification(notification)"
+              title="Edit notification">
+              Edit
+            </button>
+
+            <!-- Submit for Approval (only for InProgress) -->
+            <button 
+              *ngIf="canSubmit(notification)"
+              class="btn btn-sm btn-warning" 
+              (click)="submitForApproval(notification)"
+              title="Submit for approval">
+              Submit
+            </button>
+
+            <!-- Approve (only for Port Authority Officer on Submitted) -->
+            <button 
+              *ngIf="canApproveReject(notification)"
+              class="btn btn-sm btn-success" 
+              (click)="approveNotification(notification)"
+              title="Approve notification">
+              Approve
+            </button>
+
+            <!-- Reject (only for Port Authority Officer on Submitted) -->
+            <button 
+              *ngIf="canApproveReject(notification)"
+              class="btn btn-sm btn-danger" 
+              (click)="rejectNotification(notification)"
+              title="Reject notification">
+              Reject
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Results Count -->
+  <div *ngIf="!loading && filteredNotifications.length > 0" class="results-count">
+    Showing {{ filteredNotifications.length }} of {{ notifications.length }} notifications
+  </div>
+</div>

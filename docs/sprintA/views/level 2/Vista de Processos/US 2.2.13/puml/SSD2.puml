@@ -1,0 +1,34 @@
+@startuml Vista de Processos – Level 2 (US 2.2.13 – Manage Qualification)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Admin" as PA
+participant "<<container (C4)>>\nAdmin UI" as AdminUI #87CEEB
+participant "<<container (C4)>>\nQualifications API" as PR #87CEEB
+
+activate PA
+PA -> AdminUI: 1: open manage qualification
+activate AdminUI
+AdminUI --> PA: 1.1: ask for qualification code and new data
+deactivate AdminUI
+PA -> AdminUI: 2: qualification code + data
+activate AdminUI
+AdminUI --> PR: 2.1: request to update qualification
+activate PR
+PR -> AdminUI: 2.2: qualification updated
+deactivate PR
+AdminUI --> PA: 2.3: qualification updated
+deactivate AdminUI
+deactivate PA
+
+@enduml

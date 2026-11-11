@@ -1,0 +1,155 @@
+@startuml Logical View - Level 3 (Onion) - All Containers
+left to right direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+skinparam component { 
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+
+' ===== APIs externas/entrada (exemplos) =====
+() "MDR API" as MDR_API #87CEEB
+() "MDV API" as MDV_API #87CEEB
+() "Planning API" as PLAN_API #87CEEB
+() "filesystem API" as FS_API #87CEEB
+
+' ===== Container: Visualization (UI) =====
+rectangle "«component»\n«container (C4)»\nVisualization (UI)" as UI_CTR #87CEEB {
+  rectangle "UI Components" as UI_L1 #FFF59D {
+    component "App" as UI_APP
+  }
+}
+
+' ===== Container: Docks & Resources (MDR) =====
+rectangle "«component»\n«container (C4)»\nDocks & Resources" as DR #87CEEB {
+
+  ' --------- Frameworks & Drivers Layer ---------
+  rectangle "Frameworks and Drivers Layer" as L1 #AEEEEE {
+    component "Persistence"           as PERSIST
+    component "Data Model"            as DMODEL
+    component "Filesystem / DB Driver" as FSDRV
+    component "Routing"               as ROUT
+
+    interface "Persistence API"       as I_PERSIST
+    interface "Data Model API"        as I_DATA
+    interface "filesystem driver API" as I_FSDRV
+
+    PERSIST -down- I_PERSIST
+    DMODEL  -down- I_DATA
+    FSDRV   -down- I_FSDRV
+  }
+
+  ' --------- Interface Adapters Layer ---------
+  rectangle "Interface Adapters Layer" as L2 #C7F0C7 {
+    component "Repository"  as REPO
+    component "Controller"  as CTRL
+    component "DTO"         as DTO
+    component "External Repository" as EXT_REPO
+
+    interface "Controller API" as I_CTRL
+    interface "Repo API"       as I_REPO
+    interface "DTO API"        as I_DTO
+  interface "Ext Repo API"   as I_EXT_REPO
+
+    CTRL -down- I_CTRL
+    REPO -down- I_REPO
+    DTO  -down- I_DTO
+    EXT_REPO -down- I_EXT_REPO
+  }
+
+  ' --------- Application Business Rules ---------
+  rectangle "Application Business Rules" as L3 #F7BFBF {
+    component "Application Service" as APP
+    interface "App Service API"     as I_APP
+    interface "Model API"           as I_MODEL
+    APP -down- I_APP
+    APP -down- I_MODEL
+  }
+
+  ' --------- Enterprise Business Rules ---------
+  rectangle "Enterprise Business Rules" as L4 #F7E5B5 {
+    component "Domain Model (DDD)" as DOMAIN
+  }
+
+  ' ===== ligações entre as camadas =====
+  DR_API --> ROUT
+
+  ROUT --> I_CTRL
+  I_CTRL --> CTRL
+
+  CTRL --> I_DTO
+  I_DTO --> DTO
+
+  CTRL --> I_APP
+  I_APP --> APP
+
+  APP  --> I_MODEL
+  I_MODEL --> DOMAIN
+
+  APP  --> I_REPO
+  I_REPO --> REPO
+
+  REPO --> I_PERSIST
+  I_PERSIST --> PERSIST
+
+  REPO --> I_DATA
+  I_DATA --> DMODEL
+
+  FS_API --> I_FSDRV
+  I_FSDRV --> FSDRV
+
+  ' Extra alinhamientos (posicionamento aproximado ao exemplo)
+  ROUT -[hidden]-> PERSIST
+  PERSIST -[hidden]-> FSDRV
+  CTRL -[hidden]-> REPO
+  REPO -[hidden]-> EXT_REPO
+}
+
+' ===== Container: Planning & Scheduling =====
+rectangle "«component»\n«container (C4)»\nPlanning & Scheduling" as PLAN_CTR #87CEEB {
+  rectangle "Planner" as PL_L1 #F7E5B5 {
+    component "Planning Component" as PL_COMP
+  }
+}
+
+' ===== Container: Visits & Manifests (MDV) =====
+rectangle "«component»\n«container (C4)»\nVisits & Manifests" as MDV #87CEEB {
+  rectangle "Interfaces" as V_L1 #AEEEEE {
+    component "Routing" as V_ROUT
+    component "Persistence" as V_PERSIST
+    interface "Controller API" as V_I_CTRL
+    V_ROUT -down- V_I_CTRL
+  }
+  rectangle "Infrastructure" as V_L2 #C7F0C7 {
+    component "Controller" as V_CTRL
+    component "Repository" as V_REPO
+    interface "Data Model" as V_I_DATA
+    V_CTRL -down- V_I_DATA
+  }
+  rectangle "Application" as V_L3 #F7BFBF {
+    component "Service" as V_SVC
+    interface "Model" as V_I_MODEL
+    V_SVC -down- V_I_MODEL
+  }
+  rectangle "Domain" as V_L4 #F7E5B5 {
+    component "Domain Model" as V_DOMAIN
+  }
+}
+
+' ===== Simple relationships between containers/APIs (layout helpers) =====
+UI_CTR -[hidden]-> DR
+DR -[hidden]-> PLAN_CTR
+PLAN_CTR -[hidden]-> MDV
+
+MDR_API --> UI_CTR
+MDR_API --> DR
+MDV_API --> MDV
+PLAN_API --> PLAN_CTR
+FS_API --> DR
+@enduml

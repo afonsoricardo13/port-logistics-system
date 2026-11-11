@@ -1,0 +1,34 @@
+@startuml Vista de Processos – Level 2 (US 2.2.9 – Change Vessel Visit Notification)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Port Authority Officer" as PA
+participant "<<container (C4)>>\nVisualization (UI)" as UI #87CEEB
+participant "<<container (C4)>>\nVessel Visits Management" as VVM #87CEEB
+
+activate PA
+PA -> UI: 1: select vessel visit to change
+activate UI
+UI --> PA: 1.1: show current vessel visit details
+deactivate UI
+PA -> UI: 2: submit change 
+activate UI
+UI --> VVM: 2.1: request to change vessel visit
+activate VVM
+VVM -> UI: 2.2: change accepted / validation result
+deactivate VVM
+UI --> PA: 2.3: show change confirmation
+deactivate UI
+deactivate PA
+
+@enduml

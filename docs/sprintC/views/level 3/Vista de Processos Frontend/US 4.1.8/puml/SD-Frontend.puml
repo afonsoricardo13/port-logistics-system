@@ -1,0 +1,80 @@
+@startuml Vista de Processos Frontend – US 4.1.8 (Update Berthing Times - SPA)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as USER
+
+box "SPA (Angular)" #LightBlue
+    participant "VveDetailsComponent" as COMP
+    participant "VesselVisitExecutionService" as SVC
+    participant "MatDialog" as DIALOG
+    participant "AuthService" as AUTH
+end box
+
+participant "<<external>>\nIAM" as IAM #F5F5DC
+
+USER -> COMP: 1: click "Update Berthing Times" on VVE details
+activate COMP
+
+COMP -> AUTH: 1.1: getToken()
+activate AUTH
+AUTH --> COMP: 1.1.1: token
+deactivate AUTH
+
+COMP -> DIALOG: 1.2: open(BerthingTimesDialogComponent, {vve})
+activate DIALOG
+DIALOG --> USER: 1.3: display berthing times form
+deactivate DIALOG
+deactivate COMP
+
+note right of USER
+    Form fields:
+    - Berthing Start (datetime)
+    - Berthing End (datetime)
+    - Actual Departure (datetime)
+end note
+
+USER -> DIALOG: 2: fill berthing times, click "Save"
+activate DIALOG
+
+DIALOG -> DIALOG: 2.1: validateTimes()
+note right
+    Validations:
+    - Start after arrival
+    - End after start
+    - Departure after end
+end note
+
+DIALOG -> SVC: 2.2: updateBerthing(vveId, berthingData)
+activate SVC
+SVC --> DIALOG: 2.2.1: updated VVE
+deactivate SVC
+
+DIALOG --> COMP: 2.3: close(updatedVve)
+deactivate DIALOG
+
+activate COMP
+COMP -> COMP: 2.4: updateVveDisplay(updatedVve)
+COMP -> COMP: 2.5: recalculateMetrics()
+note right
+    Recalculates:
+    - Berth Occupancy Time
+    - Waiting Time for Berthing
+end note
+
+COMP -> COMP: 2.6: showSuccessToast("Berthing times updated")
+
+COMP --> USER: 2.7: display updated VVE with new times
+deactivate COMP
+
+@enduml

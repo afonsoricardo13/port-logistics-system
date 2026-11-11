@@ -1,0 +1,269 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+          <i class="bi bi-clipboard-check"></i>
+          Review Vessel Visit Notification
+        </h2>
+        <button class="btn btn-outline-secondary" (click)="goBack()">
+          <i class="bi bi-arrow-left"></i> Back to List
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading notification...</p>
+      </div>
+
+      <!-- Success Message -->
+      <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill"></i> {{ successMessage }}
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+        <button type="button" class="btn-close" (click)="error = null"></button>
+      </div>
+
+      <!-- Notification Details -->
+      <div *ngIf="!loading && notification">
+        <!-- Basic Information -->
+        <div class="card mb-3">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-info-circle"></i> Notification Details</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <p><strong>ID:</strong> {{ notification.id }}</p>
+                <p><strong>Vessel IMO:</strong> {{ notification.vesselImoNumber }}</p>
+                <p><strong>Organization:</strong> {{ notification.organizationIdentifier }}</p>
+                <p>
+                  <strong>Status:</strong>
+                  <span class="badge ms-2" [ngClass]="getStatusBadgeClass(notification.status)">
+                    {{ notification.status }}
+                  </span>
+                </p>
+              </div>
+              <div class="col-md-6">
+                <p><strong>ETA:</strong> {{ notification.estimatedTimeOfArrival | date:'short' }}</p>
+                <p><strong>ETD:</strong> {{ notification.estimatedTimeOfDeparture | date:'short' }}</p>
+                <p><strong>Captain:</strong> {{ notification.captainName || 'N/A' }}</p>
+                <p><strong>Crew Count:</strong> {{ notification.crewCount || 0 }}</p>
+                <p><strong>Preferred Dock:</strong> {{ notification.preferredDockCode || 'None' }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cargo Manifest -->
+        <div class="card mb-3" *ngIf="notification.containerIds && notification.containerIds.length > 0">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-box-seam"></i> Cargo Manifest</h5>
+          </div>
+          <div class="card-body">
+            <p><strong>Container Count:</strong> {{ notification.containerIds.length }}</p>
+            <div class="d-flex flex-wrap gap-2">
+              <span *ngFor="let container of notification.containerIds" class="badge bg-info">
+                {{ container }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Crew Members -->
+        <div class="card mb-3" *ngIf="notification.crew && notification.crew.length > 0">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-people"></i> Crew Members</h5>
+          </div>
+          <div class="card-body">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Citizen ID</th>
+                  <th>Nationality</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let member of notification.crew">
+                  <td>{{ member.name }}</td>
+                  <td>{{ member.citizenId }}</td>
+                  <td>{{ member.nationality }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Decision Section (US 2.2.7) -->
+        <div class="card mb-3" *ngIf="canReview()">
+          <div class="card-header bg-warning">
+            <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> Review Decision</h5>
+          </div>
+          <div class="card-body">
+            <p class="text-muted">This notification is awaiting your review. Please approve or reject.</p>
+            <div class="d-flex gap-2">
+              <button
+                class="btn btn-success"
+                (click)="openApproveModal()"
+                [disabled]="submitting">
+                <i class="bi bi-check-circle"></i> Approve
+              </button>
+              <button
+                class="btn btn-danger"
+                (click)="openRejectModal()"
+                [disabled]="submitting">
+                <i class="bi bi-x-circle"></i> Reject
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Decision History -->
+        <div class="card mb-3" *ngIf="notification.assignedDockCode || notification.rejectionReason">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-clock-history"></i> Decision</h5>
+          </div>
+          <div class="card-body">
+            <div *ngIf="notification.assignedDockCode">
+              <p><strong>Assigned Dock:</strong> <span class="badge bg-success">{{ notification.assignedDockCode }}</span></p>
+            </div>
+            <div *ngIf="notification.rejectionReason">
+              <p><strong>Rejection Reason:</strong></p>
+              <div class="alert alert-danger">{{ notification.rejectionReason }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Trail -->
+        <div class="card mb-3" *ngIf="auditTrail.length > 0">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-journal-text"></i> Audit Trail</h5>
+          </div>
+          <div class="card-body">
+            <div class="timeline">
+              <div *ngFor="let entry of auditTrail" class="timeline-item">
+                <div class="timeline-marker" [ngClass]="{
+                  'bg-success': entry.outcome === 'Approved',
+                  'bg-danger': entry.outcome === 'Rejected'
+                }"></div>
+                <div class="timeline-content">
+                  <p class="mb-1">
+                    <strong>{{ entry.outcome }}</strong> by {{ entry.officerId }}
+                  </p>
+                  <p class="text-muted mb-1">{{ entry.timestamp | date:'medium' }}</p>
+                  <p *ngIf="entry.assignedDockCode" class="mb-0">
+                    <small>Dock: <span class="badge bg-success">{{ entry.assignedDockCode }}</span></small>
+                  </p>
+                  <p *ngIf="entry.reason" class="mb-0">
+                    <small>Reason: {{ entry.reason }}</small>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Approve Modal -->
+<div class="modal" [class.show]="showApproveModal" [style.display]="showApproveModal ? 'block' : 'none'" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title"><i class="bi bi-check-circle"></i> Approve Notification</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeApproveModal()" aria-label="Close"></button>
+      </div>
+      <form [formGroup]="approveForm" (ngSubmit)="approve()">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="assignedDockCode" class="form-label">
+              Assign Dock <span class="text-danger">*</span>
+            </label>
+            <select
+              id="assignedDockCode"
+              class="form-select"
+              formControlName="assignedDockCode"
+              [class.is-invalid]="approveForm.get('assignedDockCode')?.invalid && approveForm.get('assignedDockCode')?.touched">
+              <option value="">Select a dock...</option>
+              <option *ngFor="let dock of availableDocks" [value]="dock.code">
+                {{ dock.code }} - {{ dock.nameOrNumber }} ({{ dock.location }})
+              </option>
+            </select>
+            <div class="invalid-feedback">Please select a dock</div>
+          </div>
+          <p class="text-muted">
+            <i class="bi bi-info-circle"></i>
+            This will approve the vessel visit and assign the selected dock.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeApproveModal()" [disabled]="submitting">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-success" [disabled]="submitting || approveForm.invalid">
+            <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+            <i *ngIf="!submitting" class="bi bi-check-circle"></i>
+            Approve
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showApproveModal" *ngIf="showApproveModal"></div>
+
+<!-- Reject Modal -->
+<div class="modal" [class.show]="showRejectModal" [style.display]="showRejectModal ? 'block' : 'none'" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title"><i class="bi bi-x-circle"></i> Reject Notification</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeRejectModal()" aria-label="Close"></button>
+      </div>
+      <form [formGroup]="rejectForm" (ngSubmit)="reject()">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="rejectionReason" class="form-label">
+              Rejection Reason <span class="text-danger">*</span>
+            </label>
+            <textarea
+              id="rejectionReason"
+              class="form-control"
+              formControlName="rejectionReason"
+              rows="4"
+              placeholder="Provide a detailed reason for rejection (minimum 10 characters)"
+              [class.is-invalid]="rejectForm.get('rejectionReason')?.invalid && rejectForm.get('rejectionReason')?.touched"></textarea>
+            <div class="invalid-feedback">
+              Rejection reason is required (minimum 10 characters)
+            </div>
+          </div>
+          <p class="text-muted">
+            <i class="bi bi-exclamation-triangle"></i>
+            This will reject the vessel visit notification.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeRejectModal()" [disabled]="submitting">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-danger" [disabled]="submitting || rejectForm.invalid">
+            <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+            <i *ngIf="!submitting" class="bi bi-x-circle"></i>
+            Reject
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showRejectModal" *ngIf="showRejectModal"></div>

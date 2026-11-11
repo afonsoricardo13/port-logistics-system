@@ -1,0 +1,170 @@
+<div class="vve-search-container">
+  <h2>🔍 US 4.1.10: Search Vessel Visit Executions</h2>
+  <p class="subtitle">Review execution history and analyze performance with key metrics</p>
+
+  <!-- Filter Section -->
+  <div class="filter-section card">
+    <h3>Search Filters</h3>
+    <form (ngSubmit)="search()" class="filter-form">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="startDate">Start Date</label>
+          <input
+            type="date"
+            id="startDate"
+            [(ngModel)]="startDate"
+            name="startDate"
+            class="form-control"
+          />
+        </div>
+
+        <div class="filter-group">
+          <label for="endDate">End Date</label>
+          <input
+            type="date"
+            id="endDate"
+            [(ngModel)]="endDate"
+            name="endDate"
+            class="form-control"
+          />
+        </div>
+
+        <div class="filter-group">
+          <label for="vesselImo">Vessel IMO (partial match)</label>
+          <input
+            type="text"
+            id="vesselImo"
+            [(ngModel)]="vesselImo"
+            name="vesselImo"
+            placeholder="e.g. 1234567"
+            class="form-control"
+          />
+        </div>
+
+        <div class="filter-group">
+          <label for="status">Status</label>
+          <select
+            id="status"
+            [(ngModel)]="status"
+            name="status"
+            class="form-control"
+          >
+            <option *ngFor="let opt of statusOptions" [value]="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filter-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="loading">
+          <span *ngIf="!loading">🔍 Search</span>
+          <span *ngIf="loading">⏳ Searching...</span>
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="resetFilters()" [disabled]="loading">
+          🔄 Reset Filters
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="alert alert-danger">
+    <strong>Error:</strong> {{ error }}
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading execution data...</p>
+  </div>
+
+  <!-- Results Section -->
+  <div *ngIf="!loading && searched" class="results-section">
+    <h3>Search Results ({{ searchResults.length }} records)</h3>
+
+    <div *ngIf="searchResults.length === 0" class="alert alert-info">
+      No vessel visit executions found matching your criteria.
+    </div>
+
+    <div *ngIf="searchResults.length > 0" class="table-responsive">
+      <table class="table table-hover table-bordered">
+        <thead>
+          <tr>
+            <th rowspan="2">VVE ID</th>
+            <th rowspan="2">VVN ID</th>
+            <th rowspan="2">Vessel</th>
+            <th rowspan="2">Dock Used</th>
+            <th rowspan="2">Status</th>
+            <th colspan="2" class="text-center table-group-header">Timestamps</th>
+            <th colspan="5" class="text-center table-group-header">📊 Execution Metrics (hours)</th>
+          </tr>
+          <tr>
+            <!-- Timestamps subheaders -->
+            <th>Arrival</th>
+            <th>Departure</th>
+            <!-- Metrics subheaders -->
+            <th title="Total time from arrival to departure">Turnaround</th>
+            <th title="Time vessel occupied the dock">Berth Occupancy</th>
+            <th title="Waiting time before berthing">Wait for Berth</th>
+            <th title="Delay in arrival (+ = late, - = early)" class="delay-col">Arrival Δ</th>
+            <th title="Delay in departure (+ = late, - = early)" class="delay-col">Departure Δ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let vve of searchResults">
+            <td class="id-col">{{ vve.id }}</td>
+            <td class="id-col">{{ vve.vvnId }}</td>
+            <td>
+              <div class="vessel-info">
+                <strong>{{ vve.vesselName || vve.vesselImo || 'Unknown Vessel' }}</strong>
+                <small *ngIf="vve.vesselImo && vve.vesselName !== vve.vesselImo">(IMO: {{ vve.vesselImo }})</small>
+                <small *ngIf="!vve.vesselName && !vve.vesselImo" class="text-warning">⚠️ Data not loaded from VVN</small>
+              </div>
+            </td>
+            <td>{{ vve.dockUsed || 'N/A' }}</td>
+            <td>
+              <span class="badge" [ngClass]="getStatusClass(vve.status)">
+                {{ vve.status }}
+              </span>
+            </td>
+
+            <!-- Timestamps -->
+            <td class="timestamp-col">{{ formatDateTime(vve.actualArrivalTime) }}</td>
+            <td class="timestamp-col">{{ formatDateTime(vve.actualDepartureTime) }}</td>
+
+            <!-- Metrics -->
+            <td class="metric-col">{{ formatNumber(vve.totalTurnaroundTimeHours) }}</td>
+            <td class="metric-col">{{ formatNumber(vve.berthOccupancyTimeHours) }}</td>
+            <td class="metric-col">{{ formatNumber(vve.waitingTimeForBerthingHours) }}</td>
+            <td class="metric-col delay-col" [ngClass]="getDelayClass(vve.arrivalDelayHours)">
+              {{ formatDelay(vve.arrivalDelayHours) }}
+            </td>
+            <td class="metric-col delay-col" [ngClass]="getDelayClass(vve.departureDelayHours)">
+              {{ formatDelay(vve.departureDelayHours) }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Summary Statistics (optional enhancement) -->
+    <div *ngIf="searchResults.length > 0" class="summary-section card">
+      <h4>📈 Summary Statistics</h4>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span class="summary-label">Total VVEs:</span>
+          <span class="summary-value">{{ searchResults.length }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Completed:</span>
+          <span class="summary-value">{{ countByStatus('Completed') }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">In Progress:</span>
+          <span class="summary-value">{{ countByStatus('InProgress') }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

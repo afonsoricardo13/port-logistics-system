@@ -1,0 +1,32 @@
+@startuml Vista Lógica Nivel 1- Port Operations System
+top to bottom direction
+skinparam shadowing true
+skinparam defaultTextAlignment center
+
+skinparam interfaceFontStyle bold
+skinparam interfaceFontColor #000000
+skinparam interfaceFontSize 14
+
+skinparam component {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+() "UI Logistics Operator"           as LO #87CEEB
+() "UI Administrator"                as AD #87CEEB
+() "UI Shipping Agent Representative" as SA #87CEEB
+() "UI Port Authority Officer"       as PA #87CEEB
+() "UI System Administrator"         as SYSADMIN #87CEEB
+
+component "«component»\n«system (C4)»\nPort Operations\nSystem" as POS
+
+LO -- POS
+AD -- POS
+SA -- POS
+PA -- POS
+SYSADMIN -- POS
+@enduml

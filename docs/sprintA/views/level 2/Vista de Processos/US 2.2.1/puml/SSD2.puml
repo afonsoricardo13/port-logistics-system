@@ -1,0 +1,42 @@
+@startuml Vista de Processos – Level 2 (US 2.2.1 – Update Vessel Type)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Port Authority Officer" as Officer
+participant "<<container (C4)>>\nVisualization (UI)" as UI #87CEEB
+participant "<<container (C4)>>\nVisits & Manifests" as TYPES #87CEEB
+
+activate Officer
+Officer -> UI: 1: request to update a Vessel Type
+activate UI
+UI --> Officer: 1.1: search and filter by name/description\n(select Vessel Type)
+Agent -> UI: 2: select Vessel Type
+UI -> TYPES: 2.1: get vessel type details (id)
+activate TYPES
+TYPES --> UI: 2.2: current data (name, description, capacity, constraints)
+deactivate TYPES
+UI --> Officer: 2.3: show details for editing
+
+deactivate UI
+Officer -> UI: 3: provide updated data
+activate UI
+UI -> TYPES: 3.1: update vessel type (id, data)
+activate TYPES
+TYPES --> UI: 3.2: update confirmation
+UI --> Officer: 3.3: display confirmation
+
+deactivate TYPES
+deactivate UI
+deactivate Officer
+
+@enduml

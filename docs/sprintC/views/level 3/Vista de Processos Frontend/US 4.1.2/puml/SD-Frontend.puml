@@ -1,0 +1,72 @@
+@startuml Vista de Processos Frontend – US 4.1.2 (Generate Operation Plans - SPA)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Logistics Operator" as USER
+
+box "SPA (Angular)" #LightBlue
+    participant "OperationPlanGenerationComponent" as COMP
+    participant "OperationPlanningService" as SVC
+    participant "VesselVisitNotificationService" as VVN_SVC
+    participant "SchedulingService" as SCHED_SVC
+    participant "AuthService" as AUTH
+end box
+
+participant "<<external>>\nIAM" as IAM #F5F5DC
+
+USER -> COMP: 1: navigate to /operation-plan-generation
+activate COMP
+
+COMP -> AUTH: 1.1: getToken()
+activate AUTH
+AUTH -> IAM: 1.1.1: validateSession()
+activate IAM
+IAM --> AUTH: 1.1.2: valid JWT token
+deactivate IAM
+AUTH --> COMP: 1.1.3: token
+deactivate AUTH
+
+COMP -> VVN_SVC: 1.2: getApprovedVVNs()
+activate VVN_SVC
+VVN_SVC --> COMP: 1.2.1: list of approved VVNs
+deactivate VVN_SVC
+
+COMP --> USER: 1.3: display date picker and algorithm selector
+deactivate COMP
+
+USER -> COMP: 2: select date and algorithm, click "Generate"
+activate COMP
+
+COMP -> COMP: 2.1: validateDateSelection()
+
+COMP -> SCHED_SVC: 2.2: generateDailyPlan(date, VVNs, algorithm)
+activate SCHED_SVC
+SCHED_SVC --> COMP: 2.2.1: generated plans (preview)
+deactivate SCHED_SVC
+
+COMP --> USER: 2.3: display plans in preview table
+deactivate COMP
+
+USER -> COMP: 3: review plans, click "Save Plans"
+activate COMP
+
+COMP -> SVC: 3.1: saveBatch(plans)
+activate SVC
+SVC --> COMP: 3.1.1: saved plans with IDs
+deactivate SVC
+
+COMP -> COMP: 3.2: showSuccessNotification()
+COMP --> USER: 3.3: display success message, redirect to list
+deactivate COMP
+
+@enduml

@@ -1,0 +1,91 @@
+### Vessel API Tests
+### Baseado no ficheiro WebApi.http
+@WebApi_HostAddress = https://localhost:7096
+
+### 1. GET all vessels
+GET {{WebApi_HostAddress}}/api/vessels
+Accept: application/json
+
+###
+
+### 2. POST - Create a new vessel with valid IMO
+POST {{WebApi_HostAddress}}/api/vessels
+Content-Type: application/json
+
+{
+  "imoNumber": "9074729",
+  "name": "MSC Oscar",
+  "vesselType": "Container Ship",
+  "operator": "Mediterranean Shipping Company"
+}
+
+###
+
+### 3. POST - Create another vessel
+POST {{WebApi_HostAddress}}/api/vessels
+Content-Type: application/json
+
+{
+  "imoNumber": "1234567",
+  "name": "Test Cargo",
+  "vesselType": "Cargo",
+  "operator": "Test Shipping Ltd"
+}
+
+###
+
+### 4. POST - Try to create vessel with invalid IMO (should fail)
+POST {{WebApi_HostAddress}}/api/vessels
+Content-Type: application/json
+
+{
+  "imoNumber": "1234560",
+  "name": "Invalid Ship",
+  "vesselType": "Tanker",
+  "operator": "Invalid Operator"
+}
+
+###
+
+### 5. GET vessel by IMO number
+GET {{WebApi_HostAddress}}/api/vessels/9074729
+Accept: application/json
+
+###
+
+### 6. PUT - Update vessel
+PUT {{WebApi_HostAddress}}/api/vessels/9074729
+Content-Type: application/json
+
+{
+  "imoNumber": "9074729",
+  "name": "MSC Oscar II",
+  "vesselType": "Ultra Large Container Ship",
+  "operator": "MSC - Mediterranean Shipping Company SA"
+}
+
+###
+
+### 7. Search by vessel name
+GET {{WebApi_HostAddress}}/api/vessels?name=Oscar
+Accept: application/json
+
+###
+
+### 8. Search by operator
+GET {{WebApi_HostAddress}}/api/vessels?operatorName=MSC
+Accept: application/json
+
+###
+
+### 9. Search by IMO number
+GET {{WebApi_HostAddress}}/api/vessels?imoNumber=9074729
+Accept: application/json
+
+###
+
+### 10. Search by vessel type
+GET {{WebApi_HostAddress}}/api/vessels?name=Cargo
+Accept: application/json
+
+###

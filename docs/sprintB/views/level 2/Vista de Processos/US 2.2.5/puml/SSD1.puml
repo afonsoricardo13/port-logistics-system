@@ -1,0 +1,36 @@
+﻿@startuml Vista de Processos – Level 2 (US 2.2.5 – Register Shipping Agent Organization)
+		   skinparam shadowing true
+		   skinparam linetype ortho
+		   skinparam sequence {
+		    ArrowColor Black
+		    ActorBorderColor #000000
+		    ActorBackgroundColor #87CEEB
+		    LifeLineBorderColor Black
+		    LifeLineBackgroundColor #87CEEB
+		    ParticipantBorderColor Black
+		    ParticipantBackgroundColor #87CEEB
+		    ParticipantFontStyle bold
+		   }
+		   
+		   actor "Port Authority Officer" as PA
+		   participant "<<container (C4)>>\nVisualization (UI)" as UI #87CEEB
+		   participant "<<container (C4)>>\nPlanning & Scheduling" as PLAN #87CEEB
+		   
+		   activate PA
+		   PA -> UI: 1: register organization
+		   activate UI
+		   UI --> PA: 1.1: ask for organization data
+
+		   deactivate UI
+		   
+		   PA -> UI: 2: organization data
+		   activate UI
+		   UI --> PLAN: 2.1: request to register organization
+		   activate PLAN
+		   PLAN --> UI: 2.3: organization registered 
+		   deactivate PLAN
+		   UI --> PA: 2.4: organization registered 
+		   deactivate UI
+		   deactivate PA
+		   
+		   @enduml

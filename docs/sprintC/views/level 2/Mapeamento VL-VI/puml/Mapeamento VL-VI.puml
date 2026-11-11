@@ -1,0 +1,50 @@
+@startuml Mapeamento VL-VI – Nível 2 (Sprint C)
+top to bottom direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+skinparam rectangle {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam component { 
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+rectangle "Port Operations System (Logical View)" as LV {
+  component "SPA (Web UI)" as UI_L
+  component "Port Logistics (Backend)" as PORT_L
+  component "OEM (Backend)" as OEM_L
+  component "Scheduling & Planning" as PLAN_L
+}
+
+rectangle "Port Operations System (Implementation View)" as IV {
+  component "@port-logistics/spa" as UI_I
+  component "@port-logistics/backend" as PORT_I
+  component "@operations-execution/backend" as OEM_I
+  component "@scheduling-planning/backend" as PLAN_I
+  database "Port Logistics DB" as PORT_DB_I
+  database "OEM DB" as OEM_DB_I
+}
+
+component "«external»\nIAM Provider" as IAM #F5F5DC
+
+UI_L .down.> UI_I : <<manifest>>
+PORT_L .down.> PORT_I : <<manifest>>
+OEM_L .down.> OEM_I : <<manifest>>
+PLAN_L .down.> PLAN_I : <<manifest>>
+
+PORT_I --> PORT_DB_I
+OEM_I --> OEM_DB_I
+
+UI_I --> IAM
+PORT_I --> IAM
+OEM_I --> IAM
+
+@enduml

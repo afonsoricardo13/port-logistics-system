@@ -1,0 +1,125 @@
+<div class="modal-backdrop" (click)="onCancel()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>🏁 Complete Vessel Visit Execution</h2>
+      <button class="close-btn" (click)="onCancel()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      @if (success) {
+        <div class="alert alert-success">
+          {{ success }}
+        </div>
+      }
+
+      @if (error) {
+        <div class="alert alert-error">
+          <strong>❌ Error!</strong> {{ error }}
+        </div>
+      }
+
+      <div class="vve-info">
+        <h3>VVE Details</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>VVE ID:</label>
+            <span><strong>{{ vve.id }}</strong></span>
+          </div>
+          <div class="info-item">
+            <label>VVN ID:</label>
+            <span>{{ vve.vvnId }}</span>
+          </div>
+          <div class="info-item">
+            <label>Arrival Time:</label>
+            <span>{{ formatDate(vve.actualArrivalTime) }}</span>
+          </div>
+          <div class="info-item">
+            <label>Berth Time:</label>
+            <span>{{ formatDate(vve.actualBerthTime) }}</span>
+          </div>
+          <div class="info-item">
+            <label>Dock Used:</label>
+            <span>{{ vve.dockUsed || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Status:</label>
+            <span class="status-badge status-in-progress">{{ vve.status }}</span>
+          </div>
+        </div>
+      </div>
+
+      <form [formGroup]="completeForm" (ngSubmit)="onSubmit()">
+        <div class="form-section">
+          <h3>⏱️ Completion Information</h3>
+          <p class="help-text">Record the vessel's unberth and departure times to complete the execution.</p>
+
+          <div class="form-group">
+            <label for="actualUnberthTime">
+              Actual Unberth Time <span class="required">*</span>
+            </label>
+            <input 
+              type="datetime-local"
+              id="actualUnberthTime"
+              formControlName="actualUnberthTime"
+              [class.invalid]="completeForm.get('actualUnberthTime')?.invalid && completeForm.get('actualUnberthTime')?.touched"
+            />
+            @if (completeForm.get('actualUnberthTime')?.invalid && completeForm.get('actualUnberthTime')?.touched) {
+              <small class="error-text">Unberth time is required</small>
+            }
+            <small class="help-text">When did the vessel leave the dock?</small>
+          </div>
+
+          <div class="form-group">
+            <label for="actualDepartureTime">
+              Actual Port Departure Time <span class="required">*</span>
+            </label>
+            <input 
+              type="datetime-local"
+              id="actualDepartureTime"
+              formControlName="actualDepartureTime"
+              [class.invalid]="completeForm.get('actualDepartureTime')?.invalid && completeForm.get('actualDepartureTime')?.touched"
+            />
+            @if (completeForm.get('actualDepartureTime')?.invalid && completeForm.get('actualDepartureTime')?.touched) {
+              <small class="error-text">Departure time is required</small>
+            }
+            <small class="help-text">When did the vessel exit the port limits?</small>
+          </div>
+
+          <div class="form-group">
+            <label for="notes">Completion Notes (Optional)</label>
+            <textarea 
+              id="notes"
+              formControlName="notes"
+              rows="3"
+              placeholder="Add any relevant completion notes..."
+              [class.invalid]="completeForm.get('notes')?.invalid && completeForm.get('notes')?.touched"
+            ></textarea>
+            @if (completeForm.get('notes')?.invalid && completeForm.get('notes')?.touched) {
+              <small class="error-text">Notes must be less than 500 characters</small>
+            }
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button 
+            type="button" 
+            class="btn btn-secondary" 
+            (click)="onCancel()"
+            [disabled]="loading">
+            Cancel
+          </button>
+          <button 
+            type="submit" 
+            class="btn btn-primary" 
+            [disabled]="loading || completeForm.invalid">
+            @if (loading) {
+              <span>Completing...</span>
+            } @else {
+              <span>✅ Complete VVE</span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

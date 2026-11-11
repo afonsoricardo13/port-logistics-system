@@ -1,0 +1,57 @@
+@startuml SSD - US 4.1.8 - Update VVE Berthing Times (Level 2)
+skinparam shadowing true
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+title US 4.1.8 - Update VVE Berthing Times (SSD Level 2)
+
+actor "Logistics Operator" as LO
+
+box "Port Operations System" #LightBlue
+    participant "SPA\n(Angular)" as SPA
+    participant "OEM\nBackend" as OEM
+end box
+
+participant "«external»\nIAM" as IAM #F5F5DC
+
+database "«internal»\nOEM DB" as DB #87CEEB
+
+LO -> SPA: 1: update berthing times (vveId, berthingData)
+activate SPA
+
+SPA -> IAM: 1.1: validateSession()
+activate IAM
+IAM --> SPA: 1.2: valid token
+deactivate IAM
+
+SPA -> OEM: 1.3: PATCH /api/vessel-visit-executions/{vveId}/berthing
+activate OEM
+
+OEM -> OEM: 1.4: validate berthing times
+note right
+    Validations:
+    - Berthing start <= Berthing end
+    - Departure after berthing end
+    - Dock availability
+end note
+
+OEM -> DB: 1.5: update VVE berthing data
+activate DB
+DB --> OEM: 1.6: updated VVE
+deactivate DB
+
+OEM --> SPA: 1.7: updated VVE with berthing times
+deactivate OEM
+
+SPA --> LO: 1.8: display updated VVE
+deactivate SPA
+
+@enduml

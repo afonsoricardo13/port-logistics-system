@@ -1,0 +1,102 @@
+{
+  "myNotifications": [
+    {
+      "id": 1,
+      "vesselImoNumber": "IMO1234567",
+      "estimatedTimeOfArrival": "2025-06-15T10:00:00Z",
+      "estimatedTimeOfDeparture": "2025-06-16T18:00:00Z",
+      "status": "InProgress",
+      "submittedByRepresentativeId": 1,
+      "assignedDockCode": null,
+      "rejectionReason": null,
+      "containerIds": ["ABCD1234567"],
+      "crew": [
+        {
+          "name": "Captain John",
+          "citizenId": "ID001",
+          "nationality": "PT"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "vesselImoNumber": "IMO7654321",
+      "estimatedTimeOfArrival": "2025-06-20T08:00:00Z",
+      "estimatedTimeOfDeparture": "2025-06-21T16:00:00Z",
+      "status": "Submitted",
+      "submittedByRepresentativeId": 1,
+      "assignedDockCode": null,
+      "rejectionReason": null,
+      "containerIds": ["EFGH7654321", "IJKL1111111"],
+      "crew": [
+        {
+          "name": "Captain Smith",
+          "citizenId": "ID002",
+          "nationality": "UK"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "vesselImoNumber": "IMO1111111",
+      "estimatedTimeOfArrival": "2025-06-25T12:00:00Z",
+      "estimatedTimeOfDeparture": "2025-06-26T20:00:00Z",
+      "status": "Approved",
+      "submittedByRepresentativeId": 1,
+      "assignedDockCode": "DOCK-A",
+      "rejectionReason": null,
+      "containerIds": ["MNOP2222222"],
+      "crew": [
+        {
+          "name": "Captain Brown",
+          "citizenId": "ID003",
+          "nationality": "ES"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "vesselImoNumber": "IMO2222222",
+      "estimatedTimeOfArrival": "2025-06-30T14:00:00Z",
+      "estimatedTimeOfDeparture": "2025-07-01T22:00:00Z",
+      "status": "Rejected",
+      "submittedByRepresentativeId": 1,
+      "assignedDockCode": null,
+      "rejectionReason": "Missing cargo manifest",
+      "containerIds": [],
+      "crew": []
+    }
+  ],
+  "organizationNotifications": [
+    {
+      "id": 1,
+      "vesselImoNumber": "IMO1234567",
+      "estimatedTimeOfArrival": "2025-06-15T10:00:00Z",
+      "estimatedTimeOfDeparture": "2025-06-16T18:00:00Z",
+      "status": "InProgress",
+      "submittedByRepresentativeId": 1,
+      "assignedDockCode": null,
+      "rejectionReason": null
+    },
+    {
+      "id": 5,
+      "vesselImoNumber": "IMO3333333",
+      "estimatedTimeOfArrival": "2025-07-05T09:00:00Z",
+      "estimatedTimeOfDeparture": "2025-07-06T17:00:00Z",
+      "status": "Submitted",
+      "submittedByRepresentativeId": 2,
+      "assignedDockCode": null,
+      "rejectionReason": null
+    },
+    {
+      "id": 6,
+      "vesselImoNumber": "IMO4444444",
+      "estimatedTimeOfArrival": "2025-07-10T11:00:00Z",
+      "estimatedTimeOfDeparture": "2025-07-11T19:00:00Z",
+      "status": "Approved",
+      "submittedByRepresentativeId": 3,
+      "assignedDockCode": "DOCK-B",
+      "rejectionReason": null
+    }
+  ]
+}

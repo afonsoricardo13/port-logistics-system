@@ -1,0 +1,110 @@
+{
+  "submittedNotification": {
+    "id": 1,
+    "vesselImoNumber": "IMO1234567",
+    "estimatedTimeOfArrival": "2025-06-15T10:00:00Z",
+    "estimatedTimeOfDeparture": "2025-06-16T18:00:00Z",
+    "status": "Submitted",
+    "submittedByRepresentativeId": 1,
+    "containerIds": ["ABCD1234567"],
+    "organizationIdentifier": "ORG001",
+    "captainName": "John Smith",
+    "crewCount": 25,
+    "safetyOfficers": ["Officer A", "Officer B"],
+    "preferredDockCode": "DOCK-A",
+    "crew": [
+      {
+        "name": "John Smith",
+        "citizenId": "123456789",
+        "nationality": "USA"
+      },
+      {
+        "name": "Jane Doe",
+        "citizenId": "987654321",
+        "nationality": "UK"
+      }
+    ]
+  },
+  "approvedNotification": {
+    "id": 2,
+    "vesselImoNumber": "IMO7654321",
+    "estimatedTimeOfArrival": "2025-06-20T08:00:00Z",
+    "estimatedTimeOfDeparture": "2025-06-21T16:00:00Z",
+    "status": "Approved",
+    "assignedDockCode": "DOCK-A",
+    "submittedByRepresentativeId": 1,
+    "containerIds": ["EFGH7654321"],
+    "organizationIdentifier": "ORG001",
+    "captainName": "Robert Johnson",
+    "crewCount": 30,
+    "crew": [
+      {
+        "name": "Robert Johnson",
+        "citizenId": "111222333",
+        "nationality": "Canada"
+      }
+    ]
+  },
+  "rejectedNotification": {
+    "id": 3,
+    "vesselImoNumber": "IMO9999999",
+    "estimatedTimeOfArrival": "2025-06-25T12:00:00Z",
+    "estimatedTimeOfDeparture": "2025-06-26T20:00:00Z",
+    "status": "Rejected",
+    "rejectionReason": "Missing cargo manifest and incomplete crew documentation",
+    "submittedByRepresentativeId": 1,
+    "containerIds": [],
+    "organizationIdentifier": "ORG001",
+    "captainName": "Michael Brown",
+    "crewCount": 20,
+    "crew": [
+      {
+        "name": "Michael Brown",
+        "citizenId": "444555666",
+        "nationality": "Australia"
+      }
+    ]
+  },
+  "inProgressNotification": {
+    "id": 4,
+    "vesselImoNumber": "IMO1111111",
+    "estimatedTimeOfArrival": "2025-06-30T14:00:00Z",
+    "estimatedTimeOfDeparture": "2025-07-01T22:00:00Z",
+    "status": "InProgress",
+    "submittedByRepresentativeId": 1,
+    "containerIds": ["MNOP2222222"],
+    "organizationIdentifier": "ORG001",
+    "captainName": "David Wilson",
+    "crewCount": 28,
+    "crew": [
+      {
+        "name": "David Wilson",
+        "citizenId": "777888999",
+        "nationality": "Germany"
+      }
+    ]
+  },
+  "docks": [
+    {
+      "code": "DOCK-A",
+      "name": "Dock Alpha",
+      "location": "North Terminal",
+      "capacity": 5000,
+      "status": "Available"
+    },
+    {
+      "code": "DOCK-B",
+      "name": "Dock Beta",
+      "location": "South Terminal",
+      "capacity": 3000,
+      "status": "Available"
+    },
+    {
+      "code": "DOCK-C",
+      "name": "Dock Charlie",
+      "location": "East Terminal",
+      "capacity": 4000,
+      "status": "Occupied"
+    }
+  ]
+}

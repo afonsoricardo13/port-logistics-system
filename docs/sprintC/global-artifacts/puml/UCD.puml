@@ -1,0 +1,86 @@
+@startuml UseCaseDiagram - Sprint C
+
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+title Use Case Diagram - Sprint C (Operations & Execution Management)
+
+left to right direction
+
+actor "Project Manager" as PM
+actor "Port Authority Officer" as PAO
+actor "Shipping Agent Representative" as SAR
+actor "Logistics Operator" as LO
+actor "Port Operations Supervisor" as POS
+
+' ===== Sprint B User Stories (inherited) =====
+usecase "US2.2.1 - Create and update vessel types" as UC2.2.1
+usecase "US2.2.2 - Register and update vessel records" as UC2.2.2
+usecase "US2.2.3 - Register and update docks" as UC2.2.3
+usecase "US2.2.4 - Register and update storage areas" as UC2.2.4
+usecase "US2.2.5 - Register new shipping agent organizations" as UC2.2.5
+usecase "US2.2.6 - Register and manage representatives" as UC2.2.6
+usecase "US2.2.7 - Review pending VVN and approve/reject" as UC2.2.7
+usecase "US2.2.8 - Create/submit a Vessel Visit Notification" as UC2.2.8
+usecase "US2.2.9 - Change/complete a VVN while in progress" as UC2.2.9
+usecase "US2.2.10 - View status of submitted VVN" as UC2.2.10
+usecase "US2.2.11 - Register and manage operating staff" as UC2.2.11
+usecase "US2.2.12 - Register and manage physical resources" as UC2.2.12
+usecase "US2.2.13 - Register and manage qualifications" as UC2.2.13
+
+' ===== Sprint C User Stories - Operations & Execution Management =====
+usecase "US4.1.1 - Develop OEM module as independent backend service" as UC4.1.1
+usecase "US4.1.2 - Generate and store Operation Plans for VVNs" as UC4.1.2
+usecase "US4.1.3 - Search and list Operation Plans" as UC4.1.3
+usecase "US4.1.4 - Manually update Operation Plan of a VVN" as UC4.1.4
+usecase "US4.1.5 - Identify VVNs without Operation Plans" as UC4.1.5
+usecase "US4.1.6 - Query resource allocation time" as UC4.1.6
+usecase "US4.1.7 - Create Vessel Visit Execution (VVE)" as UC4.1.7
+usecase "US4.1.8 - Update VVE with berth time and dock" as UC4.1.8
+usecase "US4.1.9 - Update VVE with executed operations" as UC4.1.9
+usecase "US4.1.10 - Search and list VVEs" as UC4.1.10
+usecase "US4.1.11 - Mark VVE as completed" as UC4.1.11
+usecase "US4.1.12 - Manage Incident Types catalog" as UC4.1.12
+usecase "US4.1.13 - Record and manage incidents" as UC4.1.13
+usecase "US4.1.14 - Manage Complementary Task Categories" as UC4.1.14
+usecase "US4.1.15 - Record and manage Complementary Tasks" as UC4.1.15
+
+' ===== Associations - Sprint B =====
+PAO --> UC2.2.1
+PAO --> UC2.2.2
+PAO --> UC2.2.3
+PAO --> UC2.2.4
+PAO --> UC2.2.5
+PAO --> UC2.2.6
+PAO --> UC2.2.7
+
+LO --> UC2.2.11
+LO --> UC2.2.12
+LO --> UC2.2.13
+
+SAR --> UC2.2.8
+SAR --> UC2.2.9
+SAR --> UC2.2.10
+
+' ===== Associations - Sprint C =====
+PM --> UC4.1.1
+
+LO --> UC4.1.2
+LO --> UC4.1.3
+LO --> UC4.1.4
+LO --> UC4.1.5
+LO --> UC4.1.6
+LO --> UC4.1.7
+LO --> UC4.1.8
+LO --> UC4.1.9
+LO --> UC4.1.10
+LO --> UC4.1.11
+LO --> UC4.1.13
+LO --> UC4.1.15
+
+PAO --> UC4.1.12
+
+POS --> UC4.1.14
+
+@enduml

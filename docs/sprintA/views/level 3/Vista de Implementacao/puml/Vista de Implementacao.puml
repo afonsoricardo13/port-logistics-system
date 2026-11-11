@@ -1,0 +1,154 @@
+@startuml Implementation View – Level 3 (All Backend Containers)
+left to right direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+skinparam component {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+rectangle "Port Operations System" as SYS {
+
+' ============================================
+' ========== CONTAINER: Docks & Resources =====
+' ============================================
+rectangle "Docks & Resources — Implementation" as DR {
+
+  rectangle "Infrastructure" as DR_INF {
+    component "Routes"      as DR_ROUTES
+    component "Persistence" as DR_PERS
+  }
+
+  rectangle "Interface Adapters" as DR_ADP {
+    rectangle "Controllers" as DR_CTRL_L {
+      component "IControllers"     as DR_ICTRL
+      component "ImplControllers"  as DR_CTRL
+    }
+    component "Repositories" as DR_REPO
+  }
+
+  rectangle "Application Services / Use Case Services" as DR_APP {
+    rectangle "AppServices" as DR_APP_L {
+      component "IAppServices"     as DR_IAPP
+      component "ImplAppServices"  as DR_APP_IMPL
+    }
+    component "IRepositories" as DR_IREPO
+  }
+
+  rectangle "Entities / Core / Domain" as DR_DOM {
+    component "Aggregates"    as DR_AGG
+    component "Value Objects" as DR_VO
+    component "Services"      as DR_SVC
+  }
+
+  ' --- dependências (tracejado), conforme exemplo ---
+  DR_ROUTES ..down..> DR_ICTRL
+  DR_PERS   ..up..>   DR_REPO
+  DR_CTRL   ..down..> DR_IAPP
+  DR_CTRL   ..down..> DR_APP_IMPL
+  DR_ICTRL  <..       DR_CTRL
+  DR_APP_IMPL ..right..> DR_IREPO
+  DR_IAPP   <..       DR_APP_IMPL
+  DR_APP_IMPL ..down..> DR_AGG
+  DR_APP_IMPL ..down..> DR_VO
+  DR_APP_IMPL ..down..> DR_SVC
+  DR_IREPO  <..       DR_REPO
+}
+
+' ============================================
+' ======= CONTAINER: Visits & Manifests =======
+' ============================================
+rectangle "Visits & Manifests — Implementation" as VM {
+
+  rectangle "Infrastructure" as VM_INF {
+    component "Routes"      as VM_ROUTES
+    component "Persistence" as VM_PERS
+  }
+
+  rectangle "Interface Adapters" as VM_ADP {
+    rectangle "Controllers" as VM_CTRL_L {
+      component "IControllers"     as VM_ICTRL
+      component "ImplControllers"  as VM_CTRL
+    }
+    component "Repositories" as VM_REPO
+  }
+
+  rectangle "Application Services / Use Case Services" as VM_APP {
+    rectangle "AppServices" as VM_APP_L {
+      component "IAppServices"     as VM_IAPP
+      component "ImplAppServices"  as VM_APP_IMPL
+    }
+    component "IRepositories" as VM_IREPO
+  }
+
+  rectangle "Entities / Core / Domain" as VM_DOM {
+    component "Aggregates"    as VM_AGG
+    component "Value Objects" as VM_VO
+    component "Services"      as VM_SVC
+  }
+
+  VM_ROUTES ..down..> VM_ICTRL
+  VM_PERS   ..up..>   VM_REPO
+  VM_CTRL   ..down..> VM_IAPP
+  VM_CTRL   ..down..> VM_APP_IMPL
+  VM_ICTRL  <..       VM_CTRL
+  VM_APP_IMPL ..right..> VM_IREPO
+  VM_IAPP   <..       VM_APP_IMPL
+  VM_APP_IMPL ..down..> VM_AGG
+  VM_APP_IMPL ..down..> VM_VO
+  VM_APP_IMPL ..down..> VM_SVC
+  VM_IREPO  <..       VM_REPO
+}
+
+' ============================================
+' ==== CONTAINER: Planning & Scheduling ======
+' ============================================
+rectangle "Planning & Scheduling — Implementation" as PL {
+
+  rectangle "Infrastructure" as PL_INF {
+    component "Routes"      as PL_ROUTES
+  }
+
+  rectangle "Interface Adapters" as PL_ADP {
+    rectangle "Controllers" as PL_CTRL_L {
+      component "IControllers"     as PL_ICTRL
+      component "ImplControllers"  as PL_CTRL
+    }
+    ' neste container os "repositórios" podem ser adapters/clients;
+    ' mantemos o rótulo igual ao template
+    component "Repositories (Clients/Adapters)" as PL_REPO
+  }
+
+  rectangle "Application Services / Use Case Services" as PL_APP {
+    rectangle "AppServices" as PL_APP_L {
+      component "IAppServices"     as PL_IAPP
+      component "ImplAppServices"  as PL_APP_IMPL
+    }
+    component "IRepositories" as PL_IREPO
+  }
+
+  rectangle "Entities / Core / Domain" as PL_DOM {
+    component "Aggregates"    as PL_AGG
+    component "Value Objects" as PL_VO
+    component "Services"      as PL_SVC
+  }
+
+  PL_ROUTES ..down..> PL_ICTRL
+  PL_CTRL   ..down..> PL_IAPP
+  PL_CTRL   ..down..> PL_APP_IMPL
+  PL_ICTRL  <..       PL_CTRL
+  PL_APP_IMPL ..right..> PL_IREPO
+  PL_IREPO  <..       PL_REPO
+  PL_IAPP   <..       PL_APP_IMPL
+  PL_APP_IMPL ..down..> PL_AGG
+  PL_APP_IMPL ..down..> PL_VO
+  PL_APP_IMPL ..down..> PL_SVC
+}
+
+}
+
+@enduml

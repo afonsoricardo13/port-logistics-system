@@ -1,0 +1,177 @@
+<!-- Storage Areas List -->
+<div class="storage-areas-list-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>Storage Areas</h1>
+    <button 
+      class="btn btn-primary" 
+      (click)="createNew()"
+      *ngIf="canManage()">
+      <i class="icon-plus"></i> New Storage Area
+    </button>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-row">
+      <!-- Search by Identifier -->
+      <div class="filter-group">
+        <label for="search">Search</label>
+        <input 
+          id="search"
+          type="text" 
+          class="form-control" 
+          placeholder="Search by identifier..."
+          [(ngModel)]="searchText"
+          (ngModelChange)="onSearchChange()" />
+      </div>
+
+      <!-- Type Filter -->
+      <div class="filter-group">
+        <label for="type">Type</label>
+        <select 
+          id="type"
+          class="form-control" 
+          [(ngModel)]="selectedType"
+          (ngModelChange)="onFilterChange()">
+          <option value="">All Types</option>
+          <option value="Yard">Yard</option>
+          <option value="Warehouse">Warehouse</option>
+        </select>
+      </div>
+
+      <!-- Location Filter -->
+      <div class="filter-group">
+        <label for="location">Location</label>
+        <input 
+          id="location"
+          type="text" 
+          class="form-control" 
+          placeholder="Filter by location..."
+          [(ngModel)]="selectedLocation"
+          (ngModelChange)="onFilterChange()" />
+      </div>
+
+      <!-- Clear Filters Button -->
+      <div class="filter-group filter-actions">
+        <button 
+          class="btn btn-secondary btn-sm" 
+          (click)="clearFilters()"
+          title="Clear all filters">
+          Clear Filters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading storage areas...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredAreas.length === 0" class="empty-state">
+    <p *ngIf="!searchText && !selectedType && !selectedLocation">
+      No storage areas found. Create your first storage area!
+    </p>
+    <p *ngIf="searchText || selectedType || selectedLocation">
+      No storage areas match your search criteria. Try adjusting your filters.
+    </p>
+  </div>
+
+  <!-- Storage Areas Table -->
+  <div *ngIf="!loading && filteredAreas.length > 0" class="storage-areas-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Identifier</th>
+          <th>Type</th>
+          <th>Location</th>
+          <th>Capacity (TEU)</th>
+          <th>Occupancy</th>
+          <th>Available</th>
+          <th>Served Docks</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let area of filteredAreas">
+          <!-- Identifier -->
+          <td class="id-cell">
+            <strong>{{ area.identifier }}</strong>
+          </td>
+
+          <!-- Type -->
+          <td>
+            <span [class]="'type-badge ' + getTypeClass(area.type)">
+              {{ area.type }}
+            </span>
+          </td>
+
+          <!-- Location -->
+          <td class="location-cell">
+            {{ area.location }}
+          </td>
+
+          <!-- Capacity -->
+          <td class="capacity-cell">
+            {{ area.maxCapacityTeu }}
+          </td>
+
+          <!-- Occupancy -->
+          <td class="occupancy-cell">
+            <div class="occupancy-info">
+              <span>{{ area.currentOccupancyTeu }}</span>
+              <div class="progress-bar">
+                <div 
+                  class="progress-fill" 
+                  [ngClass]="getOccupancyClass(getOccupancyPercentage(area))"
+                  [style.width.%]="getOccupancyPercentage(area)">
+                  {{ getOccupancyPercentage(area) }}%
+                </div>
+              </div>
+            </div>
+          </td>
+
+          <!-- Available -->
+          <td class="available-cell">
+            <span [class.text-danger]="area.maxCapacityTeu - area.currentOccupancyTeu === 0">
+              {{ area.maxCapacityTeu - area.currentOccupancyTeu }} TEU
+            </span>
+          </td>
+
+          <!-- Served Docks -->
+          <td class="docks-cell">
+            <span class="small">{{ getServedDocksDisplay(area) }}</span>
+          </td>
+
+          <!-- Actions -->
+          <td class="actions-cell">
+            <button 
+              *ngIf="canManage()"
+              class="btn btn-sm btn-secondary" 
+              (click)="editArea(area)"
+              title="Edit storage area">
+              Edit
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Results Count -->
+  <div *ngIf="!loading && filteredAreas.length > 0" class="results-count">
+    Showing {{ filteredAreas.length }} of {{ storageAreas.length }} storage areas
+  </div>
+</div>

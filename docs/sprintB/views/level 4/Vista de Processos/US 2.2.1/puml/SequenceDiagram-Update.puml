@@ -1,0 +1,148 @@
+@startuml Vista de Processos - Level 4 (US 2.2.1 - Update Vessel Type)
+
+participant ":VesselTypesController" as Controller
+participant ":VesselTypeService" as Service
+participant ":IVesselTypeRepository" as Repository
+participant "dto:VesselTypeDTO" as DTO
+participant ":IVesselTypeFactory" as Factory
+participant ":VesselType" as Entity
+participant ":VesselTypeMapper" as Mapper
+participant ":VesselTypeDataModel" as DataModel
+participant ":AbsanteeContext" as DbContext
+
+-> Controller: PUT /api/vesseltypes/{name}\n(VesselTypeDTO)
+activate Controller
+
+Controller -> Controller: Validate name matches dto.Name
+alt Names Don't Match
+    Controller --> : 400 BadRequest("Name in URL and payload must match")
+end
+
+Controller -> Controller: ValidateModelState()
+
+Controller -> Service: Update(name, dto, errors)
+activate Service
+
+Service -> Repository: GetByNameAsync(name)
+activate Repository
+Repository -> DbContext: VesselTypes.FirstOrDefaultAsync(x => x.Name == name)
+activate DbContext
+DbContext --> Repository: dataModel
+deactivate DbContext
+
+Repository -> Mapper: ToDomain(dataModel)
+activate Mapper
+Mapper -> Factory: NewVesselType(name, description, capacity, maxRows, maxBays, maxTiers)
+activate Factory
+Factory -> Entity: new VesselType(...)
+activate Entity
+Entity --> Factory: vesselType
+deactivate Entity
+Factory --> Mapper: vesselType
+deactivate Factory
+Mapper -> Entity: Id = dataModel.Id
+activate Entity
+Entity --> Mapper: vesselType
+deactivate Entity
+Mapper --> Repository: vesselType
+deactivate Mapper
+
+Repository --> Service: vesselType
+deactivate Repository
+
+alt Vessel Type Not Found
+    Service --> Controller: false (errors: "Vessel Type not found")
+    Controller --> : 400 BadRequest(errors)
+end
+
+Service -> DTO: UpdateToDomain(vesselType, dto)
+activate DTO
+DTO -> Entity: Update(description, capacity, maxRows, maxBays, maxTiers)
+activate Entity
+
+Entity -> Entity: Validate parameters
+note right
+    Throws ArgumentException if:
+    - Capacity <= 0 (if provided)
+    - MaxRows/MaxBays/MaxTiers <= 0 (if provided)
+end note
+
+alt description != null
+    Entity -> Entity: _description = description.Trim()
+end
+
+alt capacity.HasValue
+    Entity -> Entity: _capacity = capacity.Value
+end
+
+alt maxRows.HasValue
+    Entity -> Entity: _maxRows = maxRows.Value
+end
+
+alt maxBays.HasValue
+    Entity -> Entity: _maxBays = maxBays.Value
+end
+
+alt maxTiers.HasValue
+    Entity -> Entity: _maxTiers = maxTiers.Value
+end
+
+Entity --> DTO: vesselType
+deactivate Entity
+DTO --> Service: vesselType
+deactivate DTO
+
+Service -> Repository: Update(vesselType, errors)
+activate Repository
+
+Repository -> DbContext: VesselTypes.FirstAsync(v => v.Name == vesselType.Name)
+activate DbContext
+DbContext --> Repository: dataModel
+deactivate DbContext
+
+Repository -> Mapper: UpdateDataModel(dataModel, vesselType)
+activate Mapper
+Mapper -> DataModel: Description = vesselType.Description
+activate DataModel
+DataModel -> DataModel: Capacity = vesselType.Capacity
+DataModel -> DataModel: MaxRows = vesselType.MaxRows
+DataModel -> DataModel: MaxBays = vesselType.MaxBays
+DataModel -> DataModel: MaxTiers = vesselType.MaxTiers
+DataModel --> Mapper: void
+deactivate DataModel
+Mapper --> Repository: void
+deactivate Mapper
+
+Repository -> DbContext: Entry(dataModel).State = EntityState.Modified
+activate DbContext
+DbContext --> Repository: void
+deactivate DbContext
+
+Repository -> DbContext: SaveChangesAsync()
+activate DbContext
+DbContext -> DbContext: GenerateSQL()
+note right
+    UPDATE VesselTypes
+    SET Description = ?,
+        Capacity = ?,
+        MaxRows = ?,
+        MaxBays = ?,
+        MaxTiers = ?
+    WHERE Id = ?
+end note
+DbContext -> DbContext: ExecuteUpdate()
+DbContext --> Repository: 1
+deactivate DbContext
+
+Repository --> Service: vesselType
+deactivate Repository
+
+Service --> Controller: true
+deactivate Service
+
+Controller -> Controller: _logger.LogInformation("Updating vessel type {Name}", name)
+
+Controller --> : 200 OK
+deactivate Controller
+
+@enduml

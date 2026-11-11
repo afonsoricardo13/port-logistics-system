@@ -1,0 +1,17 @@
+@startuml
+  class ShippingAgentOrganization {
+    - identifier: string
+    - legalName: string
+  }
+
+  class Representative {
+    - name: string
+    - citizenId: string
+    - nationality: string
+    - email: string
+    - phoneNumber: string
+    - status: string
+  }
+
+  ShippingAgentOrganization "1" -- "0..*" Representative : has
+  @enduml

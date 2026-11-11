@@ -1,0 +1,77 @@
+@startuml Vista Física - Nível 3 (Sprint C)
+left to right direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+skinparam node {
+	BackgroundColor #87CEEB
+	BorderColor #000000
+	RoundCorner 5
+}
+skinparam component {
+	BackgroundColor #87CEEB
+	BorderColor #000000
+	RoundCorner 5
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+' ====== Client nodes ======
+node "Client Browser" as CLIENT {
+	component "Angular SPA" as SPA
+}
+
+' ====== Azure App Services ======
+node "Azure App Service\n(Port Logistics)" as AZURE_PL {
+	component ".NET 9 WebApi" as PL_API
+	component "Application Layer" as PL_APP
+	component "Domain Layer" as PL_DOMAIN
+	component "DataModel Layer" as PL_DATA
+}
+
+node "Azure App Service\n(OEM)" as AZURE_OEM {
+	component ".NET 9 WebApi" as OEM_API
+	component "Application Layer" as OEM_APP
+	component "Domain Layer" as OEM_DOMAIN
+	component "DataModel Layer" as OEM_DATA
+}
+
+node "Azure VM\n(Scheduling)" as AZURE_SCHED {
+	component "Prolog Server" as SCHED_API
+}
+
+' ====== Databases (Internal) ======
+node "Azure SQL\n(Port Logistics DB)" as SQL_PL #87CEEB {
+	database "PortLogisticsDb" as PL_DB
+}
+
+node "Azure SQL\n(OEM DB)" as SQL_OEM #87CEEB {
+	database "OEMDb" as OEM_DB
+}
+
+' ====== External IAM ======
+node "Azure AD B2C / Auth0" as IAM_NODE #F5F5DC {
+	component "«external»\nIAM Provider" as IAM #F5F5DC
+}
+
+' ====== CDN ======
+node "Azure Static Web Apps" as CDN_NODE {
+	component "SPA Static Files" as SPA_FILES
+}
+
+' ====== Connections ======
+CLIENT --> CDN_NODE : HTTPS
+CLIENT --> AZURE_PL : HTTPS
+CLIENT --> AZURE_OEM : HTTPS
+CLIENT --> IAM_NODE : OAuth 2.0
+
+AZURE_PL --> SQL_PL : SQL
+AZURE_OEM --> SQL_OEM : SQL
+AZURE_OEM --> AZURE_PL : REST API
+AZURE_OEM --> AZURE_SCHED : REST API
+
+AZURE_PL --> IAM_NODE : JWT validation
+AZURE_OEM --> IAM_NODE : JWT validation
+
+@enduml

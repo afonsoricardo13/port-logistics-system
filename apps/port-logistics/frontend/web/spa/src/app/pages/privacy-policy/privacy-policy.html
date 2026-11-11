@@ -1,0 +1,171 @@
+<div class="privacy-policy-container">
+  <div class="privacy-policy-content">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state">
+      <div class="spinner"></div>
+      <p>{{ 'privacyPolicy.loading' | translate }}</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error" class="error-state alert alert-danger">
+      <h3>⚠️ Error Loading Privacy Policy</h3>
+      <p>{{ error }}</p>
+      <button class="btn btn-primary" routerLink="/">Return to Homepage</button>
+    </div>
+
+    <!-- Privacy Policy Display -->
+    <div *ngIf="policy && !loading && !error" class="policy-display">
+      <!-- Header -->
+      <div class="policy-header">
+        <h1>Política de Privacidade e Proteção de Dados</h1>
+        <p class="subtitle">
+          Sistema de Logística Portuária - Cumprimento do RGPD (Regulamento UE 2016/679)
+        </p>
+        <div class="policy-metadata">
+          <div class="metadata-item">
+            <span class="label">Versão:</span>
+            <span class="value">{{ policy.version }}</span>
+          </div>
+          <div class="metadata-item">
+            <span class="label">Data Efetiva:</span>
+            <span class="value">{{ formatDate(policy.effectiveDate) }}</span>
+          </div>
+          <div class="metadata-item">
+            <span class="label">Última Atualização:</span>
+            <span class="value">{{ formatDate(policy.createdAt) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- GDPR Compliance Notice (US 4.5.2) -->
+      <div class="gdpr-notice">
+        <div class="notice-icon">ℹ️</div>
+        <div class="notice-content">
+          <p><strong>Transparência GDPR:</strong> Esta política foi elaborada em cumprimento dos 
+          artigos 13.º e 14.º do RGPD e fornece informação completa sobre o tratamento de dados 
+          pessoais, incluindo dados de utilizadores do sistema e de terceiros afetados indiretamente 
+          (tripulantes de embarcações, passageiros, operadores externos).</p>
+        </div>
+      </div>
+
+      <!-- Policy Content (rendered as HTML with GDPR structure) -->
+      <div class="policy-content" [innerHTML]="policy.content"></div>
+
+      <!-- US 4.5.4: Non-System Users Rights Section -->
+      <div class="non-users-rights-section">
+        <h2>Direitos de Pessoas Não Registadas no Sistema</h2>
+        <h3>Rights for Non-System Users</h3>
+        
+        <div class="info-box">
+          <p><strong>Para tripulantes de embarcações, passageiros, e outras pessoas afetadas:</strong></p>
+          <p><strong>For vessel crew members, passengers, and other affected individuals:</strong></p>
+        </div>
+
+        <p>
+          Se os seus dados pessoais foram processados pelo nosso sistema (por exemplo, como tripulante 
+          de uma embarcação, passageiro, ou funcionário de uma empresa parceira), mas não é um utilizador 
+          registado do sistema, pode exercer os seus direitos RGPD contactando-nos diretamente.
+        </p>
+        <p>
+          <em>If your personal data has been processed by our system (e.g., as a vessel crew member, 
+          passenger, or employee of a partner company), but you are not a registered system user, 
+          you can exercise your GDPR rights by contacting us directly.</em>
+        </p>
+
+        <h4>Direitos Disponíveis / Available Rights:</h4>
+        <ul class="rights-list">
+          <li>
+            <strong>Direito de Acesso (Art. 15º RGPD):</strong> Solicitar uma cópia dos seus dados pessoais.
+            <br><em>Right of Access (Art. 15 GDPR): Request a copy of your personal data.</em>
+          </li>
+          <li>
+            <strong>Direito de Retificação (Art. 16º RGPD):</strong> Solicitar a correção de dados inexatos.
+            <br><em>Right to Rectification (Art. 16 GDPR): Request correction of inaccurate data.</em>
+          </li>
+          <li>
+            <strong>Direito ao Apagamento (Art. 17º RGPD):</strong> Solicitar a eliminação dos seus dados.
+            <br><em>Right to Erasure (Art. 17 GDPR): Request deletion of your data.</em>
+          </li>
+          <li>
+            <strong>Direito à Portabilidade (Art. 20º RGPD):</strong> Receber os seus dados em formato estruturado.
+            <br><em>Right to Data Portability (Art. 20 GDPR): Receive your data in a structured format.</em>
+          </li>
+        </ul>
+
+        <h4>Como Exercer os Seus Direitos / How to Exercise Your Rights:</h4>
+        <div class="contact-box">
+          <ol>
+            <li>
+              Envie um email para <a href="mailto:privacy@portlogistics.com">privacy@portlogistics.com</a> 
+              ou <a href="mailto:dpo@portlogistics.com">dpo@portlogistics.com</a>
+            </li>
+            <li>
+              Inclua na sua mensagem:
+              <ul>
+                <li>Nome completo / Full name</li>
+                <li>Documento de identificação (para verificação) / ID document (for verification)</li>
+                <li>Descrição dos dados em questão (ex: data da viagem, nome da embarcação)</li>
+                <li>Description of the data in question (e.g., voyage date, vessel name)</li>
+                <li>O direito específico que pretende exercer / The specific right you wish to exercise</li>
+              </ul>
+            </li>
+            <li>
+              Responderemos ao seu pedido no prazo máximo de 30 dias.
+              <br><em>We will respond to your request within a maximum of 30 days.</em>
+            </li>
+          </ol>
+        </div>
+
+        <div class="legal-notice">
+          <p>
+            <strong>Nota Legal:</strong> De acordo com o RGPD, podemos necessitar de verificar a sua 
+            identidade antes de processar o seu pedido. Em certas circunstâncias, poderemos estar 
+            legalmente obrigados a reter determinados dados (ex: obrigações fiscais, registos de segurança).
+          </p>
+          <p>
+            <em><strong>Legal Notice:</strong> Under GDPR, we may need to verify your identity before 
+            processing your request. In certain circumstances, we may be legally required to retain 
+            certain data (e.g., tax obligations, security records).</em>
+          </p>
+        </div>
+      </div>
+
+      <!-- Footer Info -->
+      <div class="policy-footer">
+        <div class="footer-section">
+          <h3>Questões sobre Esta Política?</h3>
+          <p>
+            Se tiver dúvidas sobre esta Política de Privacidade ou pretender exercer 
+            os seus direitos, contacte-nos:
+          </p>
+          <ul class="contact-list">
+            <li>
+              <strong>Email Privacidade:</strong> 
+              <a href="mailto:privacy@portlogistics.com">privacy@portlogistics.com</a>
+            </li>
+            <li>
+              <strong>Encarregado de Proteção de Dados:</strong> 
+              <a href="mailto:dpo@portlogistics.com">dpo@portlogistics.com</a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h3>Autoridade de Controlo</h3>
+          <p>
+            Pode apresentar reclamação junto da 
+            <strong>Comissão Nacional de Proteção de Dados (CNPD)</strong>:
+          </p>
+          <p>
+            <a href="https://www.cnpd.pt" target="_blank" rel="noopener">www.cnpd.pt</a> | 
+            <a href="mailto:geral@cnpd.pt">geral@cnpd.pt</a>
+          </p>
+        </div>
+
+        <p class="back-link">
+          <a routerLink="/">← Voltar à Página Inicial</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

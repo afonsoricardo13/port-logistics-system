@@ -1,0 +1,57 @@
+@startuml SSD - US 4.1.15 - Record Complementary Tasks (Level 2)
+skinparam shadowing true
+skinparam sequence {
+	ArrowColor Black
+	ActorBorderColor #000000
+	ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+title US 4.1.15 - Record Complementary Tasks (SSD Level 2)
+
+actor "Logistics Operator" as LO
+
+box "Port Operations System" #LightBlue
+    participant "SPA\n(Angular)" as SPA
+    participant "OEM\nBackend" as OEM
+end box
+
+participant "«external»\nIAM" as IAM #F5F5DC
+
+database "«internal»\nOEM DB" as DB #87CEEB
+
+LO -> SPA: 1: record complementary task (vveId, taskData)
+activate SPA
+
+SPA -> IAM: 1.1: validateSession()
+activate IAM
+IAM --> SPA: 1.2: valid token
+deactivate IAM
+
+SPA -> OEM: 1.3: POST /api/complementary-tasks
+activate OEM
+
+OEM -> OEM: 1.4: validate task data
+note right
+    Validations:
+    - VVE exists and is InProgress
+    - Category exists
+    - Times are valid
+end note
+
+OEM -> DB: 1.5: create complementary task
+activate DB
+DB --> OEM: 1.6: created task with ID
+deactivate DB
+
+OEM --> SPA: 1.7: created complementary task
+deactivate OEM
+
+SPA --> LO: 1.8: display task, show success
+deactivate SPA
+
+@enduml

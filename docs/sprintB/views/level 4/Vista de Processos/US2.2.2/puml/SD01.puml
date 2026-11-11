@@ -1,0 +1,109 @@
+@startuml Vista de Processos - Level 4 (US 2.2.2 - Create Vessel)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+actor "Port Authority Officer" as Officer
+participant "<<container (C4)>>\nVisualization (UI)\nController" as UI_CTRL #87CEEB
+participant "<<container (C4)>>\nVisits & Manifests\nController" as MDR_CTRL #87CEEB
+participant "<<component>>\nApplication Service" as MDR_APP #87CEEB
+participant "<<component>>\nDomain Model (Vessel)" as MDR_DOMAIN #87CEEB
+participant "<<component>>\nVesselType Repository" as TYPES_REPO #87CEEB
+participant "<<component>>\nRepository" as MDR_REPO #87CEEB
+participant "<<component>>\nData Model" as MDR_DATA #87CEEB
+participant "<<component>>\nPersistence" as MDR_PERSIST #87CEEB
+participant "<<component>>\nVesselType Persistence" as TYPES_PERSIST #87CEEB
+
+activate Officer
+Officer -> UI_CTRL: 1: POST /api/vessels {name, imo, typeId, owner, operator}
+activate UI_CTRL
+UI_CTRL -> MDR_CTRL: 1.1: createVessel(dto)
+activate MDR_CTRL
+MDR_CTRL -> MDR_APP: 1.1.1: createVessel(dto)
+activate MDR_APP
+MDR_APP -> MDR_REPO: 1.1.1.1: existsByImo(dto.imo)
+activate MDR_REPO
+MDR_REPO -> MDR_PERSIST: 1.1.1.1.1: query IMO uniqueness
+activate MDR_PERSIST
+MDR_PERSIST --> MDR_REPO: 1.1.1.1.2: exists? (true/false)
+deactivate MDR_PERSIST
+MDR_REPO --> MDR_APP: 1.1.1.1.3: exists
+deactivate MDR_REPO
+
+alt IMO already registered
+  MDR_APP --> MDR_CTRL: 1.1.1.a: BusinessRuleValidationException "IMO already registered"
+  MDR_CTRL --> UI_CTRL: 1.1.a: HTTP 400 Bad Request
+  UI_CTRL --> Officer: 1.1.b: show error
+else new IMO
+
+  MDR_APP -> TYPES_REPO: 1.1.1.2: getById(dto.typeId)
+  activate TYPES_REPO
+  TYPES_REPO -> TYPES_PERSIST: 1.1.1.2.1: fetch vessel type
+  activate TYPES_PERSIST
+  TYPES_PERSIST --> TYPES_REPO: 1.1.1.2.2: type record or null
+  deactivate TYPES_PERSIST
+  TYPES_REPO --> MDR_APP: 1.1.1.2.3: vesselType
+  deactivate TYPES_REPO
+
+  alt vessel type not found
+    MDR_APP --> MDR_CTRL: 1.1.1.b: BusinessRuleValidationException "Vessel type not found"
+    MDR_CTRL --> UI_CTRL: 1.1.c: HTTP 400 Bad Request
+    UI_CTRL --> Officer: 1.1.d: show error
+  else type ok
+
+    MDR_APP -> MDR_DOMAIN: 1.1.1.3: build Vessel aggregate (dto, vesselType)
+    activate MDR_DOMAIN
+    MDR_DOMAIN -> MDR_DOMAIN: validate name not empty, IMO checksum, owner required
+    alt invalid data
+      MDR_DOMAIN --> MDR_APP: 1.1.1.3.a: exception
+      MDR_APP --> MDR_CTRL: 1.1.1.c: validation error
+      MDR_CTRL --> UI_CTRL: 1.1.d: HTTP 400 Bad Request
+      UI_CTRL --> Officer: 1.1.e: show error
+    else valid aggregate
+      MDR_DOMAIN --> MDR_APP: 1.1.1.3.1: Vessel aggregate
+      deactivate MDR_DOMAIN
+
+      MDR_APP -> MDR_REPO: 1.1.1.4: save(vessel)
+      activate MDR_REPO
+      MDR_REPO -> MDR_DATA: 1.1.1.4.1: map to data model
+      activate MDR_DATA
+      MDR_DATA --> MDR_REPO: 1.1.1.4.2: vessel record
+      deactivate MDR_DATA
+      MDR_REPO -> MDR_PERSIST: 1.1.1.4.3: INSERT vessel
+      activate MDR_PERSIST
+      MDR_PERSIST --> MDR_REPO: 1.1.1.4.4: persisted record
+      deactivate MDR_PERSIST
+      MDR_REPO --> MDR_APP: 1.1.1.4.5: persisted(vessel)
+      deactivate MDR_REPO
+
+      MDR_APP --> MDR_CTRL: 1.1.2: created VesselDTO
+      deactivate MDR_APP
+      MDR_CTRL --> UI_CTRL: 1.2: HTTP 201 Created (Location + body)
+      deactivate MDR_CTRL
+      UI_CTRL --> Officer: 1.3: show confirmation
+    end
+  end
+end
+
+deactivate UI_CTRL
+deactivate Officer
+
+note right of MDR_DOMAIN
+  Invariants enforced:
+  - Name required
+  - IMO check-digit valid (BR2)
+  - Owner/operator required
+  - Vessel type reference must exist (BR3)
+  - IMO unique (BR1)
+end note
+
+@enduml

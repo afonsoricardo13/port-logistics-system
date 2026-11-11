@@ -1,0 +1,92 @@
+@startuml Vista de Implementação – Nível 3 (Sprint C)
+top to bottom direction
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+skinparam rectangle {
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5
+}
+skinparam component { 
+  BackgroundColor #87CEEB
+  BorderColor #000000
+  RoundCorner 5 
+}
+skinparam componentFontStyle bold
+skinparam componentFontColor #000000
+
+rectangle "Port Operations System - Implementation" as SYS {
+
+  ' === SPA ===
+  rectangle "SPA (Angular)" as SPA {
+    component "pages/" as SPA_PAGES
+    component "services/oem/" as SPA_OEM_SVC
+    component "services/" as SPA_SVC
+    component "models/" as SPA_MODELS
+    component "guards/" as SPA_GUARDS
+  }
+
+  ' === Port Logistics Backend ===
+  rectangle "Port Logistics Backend (.NET 9)" as PL {
+    component "WebApi/" as PL_WEBAPI
+    component "Application/" as PL_APP
+    component "Domain/" as PL_DOMAIN
+    component "DataModel/" as PL_DATA
+  }
+
+  ' === OEM Backend ===
+  rectangle "OEM Backend (.NET 9)" as OEM {
+    component "WebApi/" as OEM_WEBAPI
+    component "Application/" as OEM_APP
+    component "Domain/" as OEM_DOMAIN
+    component "DataModel/" as OEM_DATA
+  }
+
+  ' === Scheduling Backend ===
+  rectangle "Scheduling Backend (Prolog)" as SCHED {
+    component "scheduling_server.pl" as SCHED_SERVER
+    component "scheduling_algorithms.pl" as SCHED_ALGO
+    component "data_service.pl" as SCHED_DATA
+  }
+
+  ' === Dependencies ===
+  SPA_PAGES --> SPA_OEM_SVC
+  SPA_PAGES --> SPA_SVC
+  SPA_OEM_SVC --> SPA_MODELS
+  SPA_SVC --> SPA_MODELS
+
+  PL_WEBAPI --> PL_APP
+  PL_APP --> PL_DOMAIN
+  PL_APP --> PL_DATA
+
+  OEM_WEBAPI --> OEM_APP
+  OEM_APP --> OEM_DOMAIN
+  OEM_APP --> OEM_DATA
+
+  SCHED_SERVER --> SCHED_ALGO
+  SCHED_SERVER --> SCHED_DATA
+}
+
+' === External Dependencies ===
+component "«external»\nIAM" as IAM #F5F5DC
+database "«internal»\nPort Logistics DB" as PL_DB #87CEEB
+database "«internal»\nOEM DB" as OEM_DB #87CEEB
+
+SPA --> IAM : OAuth
+PL_WEBAPI --> IAM : JWT
+OEM_WEBAPI --> IAM : JWT
+
+PL_DATA --> PL_DB
+OEM_DATA --> OEM_DB
+
+' === Inter-module communication ===
+SPA --> PL_WEBAPI : REST
+SPA --> OEM_WEBAPI : REST
+SPA --> SCHED_SERVER : REST
+
+OEM_APP --> PL_WEBAPI : REST
+OEM_APP --> SCHED_SERVER : REST
+
+@enduml

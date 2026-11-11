@@ -1,0 +1,37 @@
+@startuml C4 Dynamic - Create/Update Dock
+' Using UML sequence style for clarity within C4 docs
+skinparam monochrome true
+actor "Port Authority Officer" as Officer
+participant "SPA (Web UI)" as SPA
+participant "API: DocksController" as Ctrl
+participant "DockAppService" as App
+participant "Dock Aggregate" as Domain
+participant "DockRepository" as Repo
+participant "DbContext" as Db
+
+== Create Dock ==
+Officer -> SPA: Fill form (dock details)
+SPA -> Ctrl: POST /api/docks {CreateDockRequest}
+Ctrl -> App: CreateDock(request)
+App -> Domain: Validate invariants (draft <= depth, unique name, allowed types)
+App -> Repo: Add(Dock)
+Repo -> Db: SaveChanges()
+Db --> Repo: OK
+Repo --> App: Dock saved
+App --> Ctrl: DockResponse (201)
+Ctrl --> SPA: 201 Created + body
+
+== Update Dock ==
+Officer -> SPA: Edit dock
+SPA -> Ctrl: PUT /api/docks/{id} {UpdateDockRequest}
+Ctrl -> App: UpdateDock(id, request)
+App -> Repo: GetById(id)
+Repo -> Db: Query
+Db --> Repo: Dock
+App -> Domain: Apply changes + validate
+App -> Repo: Update(Dock)
+Repo -> Db: SaveChanges()
+Db --> Repo: OK
+App --> Ctrl: DockResponse (200)
+Ctrl --> SPA: 200 OK
+@enduml

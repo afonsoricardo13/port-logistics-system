@@ -1,0 +1,30 @@
+@startuml Vista de Processos – Level 2 (US 2.2.10 – View Vessel Visit Notifications)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+	ArrowColor Black
+  ActorBorderColor #000000
+  ActorBackgroundColor #87CEEB
+	LifeLineBorderColor Black
+	LifeLineBackgroundColor #87CEEB
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor #87CEEB
+	ParticipantFontStyle bold
+}
+
+actor "Shipping Agent Representative" as Rep
+participant "<<container (C4)>>\nSPA (Web UI)" as UI #87CEEB
+participant "<<container (C4)>>\nPort Logistics (Backend)" as VV #87CEEB
+
+activate Rep
+Rep -> UI: 1: request to view Vessel Visit Notifications\n(with optional filters)
+activate UI
+UI --> VV: 1.1: request notifications list\n(vessel, status, representative, time, scope)
+activate VV
+VV -> UI: 1.2: return notifications\nwith status information
+deactivate VV
+UI --> Rep: 1.3: display notifications\n(in progress, pending, approved with dock,\nrejected with reason)
+deactivate UI
+deactivate Rep
+
+@enduml

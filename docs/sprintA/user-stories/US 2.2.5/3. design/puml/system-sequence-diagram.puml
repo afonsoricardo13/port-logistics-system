@@ -1,0 +1,15 @@
+@startuml
+actor Officer as "Port Authority Officer"
+participant "Port System" as System
+participant "Notification Service" as Notification
+
+Officer -> System : Submit organization and representative data
+System -> System : Validate organization and representative info
+alt Valid data
+    System -> System : Register organization and representative
+    System -> Notification : Send notification to representative (email/phone)
+    Notification -> Officer : Confirmation of registration
+else Invalid data
+    System -> Officer : Error message (missing/invalid info)
+end
+@enduml

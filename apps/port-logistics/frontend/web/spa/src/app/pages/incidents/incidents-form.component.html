@@ -1,0 +1,186 @@
+<div class="form-container">
+  <div class="form-header">
+    <h2>{{ isEditMode ? 'Edit Incident' : 'Create New Incident' }}</h2>
+    <button class="btn-close" (click)="cancel()" title="Close">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    {{ error }}
+  </div>
+
+  <form (ngSubmit)="onSubmit()" class="incident-form">
+    <!-- Incident Type -->
+    <div class="form-group">
+      <label for="incidentType">
+        Incident Type <span class="required">*</span>
+      </label>
+      <select 
+        id="incidentType" 
+        [(ngModel)]="incidentTypeCode" 
+        name="incidentType"
+        class="form-control"
+        required>
+        <option value="">Select incident type...</option>
+        <option *ngFor="let type of incidentTypes" [value]="type.code">
+          {{ type.name }} ({{ type.severity }})
+        </option>
+      </select>
+      <small class="form-help">Select the type of incident</small>
+    </div>
+
+    <!-- Start Time -->
+    <div class="form-group">
+      <label for="startTime">
+        Start Time <span class="required">*</span>
+      </label>
+      <input 
+        type="datetime-local" 
+        id="startTime" 
+        [(ngModel)]="startTime" 
+        name="startTime"
+        class="form-control"
+        required
+      />
+      <small class="form-help">When did the incident start?</small>
+    </div>
+
+    <!-- End Time (optional) -->
+    <div class="form-group">
+      <label for="endTime">
+        End Time <small>(optional)</small>
+      </label>
+      <input 
+        type="datetime-local" 
+        id="endTime" 
+        [(ngModel)]="endTime" 
+        name="endTime"
+        class="form-control"
+      />
+      <small class="form-help">When was the incident resolved? Leave empty if still active</small>
+    </div>
+
+    <!-- Severity -->
+    <div class="form-group">
+      <label for="severity">
+        Severity <span class="required">*</span>
+      </label>
+      <div class="severity-options">
+        <label *ngFor="let opt of severityOptions" class="radio-option">
+          <input 
+            type="radio" 
+            [(ngModel)]="severity" 
+            [value]="opt" 
+            name="severity"
+            required
+          />
+          <span class="radio-label" [class]="'severity-' + opt.toLowerCase()">
+            {{ opt }}
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Status (edit mode only) -->
+    <div class="form-group" *ngIf="isEditMode">
+      <label for="status">
+        Status <span class="required">*</span>
+      </label>
+      <div class="status-options">
+        <label *ngFor="let opt of statusOptions" class="radio-option">
+          <input 
+            type="radio" 
+            [(ngModel)]="status" 
+            [value]="opt" 
+            name="status"
+            required
+          />
+          <span class="radio-label" [class]="'status-' + opt.toLowerCase()">
+            {{ opt }}
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="form-group">
+      <label for="description">
+        Description <span class="required">*</span>
+      </label>
+      <textarea 
+        id="description" 
+        [(ngModel)]="description" 
+        name="description"
+        rows="5"
+        class="form-control"
+        placeholder="Describe the incident in detail..."
+        required
+      ></textarea>
+      <small class="form-help">Provide a detailed description of the incident</small>
+    </div>
+
+    <!-- Affected VVEs -->
+    <div class="form-group">
+      <label for="affectedVVEs">
+        Affected Vessel Visit Executions <small>(optional)</small>
+      </label>
+      <input 
+        type="text" 
+        id="affectedVVEs" 
+        [(ngModel)]="affectedVVEIds" 
+        name="affectedVVEs"
+        class="form-control"
+        placeholder="VVE-001, VVE-002, ... or leave empty for all ongoing VVEs"
+      />
+      <small class="form-help">
+        Enter VVE IDs separated by commas, or leave empty to affect all ongoing VVEs. 
+        Use "*" to explicitly mark as affecting all VVEs.
+      </small>
+    </div>
+
+    <!-- Current Incident Info (edit mode) -->
+    <div *ngIf="isEditMode && currentIncident" class="incident-info">
+      <h3>Current Incident Information</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">Created By:</span>
+          <span class="value">{{ currentIncident.createdBy }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Created At:</span>
+          <span class="value">{{ currentIncident.createdAt | date:'short' }}</span>
+        </div>
+        <div class="info-item" *ngIf="currentIncident.resolvedAt">
+          <span class="label">Resolved At:</span>
+          <span class="value">{{ currentIncident.resolvedAt | date:'short' }}</span>
+        </div>
+        <div class="info-item" *ngIf="currentIncident.durationMinutes">
+          <span class="label">Duration:</span>
+          <span class="value">{{ currentIncident.durationMinutes }} minutes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="loading">
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="loading">
+        <span *ngIf="!loading">
+          {{ isEditMode ? 'Update Incident' : 'Create Incident' }}
+        </span>
+        <span *ngIf="loading" class="loading-text">
+          <span class="spinner-small"></span>
+          {{ isEditMode ? 'Updating...' : 'Creating...' }}
+        </span>
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,289 @@
+<div class="admin-container">
+  <div class="admin-content">
+    <!-- Header -->
+    <div class="page-header">
+      <h1>{{ 'dataRightsAdmin.title' | translate }}</h1>
+      <p class="subtitle">{{ 'dataRightsAdmin.subtitle' | translate }}</p>
+    </div>
+
+    <!-- Success Message -->
+    <div *ngIf="successMessage" class="alert alert-success">
+      <span class="alert-icon">✓</span>
+      {{ successMessage }}
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="error && !showProcessModal" class="alert alert-danger">
+      <span class="alert-icon">⚠️</span>
+      {{ error }}
+      <button class="close-btn" (click)="error = null">&times;</button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-cards">
+      <div class="stat-card pending">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-info">
+          <span class="stat-value">{{ pendingCount }}</span>
+          <span class="stat-label">{{ 'dataRightsAdmin.stats.pending' | translate }}</span>
+        </div>
+      </div>
+      <div class="stat-card in-progress">
+        <div class="stat-icon">🔄</div>
+        <div class="stat-info">
+          <span class="stat-value">{{ inProgressCount }}</span>
+          <span class="stat-label">{{ 'dataRightsAdmin.stats.inProgress' | translate }}</span>
+        </div>
+      </div>
+      <div class="stat-card total">
+        <div class="stat-icon">📊</div>
+        <div class="stat-info">
+          <span class="stat-value">{{ allRequests.length }}</span>
+          <span class="stat-label">{{ 'dataRightsAdmin.stats.total' | translate }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-section">
+      <div class="filter-group">
+        <label>{{ 'dataRightsAdmin.filters.status' | translate }}</label>
+        <select [(ngModel)]="filterStatus" (change)="applyFilters()">
+          <option value="all">{{ 'dataRightsAdmin.filters.allStatuses' | translate }}</option>
+          <option value="0">Pending</option>
+          <option value="1">In Progress</option>
+          <option value="2">Completed</option>
+          <option value="3">Rejected</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>{{ 'dataRightsAdmin.filters.type' | translate }}</label>
+        <select [(ngModel)]="filterType" (change)="applyFilters()">
+          <option value="all">{{ 'dataRightsAdmin.filters.allTypes' | translate }}</option>
+          <option value="0">Access</option>
+          <option value="1">Rectification</option>
+          <option value="2">Deletion</option>
+        </select>
+      </div>
+      <button class="btn btn-secondary refresh-btn" (click)="loadRequests()">
+        🔄 {{ 'dataRightsAdmin.filters.refresh' | translate }}
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="loading-state">
+      <div class="spinner"></div>
+      <p>{{ 'dataRightsAdmin.loading' | translate }}</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && filteredRequests.length === 0" class="empty-state">
+      <p>{{ 'dataRightsAdmin.empty' | translate }}</p>
+    </div>
+
+    <!-- Requests Table -->
+    <table *ngIf="!loading && filteredRequests.length > 0" class="requests-table">
+      <thead>
+        <tr>
+          <th>{{ 'dataRightsAdmin.table.id' | translate }}</th>
+          <th>{{ 'dataRightsAdmin.table.user' | translate }}</th>
+          <th>{{ 'dataRightsAdmin.table.type' | translate }}</th>
+          <th>{{ 'dataRightsAdmin.table.status' | translate }}</th>
+          <th>{{ 'dataRightsAdmin.table.createdAt' | translate }}</th>
+          <th>{{ 'dataRightsAdmin.table.actions' | translate }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let request of filteredRequests" [class.pending-row]="request.status === 0">
+          <td>#{{ request.id }}</td>
+          <td>
+            <div class="user-info">
+              <span class="user-email">{{ request.userEmail }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="getTypeClass(request.requestType)">
+              {{ request.requestTypeDisplay }}
+            </span>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="getStatusClass(request.status)">
+              {{ request.statusDisplay }}
+            </span>
+          </td>
+          <td>{{ formatDate(request.createdAt) }}</td>
+          <td class="actions-cell">
+            <button class="btn-icon" title="View Details" (click)="openDetailModal(request)">
+              👁️
+            </button>
+            <button 
+              *ngIf="request.status === 0 || request.status === 1"
+              class="btn-icon" 
+              title="Process Request" 
+              (click)="openProcessModal(request)">
+              ⚙️
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Process Modal -->
+<div class="modal-overlay" *ngIf="showProcessModal" (click)="closeModals()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ 'dataRightsAdmin.processModal.title' | translate }} #{{ selectedRequest?.id }}</h2>
+      <button class="close-btn" (click)="closeModals()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <!-- Error in modal -->
+      <div *ngIf="error" class="alert alert-danger">
+        {{ error }}
+      </div>
+
+      <!-- Request Info -->
+      <div class="request-summary">
+        <div class="summary-row">
+          <strong>User:</strong> {{ selectedRequest?.userEmail }}
+        </div>
+        <div class="summary-row">
+          <strong>Type:</strong> 
+          <span class="badge" [ngClass]="getTypeClass(selectedRequest?.requestType || 0)">
+            {{ selectedRequest?.requestTypeDisplay }}
+          </span>
+        </div>
+        <div class="summary-row" *ngIf="selectedRequest?.requestDetails">
+          <strong>Details:</strong> {{ selectedRequest?.requestDetails }}
+        </div>
+        <div class="summary-row" *ngIf="selectedRequest?.proposedChanges">
+          <strong>Proposed Changes:</strong> {{ selectedRequest?.proposedChanges }}
+        </div>
+        <div class="summary-row" *ngIf="selectedRequest?.exportFormat">
+          <strong>Export Format:</strong> {{ selectedRequest?.exportFormat?.toUpperCase() }}
+        </div>
+      </div>
+
+      <!-- Process Form -->
+      <div class="form-group">
+        <label>{{ 'dataRightsAdmin.processModal.newStatus' | translate }}</label>
+        <select [(ngModel)]="processStatus" class="form-control">
+          <option [value]="1">In Progress</option>
+          <option [value]="2">Completed</option>
+          <option [value]="3">Rejected</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>{{ 'dataRightsAdmin.processModal.notes' | translate }}</label>
+        <textarea 
+          class="form-control" 
+          rows="3" 
+          [(ngModel)]="adminResponse"
+          placeholder="Optional notes for the user"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeModals()" [disabled]="processing">
+        {{ 'common.cancel' | translate }}
+      </button>
+      <button 
+        class="btn" 
+        [ngClass]="{'btn-info': processStatus === 1, 'btn-success': processStatus === 2, 'btn-danger': processStatus === 3}"
+        (click)="processRequest()" 
+        [disabled]="processing">
+        <span *ngIf="processing" class="spinner-small"></span>
+        {{ 'dataRightsAdmin.processModal.submit' | translate }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" *ngIf="showDetailModal" (click)="closeModals()">
+  <div class="modal-content modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ 'dataRightsAdmin.detailModal.title' | translate }} #{{ selectedRequest?.id }}</h2>
+      <button class="close-btn" (click)="closeModals()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid">
+        <div class="detail-section">
+          <h4>Request Information</h4>
+          <div class="detail-row">
+            <span class="detail-label">ID:</span>
+            <span class="detail-value">#{{ selectedRequest?.id }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Type:</span>
+            <span class="detail-value">
+              <span class="badge" [ngClass]="getTypeClass(selectedRequest?.requestType || 0)">
+                {{ selectedRequest?.requestTypeDisplay }}
+              </span>
+            </span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Status:</span>
+            <span class="detail-value">
+              <span class="badge" [ngClass]="getStatusClass(selectedRequest?.status || 0)">
+                {{ selectedRequest?.statusDisplay }}
+              </span>
+            </span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Created At:</span>
+            <span class="detail-value">{{ formatDate(selectedRequest?.createdAt) }}</span>
+          </div>
+          <div class="detail-row" *ngIf="selectedRequest?.requestDetails">
+            <span class="detail-label">Details:</span>
+            <span class="detail-value">{{ selectedRequest?.requestDetails }}</span>
+          </div>
+          <div class="detail-row" *ngIf="selectedRequest?.exportFormat">
+            <span class="detail-label">Format:</span>
+            <span class="detail-value">{{ selectedRequest?.exportFormat?.toUpperCase() }}</span>
+          </div>
+          <div class="detail-row" *ngIf="selectedRequest?.proposedChanges">
+            <span class="detail-label">Proposed Changes:</span>
+            <span class="detail-value">{{ selectedRequest?.proposedChanges }}</span>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4>User Information</h4>
+          <div class="detail-row">
+            <span class="detail-label">Email:</span>
+            <span class="detail-value">{{ selectedRequest?.userEmail }}</span>
+          </div>
+        </div>
+
+        <div class="detail-section" *ngIf="selectedRequest?.processedAt">
+          <h4>Processing Information</h4>
+          <div class="detail-row">
+            <span class="detail-label">Processed At:</span>
+            <span class="detail-value">{{ formatDate(selectedRequest?.processedAt) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Processed By:</span>
+            <span class="detail-value">{{ selectedRequest?.processedBy }}</span>
+          </div>
+          <div class="detail-row" *ngIf="selectedRequest?.adminResponse">
+            <span class="detail-label">Admin Response:</span>
+            <span class="detail-value">{{ selectedRequest?.adminResponse }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeModals()">
+        {{ 'common.close' | translate }}
+      </button>
+      <button 
+        *ngIf="selectedRequest?.status === 0 || selectedRequest?.status === 1"
+        class="btn btn-primary" 
+        (click)="showDetailModal = false; openProcessModal(selectedRequest!)">
+        {{ 'dataRightsAdmin.detailModal.process' | translate }}
+      </button>
+    </div>
+  </div>
+</div>

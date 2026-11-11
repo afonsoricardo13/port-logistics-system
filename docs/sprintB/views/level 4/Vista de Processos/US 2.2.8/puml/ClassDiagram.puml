@@ -1,0 +1,218 @@
+@startuml Vista Logica - Level 4 (US 2.2.8 - Vessel Visit Notification)
+
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor<<Controller>> LightBlue
+    BackgroundColor<<Service>> LightGreen
+    BackgroundColor<<Repository>> LightYellow
+    BackgroundColor<<Entity>> LightCoral
+    BackgroundColor<<DTO>> Wheat
+    BackgroundColor<<Utility>> LightGray
+}
+
+package "WebApi Layer" {
+    class VesselVisitNotificationsController <<Controller>> {
+        - _service: VesselVisitNotificationService
+        - _representativeRepo: IRepresentativeRepository
+        - _logger: ILogger<VesselVisitNotificationsController>
+        - _errors: List<string>
+        + Create(dto: VesselVisitNotificationDTO): Task<ActionResult<VesselVisitNotificationDTO>>
+        + GetById(id: long): Task<ActionResult<VesselVisitNotificationDTO>>
+        + UpdateStatus(id: long, dto: UpdateVvnStatusDTO): Task<ActionResult<VesselVisitNotificationDTO>>
+        + Update(id: long, dto: VesselVisitNotificationDTO): Task<ActionResult<VesselVisitNotificationDTO>>
+        + GetAll(vesselImoNumber?, status?, etaFrom?, etaTo?): Task<ActionResult<IEnumerable<VesselVisitNotificationDTO>>>
+        + GetMyNotifications(): Task<ActionResult<IEnumerable<VesselVisitNotificationDTO>>>
+        + GetOrganizationNotifications(): Task<ActionResult<IEnumerable<VesselVisitNotificationDTO>>>
+    }
+}
+
+package "Application Layer" {
+    class VesselVisitNotificationService <<Service>> {
+        - _repo: IVesselVisitNotificationRepository
+        - _docks: IDockRepository
+        - _vessels: IVesselRepository
+        - _representativeRepo: IRepresentativeRepository
+        - _organizationRepo: IOrganizationRepository
+        + GetById(id: long): Task<VesselVisitNotificationDTO?>
+        + Create(dto: VesselVisitNotificationDTO, errors: List<string>, representativeId: long): Task<VesselVisitNotificationDTO?>
+        + Submit(id: long, errors: List<string>): Task<VesselVisitNotificationDTO?>
+        + Update(id: long, dto: VesselVisitNotificationDTO, errors: List<string>): Task<VesselVisitNotificationDTO?>
+        + Approve(id: long, officerId: string, dto: ApproveNotificationDTO, errors: List<string>): Task<VesselVisitNotificationDTO?>
+        + Reject(id: long, officerId: string, dto: RejectNotificationDTO, errors: List<string>): Task<VesselVisitNotificationDTO?>
+        + GetFiltered(filter: VesselVisitNotificationFilterDTO): Task<IEnumerable<VesselVisitNotificationDTO>>
+        + GetByRepresentativeIdAsync(representativeId: long): Task<IEnumerable<VesselVisitNotificationDTO>>
+        + GetByOrganizationIdAsync(organizationId: long): Task<IEnumerable<VesselVisitNotificationDTO>>
+        - PopulateOrganizationAsync(dto: VesselVisitNotificationDTO): Task
+        - UpdateAdditionalFields(vvnId: long, dto: VesselVisitNotificationDTO): Task
+    }
+
+    class VesselVisitNotificationDTO <<DTO>> {
+        + Id: long
+        + VesselImoNumber: string
+        + EstimatedTimeOfArrival: DateTime?
+        + EstimatedTimeOfDeparture: DateTime?
+        + ContainerIds: List<string>
+        + Crew: List<CrewMemberDTO>
+        + Status: string
+        + AssignedDockCode: string?
+        + SubmittedByRepresentativeId: long?
+        + RejectionReason: string?
+        + OrganizationIdentifier: string?
+        + CaptainName: string?
+        + CrewCount: int?
+        + SafetyOfficers: List<string>?
+        + PreferredDockCode: string?
+        + UnloadingManifest: object?
+        + LoadingManifest: object?
+        + TotalUnloadingContainers: int
+        + LoadingContainerCount: int
+        + {static} ToDTO(v: VesselVisitNotification): VesselVisitNotificationDTO
+        + {static} ToDTO(list: IEnumerable<VesselVisitNotification>): IEnumerable<VesselVisitNotificationDTO>
+        + {static} ToDomain(dto: VesselVisitNotificationDTO): VesselVisitNotification
+    }
+
+    class CrewMemberDTO <<DTO>> {
+        + Name: string
+        + CitizenId: string
+        + Nationality: string
+    }
+}
+
+package "Domain Layer" {
+    enum VvnStatus {
+        InProgress = 0
+        Submitted = 1
+        Approved = 2
+        Rejected = 3
+    }
+
+    class VesselVisitNotification <<Entity>> {
+        + Id: long
+        - _vesselImoNumber: string
+        - _containerIds: List<string>
+        - _crew: List<CrewMember>
+        - _decisionLogs: List<DecisionLog>
+        + VesselImoNumber: string {get}
+        + EstimatedTimeOfArrival: DateTime? {get; private set}
+        + EstimatedTimeOfDeparture: DateTime? {get; private set}
+        + ContainerIds: IReadOnlyCollection<string> {get}
+        + Crew: IReadOnlyCollection<CrewMember> {get}
+        + Status: VvnStatus {get; private set}
+        + AssignedDockCode: string? {get; private set}
+        + SubmittedByRepresentativeId: long? {get; private set}
+        + TotalUnloadingContainers: int {get; private set}
+        + LoadingContainerCount: int {get; private set}
+        + DecisionLogs: IReadOnlyCollection<DecisionLog> {get}
+        + VesselVisitNotification(vesselImoNumber, eta, etd, containerIds, crew, representativeId)
+        + AddOrReplaceCargoManifest(containerIds: IEnumerable<string>): void
+        + AddOrReplaceCrew(crew: IEnumerable<CrewMember>): void
+        + UpdateDetails(eta: DateTime?, etd: DateTime?, errors: List<string>): void
+        + Submit(errors: List<string>): void
+        + Approve(officerId: string, assignedDockCode: string, errors: List<string>): void
+        + Reject(officerId: string, reason: string, errors: List<string>): void
+    }
+
+    class CrewMember <<Entity>> {
+        + Id: long
+        + Name: string {get; private set}
+        + CitizenId: string {get; private set}
+        + Nationality: string {get; private set}
+        + CrewMember(name, citizenId, nationality)
+    }
+
+    class Iso6346 <<Utility>> {
+        + {static} IsValid(code: string): bool
+        - {static} CharValue(c: char): int
+    }
+
+    interface IVesselVisitNotificationRepository <<Repository>> {
+        + GetByIdAsync(id: long): Task<VesselVisitNotification?>
+        + Add(vvn: VesselVisitNotification): Task<VesselVisitNotification>
+        + Update(vvn: VesselVisitNotification, errorMessages: List<string>): Task<VesselVisitNotification?>
+        + GetByStatusAsync(status: VvnStatus): Task<IEnumerable<VesselVisitNotification>>
+        + GetFilteredAsync(vesselImoNumber?, status?, dateFrom?, dateTo?, representativeId?, organizationId?): Task<IEnumerable<VesselVisitNotification>>
+        + GetByRepresentativeIdAsync(representativeId: long): Task<IEnumerable<VesselVisitNotification>>
+        + GetByOrganizationIdAsync(organizationId: long): Task<IEnumerable<VesselVisitNotification>>
+        + UpdateAdditionalFields(vvnId: long, captainName?, crewCount?, safetyOfficers?, preferredDockCode?, unloadingManifest?, loadingManifest?): Task
+        + GetAdditionalFieldsAsync(id: long): Task<(...)>
+        + Delete(id: long): Task<bool>
+    }
+}
+
+package "DataModel Layer" {
+    class VesselVisitNotificationRepository <<Repository>> {
+        - _context: AbsanteeContext
+        - _mapper: VesselVisitNotificationMapper
+        + GetByIdAsync(id: long): Task<VesselVisitNotification?>
+        + Add(vvn: VesselVisitNotification): Task<VesselVisitNotification>
+        + Update(vvn: VesselVisitNotification, errorMessages: List<string>): Task<VesselVisitNotification?>
+        + GetByStatusAsync(status: VvnStatus): Task<IEnumerable<VesselVisitNotification>>
+        + GetFilteredAsync(...): Task<IEnumerable<VesselVisitNotification>>
+        + GetByRepresentativeIdAsync(representativeId: long): Task<IEnumerable<VesselVisitNotification>>
+        + GetByOrganizationIdAsync(organizationId: long): Task<IEnumerable<VesselVisitNotification>>
+        + UpdateAdditionalFields(...): Task
+        + GetAdditionalFieldsAsync(id: long): Task<(...)>
+        + Delete(id: long): Task<bool>
+    }
+
+    class VesselVisitNotificationMapper {
+        + ToDomain(dm: VesselVisitNotificationDataModel): VesselVisitNotification
+        + ToDomain(items: IEnumerable<VesselVisitNotificationDataModel>): IEnumerable<VesselVisitNotification>
+        + ToDataModel(vvn: VesselVisitNotification): VesselVisitNotificationDataModel
+        + UpdateDataModel(dm: VesselVisitNotificationDataModel, vvn: VesselVisitNotification): void
+    }
+
+    class VesselVisitNotificationDataModel {
+        + Id: long
+        + VesselImoNumber: string
+        + EstimatedTimeOfArrival: DateTime?
+        + EstimatedTimeOfDeparture: DateTime?
+        + ContainerIdsCsv: string
+        + Status: int
+        + AssignedDockCode: string?
+        + SubmittedByRepresentativeId: long?
+        + CaptainName: string?
+        + CrewCount: int?
+        + PreferredDockCode: string?
+        + TotalUnloadingContainers: int
+        + LoadingContainerCount: int
+    }
+
+    class AbsanteeContext {
+        + VesselVisitNotifications: DbSet<VesselVisitNotificationDataModel>
+        + SaveChangesAsync(): Task<int>
+    }
+}
+
+' Relationships
+VesselVisitNotificationsController --> VesselVisitNotificationService : uses
+VesselVisitNotificationsController --> IRepresentativeRepository : uses
+VesselVisitNotificationsController ..> VesselVisitNotificationDTO : receives/returns
+
+VesselVisitNotificationService --> IVesselVisitNotificationRepository : uses
+VesselVisitNotificationService --> IDockRepository : uses
+VesselVisitNotificationService --> IVesselRepository : uses
+VesselVisitNotificationService --> IRepresentativeRepository : uses
+VesselVisitNotificationService --> IOrganizationRepository : uses
+VesselVisitNotificationService ..> VesselVisitNotificationDTO : uses
+VesselVisitNotificationService ..> VesselVisitNotification : uses
+
+VesselVisitNotificationDTO ..> VesselVisitNotification : converts to/from
+VesselVisitNotificationDTO *-- CrewMemberDTO
+
+VesselVisitNotification *-- VvnStatus
+VesselVisitNotification *-- "0..*" CrewMember
+VesselVisitNotification ..> Iso6346 : validates container IDs
+
+VesselVisitNotificationRepository ..|> IVesselVisitNotificationRepository : implements
+VesselVisitNotificationRepository --> AbsanteeContext : uses
+VesselVisitNotificationRepository --> VesselVisitNotificationMapper : uses
+VesselVisitNotificationRepository ..> VesselVisitNotification : manages
+VesselVisitNotificationRepository ..> VesselVisitNotificationDataModel : uses
+
+VesselVisitNotificationMapper ..> VesselVisitNotification : maps
+VesselVisitNotificationMapper ..> VesselVisitNotificationDataModel : maps
+
+AbsanteeContext --> VesselVisitNotificationDataModel : manages
+
+@enduml

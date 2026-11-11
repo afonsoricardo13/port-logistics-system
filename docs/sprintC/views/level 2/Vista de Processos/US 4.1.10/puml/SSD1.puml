@@ -1,0 +1,37 @@
+@startuml Vista de Processos – Level 2 (US 4.1.10 – Search VVEs)
+skinparam shadowing true
+skinparam linetype ortho
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor #000000
+    ActorBackgroundColor #87CEEB
+    LifeLineBorderColor Black
+    LifeLineBackgroundColor #87CEEB
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor #87CEEB
+    ParticipantFontStyle bold
+}
+
+participant "<<container (C4)>>\nSPA (Web UI)" as UI #87CEEB
+participant "<<container (C4)>>\nOEM (Backend)" as OEM #87CEEB
+participant "<<external>>\nIAM" as IAM #F5F5DC
+
+-> UI: 1: request to search VVEs
+activate UI
+UI -> IAM: 1.1: validate token
+activate IAM
+IAM --> UI: 1.1.1: token valid
+deactivate IAM
+UI --> : 1.2: display search form (date range, vessel, status)
+deactivate UI
+
+-> UI: 2: provide search criteria
+activate UI
+UI -> OEM: 2.1: GET /api/vesselvisitexecutions/search?startDate=X&endDate=Y&vesselImo=Z&status=S
+activate OEM
+OEM --> UI: 2.1.1: VVEs with execution metrics
+deactivate OEM
+UI --> : 2.2: display results with metrics (TAT, berth time, delays)
+deactivate UI
+
+@enduml
